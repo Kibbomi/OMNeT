@@ -52,6 +52,7 @@ void MyRSU::initialize(int stage)
         llcSocket.setOutputGate(gate("ethOut"));
 
         llcSocket.setCallback(this);
+        llcSocket.open(-1, localSap);
 
         EV<<"RSU is initialized!!!!!"<<std::endl;
     }
@@ -67,7 +68,6 @@ void MyRSU::onWSA(DemoServiceAdvertisment* wsa)
 
 void MyRSU::onWSM(BaseFrame1609_4* frame)
 {
-
     //MyMsg* wsm = check_and_cast<MyMsg*>(frame);
     // this rsu repeats the received traffic update in 2 seconds plus some random delay
     //sendDelayedDown(wsm->dup(), 2 + uniform(0.01, 0.2));
@@ -98,21 +98,22 @@ void MyRSU::onWSM(BaseFrame1609_4* frame)
 
         //Ethernet Message Type
 
-        //잠깐만... 원래 소켓 열고 닫고 반복하면 안 좋을 것 같음. 실행시 1번 열고 종료시 닫는걸로 하자.
-        llcSocket.open(-1, localSap);
+
 
 
         inet::Packet *datapacket = new inet::Packet("",inet::IEEE802CTRL_DATA);
 
-        const auto& data = inet::makeShared<inet::MyEtherAppReq>();
+        const auto& data = inet::makeShared<inet::MyOffloadingReq>();
 
         //내가 임의로 정한 size임.
         data->setChunkLength(inet::units::values::B(800));
-        data->setHello(11);
+        data->setConstraint(10);
+        data->setCycle(1234);
+        data->setData(6789);
         data->addTag<inet::CreationTimeTag>()->setCreationTime(simTime());
 
         datapacket->insertAtBack(data);
-        datapacket->setName("MYMSG_REQ");
+        datapacket->setName("OFFLOADING_REQ");
 
 
 
@@ -127,8 +128,6 @@ void MyRSU::onWSM(BaseFrame1609_4* frame)
         omnetpp::cComponent::emit(inet::packetSentSignal,datapacket);
         llcSocket.send(datapacket);
         EV<<"RSU send the Ethernet packet to Link!!\n";
-        llcSocket.close();
-        llcSocket.destroy();
     }
 
 }
@@ -157,10 +156,16 @@ void MyRSU::handleMessage(cMessage* msg)
             handleLowerMsg(msg);
         }
         else if(msg->getArrivalGateId() == ethIn_ID){
-            EV<<"Handel Message ethIN_ID Called!!!!\n";
+            EV<<"Handle Message ethIN_ID Called!!!!\n";
+            //record??
+
+            inet::Packet* Ethermsg = dynamic_cast<inet::Packet*>(msg);
+            socketDataArrived(nullptr,Ethermsg);
         }
         else if(msg->getArrivalGateId() == ethOut_ID){
-            EV<<"Handel Message ethOUT_ID Called!!!!\n";
+            EV<<"Handle Message ethOUT_ID Called!!!!\n";
+
+
         }
         else if (msg->getArrivalGateId() == -1) {
             /* Classes extending this class may not use all the gates, f.e.
@@ -186,11 +191,33 @@ void MyRSU::handleMessage(cMessage* msg)
 void MyRSU::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Packet *msg)
 {
     EV<<" Client : Call socketDataArrived."<<std::endl;
+
+    EV_INFO << "The name of received packet " << msg->getName() << "'\n";
+
+    if(strcmp(msg->getName(),"MYMSG_RESP")==0)
+        msg->setKind(MYMSG_RESP);
+    else if(strcmp(msg->getName(),"OFFLOADING_RESP")==0)
+        msg->setKind(OFFLOADING_RESP);
+    else if(strcmp(msg->getName(),"ES_AVAILABILITY_RESP")==0)
+        msg->setKind(ES_AVAILABILITY_RESP);
+
+
+    if(msg->getKind() == OFFLOADING_RESP){
+        const auto& req = msg->peekAtFront<inet::MyOffloadingResp>();
+        if (req == nullptr)
+                   throw cRuntimeError("data type error: not an MyOffloadingResp arrived in packet %s", msg->str().c_str());
+
+        EV<<"Client : Received MyOffloading RESP.... Data is : " <<req->getData()<<std::endl;
+    }
+
+
 }
 
 void MyRSU::socketClosed(inet::Ieee8022LlcSocket *socket)
 {
     EV<<" Client : Call socketClosed."<<std::endl;
     //implement a socket close method
+    llcSocket.close();
+    llcSocket.destroy();
 }
 
