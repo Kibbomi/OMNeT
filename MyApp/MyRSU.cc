@@ -29,6 +29,8 @@
 #include "veins/modules/application/traci/MyApp/MsgOffloading_m.h"
 #include "veins/modules/application/traci/MyApp/MyMsgType.h"
 
+//for emit
+
 using namespace veins;
 
 //Define_Module(veins::MyRSU);
@@ -41,13 +43,14 @@ void MyRSU::initialize(int stage)
     MyDemoBaseApplLayer::initialize(stage);
     if(stage == 0){
         //소프트웨어적으로 게이트를 찾는것. 물리적 연결은 ned에서 함.
-        //in=findGate("in");
-        //out=findGate("out");
+        ethIn_ID=findGate("ethIn");
+        ethOut_ID=findGate("ethOut");
+
 
         localSap = 0xf0;
         remoteSap = 0xf1;
+        llcSocket.setOutputGate(gate("ethOut"));
 
-        llcSocket.setOutputGate(gate("out"));
         llcSocket.setCallback(this);
 
         EV<<"RSU is initialized!!!!!"<<std::endl;
@@ -103,6 +106,8 @@ void MyRSU::onWSM(BaseFrame1609_4* frame)
 
         const auto& data = inet::makeShared<inet::MyEtherAppReq>();
 
+        //내가 임의로 정한 size임.
+        data->setChunkLength(inet::units::values::B(800));
         data->setHello(11);
         data->addTag<inet::CreationTimeTag>()->setCreationTime(simTime());
 
@@ -117,16 +122,65 @@ void MyRSU::onWSM(BaseFrame1609_4* frame)
         ieee802SapReq->setSsap(0xf0);
         ieee802SapReq->setDsap(0xf1);
 
-
         //send(datapacket,out);
+        //omnetpp::emit(packetSentSignal, datapacket);
+        omnetpp::cComponent::emit(inet::packetSentSignal,datapacket);
         llcSocket.send(datapacket);
         EV<<"RSU send the Ethernet packet to Link!!\n";
-
         llcSocket.close();
         llcSocket.destroy();
     }
 
 }
+
+//HandleMessage
+void MyRSU::handleMessage(cMessage* msg)
+{
+    EV<<"RSU Handle Message has called\n";
+    if (msg->isSelfMessage()) {
+            handleSelfMsg(msg);
+        }
+        else if (msg->getArrivalGateId() == upperLayerIn) {
+            recordPacket(PassedMessage::INCOMING, PassedMessage::UPPER_DATA, msg);
+            handleUpperMsg(msg);
+        }
+        else if (msg->getArrivalGateId() == upperControlIn) {
+            recordPacket(PassedMessage::INCOMING, PassedMessage::UPPER_CONTROL, msg);
+            handleUpperControl(msg);
+        }
+        else if (msg->getArrivalGateId() == lowerControlIn) {
+            recordPacket(PassedMessage::INCOMING, PassedMessage::LOWER_CONTROL, msg);
+            handleLowerControl(msg);
+        }
+        else if (msg->getArrivalGateId() == lowerLayerIn) {
+            recordPacket(PassedMessage::INCOMING, PassedMessage::LOWER_DATA, msg);
+            handleLowerMsg(msg);
+        }
+        else if(msg->getArrivalGateId() == ethIn_ID){
+            EV<<"Handel Message ethIN_ID Called!!!!\n";
+        }
+        else if(msg->getArrivalGateId() == ethOut_ID){
+            EV<<"Handel Message ethOUT_ID Called!!!!\n";
+        }
+        else if (msg->getArrivalGateId() == -1) {
+            /* Classes extending this class may not use all the gates, f.e.
+             * BaseApplLayer has no upper gates. In this case all upper gate-
+             * handles are initialized to -1. When getArrivalGateId() equals -1,
+             * it would be wrong to forward the message to one of these gates,
+             * as they actually don't exist, so raise an error instead.
+             */
+            throw cRuntimeError("No self message and no gateID?? Check configuration.");
+        }
+        else {
+            /* msg->getArrivalGateId() should be valid, but it isn't recognized
+             * here. This could signal the case that this class is extended
+             * with extra gates, but handleMessage() isn't overridden to
+             * check for the new gate(s).
+             */
+            throw cRuntimeError("Unknown gateID?? Check configuration or override handleMessage().");
+        }
+}
+
 
 //for 802.2
 void MyRSU::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Packet *msg)

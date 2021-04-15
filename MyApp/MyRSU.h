@@ -27,17 +27,21 @@
 
 
 //INET Header....
+//For INET message
+#include "inet/common/INETDefs.h"
+
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/TimeTag_m.h"
-#include "inet/common/packet/Packet.h"
 #include "inet/linklayer/common/Ieee802Ctrl.h"
 #include "inet/linklayer/common/Ieee802SapTag_m.h"
 #include "inet/linklayer/common/MacAddressTag_m.h"
 #include "inet/networklayer/common/L3AddressResolver.h"
 
+#include "inet/common/packet/Packet.h"
+#include "inet/linklayer/common/MacAddress.h"
 #include "inet/linklayer/ieee8022/Ieee8022LlcSocket.h"
 #include "inet/linklayer/ieee8022/Ieee8022LlcSocketCommand_m.h"
-#include "inet/common/INETDefs.h"
+
 
 //INET Messages...
 #include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"
@@ -58,11 +62,17 @@ public:
     int localSap = -1;
     int remoteSap = -1;
     inet::Ieee8022LlcSocket llcSocket;
-
+    //cGate *outputgate;
+    int ethIn_ID;
+    int ethOut_ID;
 
     //ICallback abstract methods...
     virtual void socketDataArrived(inet::Ieee8022LlcSocket* socket, inet::Packet *msg) override;
     virtual void socketClosed(inet::Ieee8022LlcSocket *socket) override;
+
+
+    //Message
+    void handleMessage(cMessage*) override;
 
 protected:
     void onWSM(BaseFrame1609_4* wsm) override;
