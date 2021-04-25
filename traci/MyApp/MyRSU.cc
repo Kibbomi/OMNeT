@@ -29,6 +29,10 @@
 #include "veins/modules/application/traci/MyApp/MsgOffloading_m.h"
 #include "veins/modules/application/traci/MyApp/MyMsgType.h"
 
+#include "inet/applications/ethernet/EtherApp_m.h"
+#include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"
+#include "inet/common/TimeTag_m.h"
+#include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
 //for emit
 
 using namespace veins;
@@ -79,6 +83,44 @@ void MyRSU::onWSM(BaseFrame1609_4* frame)
     cPacket* pac = frame->decapsulate();
 
     if(pac->getKind()==Msg_MsgOffloading){
+
+        //Test  begin
+        /*{
+            inet::Packet *datapacket = new inet::Packet("",inet::IEEE802CTRL_DATA);
+
+        const auto& data1 = inet::makeShared<inet::EtherAppReq>();
+
+        //내가 임의로 정한 size임.
+        data1->setChunkLength(inet::units::values::B(800));  //수정필수.
+        data1->addTag<inet::CreationTimeTag>()->setCreationTime(simTime());
+        EV<<"Time Tag RSU data 1 TAG NUM : "<< data1->getNumTags()<<'\n';
+
+        datapacket->insertAtBack(data1);
+        datapacket->setName("OFFLOADING_REQ");
+
+
+
+
+        datapacket->addTag<inet::MacAddressReq>()->setDestAddress(inet::MacAddress::BROADCAST_ADDRESS);
+        EV<<"RSU send the Ethernet packet !\n";
+        auto ieee802SapReq = datapacket->addTag<inet::Ieee802SapReq>();
+        ieee802SapReq->setSsap(0xf0);
+        ieee802SapReq->setDsap(0xf1);
+
+        EV<<"MacAddr + Sap Tag RSU TAG NUM : "<< datapacket->getNumTags()<<'\n';
+
+        //send(datapacket,out);
+        //omnetpp::emit(packetSentSignal, datapacket);
+        omnetpp::cComponent::emit(inet::packetSentSignal,datapacket);
+        llcSocket.send(datapacket);
+        EV<<"RSU send the Ethernet packet to Link!!\n";
+
+
+        return;
+        }*/
+        //Test end
+
+
         //802.11p Message Type
 
        /* MsgOffloading* msg = dynamic_cast<MsgOffloading*>(pac);
@@ -97,23 +139,25 @@ void MyRSU::onWSM(BaseFrame1609_4* frame)
 
 
         //Ethernet Message Type
-
-
-
-
         inet::Packet *datapacket = new inet::Packet("",inet::IEEE802CTRL_DATA);
 
         const auto& data = inet::makeShared<inet::MyOffloadingReq>();
 
         //내가 임의로 정한 size임.
-        data->setChunkLength(inet::units::values::B(800));
+        data->setChunkLength(inet::units::values::B(800));  //수정필수.
         data->setConstraint(10);
         data->setCycle(1234);
         data->setData(6789);
         data->addTag<inet::CreationTimeTag>()->setCreationTime(simTime());
+        //안나오는 것 일뿐... 잘 동작?
 
         datapacket->insertAtBack(data);
+
+
+        //ttl tag
+        //datapacket->addTag<inet::CreationTTLTag>()->setTtl(3);
         datapacket->setName("OFFLOADING_REQ");
+
 
 
 

@@ -46,7 +46,7 @@
 //INET Messages...
 #include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"
 #include "inet/applications/ethernet/MyEthernetExample/MyEthernetMsgType.h"
-
+#include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
 
 namespace veins {
 
