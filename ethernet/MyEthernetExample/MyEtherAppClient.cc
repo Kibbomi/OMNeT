@@ -219,6 +219,7 @@ void MyEtherAppClient::sendPacket()
 
     if(packetsSent%3 == 1){
         const auto& data = makeShared<MyEtherAppReq>();
+        //const auto& dddd = makeShared<EtherAppReq>();
 
         long len = *reqLength;
         data->setChunkLength(B(len));
@@ -274,6 +275,7 @@ void MyEtherAppClient::sendPacket()
     datapacket->addTag<MacAddressReq>()->setDestAddress(MacAddress::BROADCAST_ADDRESS);
     EV<<"Client Send datapacket .. msg->getKind()" << datapacket->getKind()<<std::endl;
     auto ieee802SapReq = datapacket->addTag<Ieee802SapReq>();
+
     ieee802SapReq->setSsap(localSap);
     ieee802SapReq->setDsap(remoteSap);
 

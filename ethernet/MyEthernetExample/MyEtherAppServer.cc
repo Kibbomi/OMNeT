@@ -30,6 +30,12 @@
 #include "inet/linklayer/common/Ieee802SapTag_m.h"
 #include "inet/linklayer/common/MacAddressTag_m.h"
 
+
+//mac수정
+#include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
+
+
+
 namespace inet {
 
 Define_Module(MyEtherAppServer);
@@ -215,6 +221,14 @@ void MyEtherAppServer::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
 
         MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
         int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
+
+
+          //수정
+          //int ttl = msg->getTag<CreationTTLTag>()->getTtl();
+          //EV<<"Mac Relay Unit : GET TAG!!!!!!!!!!!!" << ttl <<'\n';
+          //수정 끝
+
+
 
         //요청 온 RSU의 목록을 추가함.
         //delay.....
