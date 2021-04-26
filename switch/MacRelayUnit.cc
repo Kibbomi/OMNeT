@@ -32,6 +32,7 @@
 #include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
 #include "inet/linklayer/ieee8022/Ieee8022LlcHeader_m.h"
 #include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"
+#include "inet/common/TimeTag_m.h"
 
 namespace inet {
 
@@ -116,15 +117,38 @@ void MacRelayUnit::handleAndDispatchFrame(Packet *packet)
     int arrivalInterfaceId = packet->getTag<InterfaceInd>()->getInterfaceId();
 
     //수정
-    if(strcmp(packet->getName(),"OFFLOADING_REQ")==0){
-    const auto& EPSFrameHeader = packet->popAtFront<EthernetMacHeader>();
-    const auto& EPSLlcHeader = packet->popAtFront<Ieee8022LlcHeader>();
-    const auto& EPSData = packet->peekAtFront<MyOffloadingReq>();
+    if(strcmp(packet->getName(),"OFFLOADING_REQ")==0)
+    {
+        //pop은 단순히 iterater만 이동시키는 것.
+        //const auto& EPSFrameHeader = packet->popAtFront<EthernetMacHeader>();
+        //const auto& EPSLlcHeader = packet->popAtFront<Ieee8022LlcHeader>();
+        //const auto& EPSData = packet->popAtFront<MyOffloadingReq>();
 
-    EV<<"MacRelayUnit!! Get TTL value: "<< EPSData->getData()<<'\n';
+        //실제로 삭제하고 다시 붙여줘야 함.
+        const auto& EPSFrameHeader = packet->removeAtFront<EthernetMacHeader>();
+        const auto& EPSLlcHeader = packet->removeAtFront<Ieee8022LlcHeader>();
+        const auto& EPSData = packet->removeAtFront<MyOffloadingReq>();
 
-    packet->insertAtFront(EPSLlcHeader);
-    packet->insertAtFront(EPSFrameHeader);
+        EV_INFO << "Switch : received data value : " << EPSData->getData()<<'\n';
+        EV_INFO << "Switch : received Constraint value : " << EPSData->getConstraint()<<'\n';
+        EV_INFO << "Switch : received Cycle value : " << EPSData->getCycle()<<'\n';
+
+        const auto& data = makeShared<MyOffloadingReq>();
+
+        //내가 임의로 정한 size임.
+        data->setChunkLength(B(800));  //수정필수.
+        data->setConstraint(1);
+        data->setCycle(2);
+        data->setData(9999);
+        data->addTag<CreationTimeTag>()->setCreationTime(simTime());
+
+        EV_INFO << "Switch : generate data value : " << data->getData()<<'\n';
+        EV_INFO << "Switch : generate Constraint value : " << data->getConstraint()<<'\n';
+        EV_INFO << "Switch : generate Cycle value : " << data->getCycle()<<'\n';
+
+        packet->insertAtFront(data);
+        packet->insertAtFront(EPSLlcHeader);
+        packet->insertAtFront(EPSFrameHeader);
     }
     //수정 끝
 
