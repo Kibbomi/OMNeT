@@ -32,7 +32,10 @@
 #include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
 #include "inet/linklayer/ieee8022/Ieee8022LlcHeader_m.h"
 #include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"
-#include "inet/common/TimeTag_m.h"
+
+//ERS
+#include "inet/applications/ethernet/EPS/ExpandingRingSearch_m.h"
+#include "inet/applications/ethernet/EPS/findTarget.h"
 
 namespace inet {
 
@@ -117,7 +120,7 @@ void MacRelayUnit::handleAndDispatchFrame(Packet *packet)
     int arrivalInterfaceId = packet->getTag<InterfaceInd>()->getInterfaceId();
 
     //수정
-    if(strcmp(packet->getName(),"OFFLOADING_REQ")==0)
+    if(strcmp(packet->getName(),"ERSReq")==0)
     {
         //pop은 단순히 iterater만 이동시키는 것.
         //const auto& EPSFrameHeader = packet->popAtFront<EthernetMacHeader>();
@@ -125,30 +128,28 @@ void MacRelayUnit::handleAndDispatchFrame(Packet *packet)
         //const auto& EPSData = packet->popAtFront<MyOffloadingReq>();
 
         //실제로 삭제하고 다시 붙여줘야 함.
-        const auto& EPSFrameHeader = packet->removeAtFront<EthernetMacHeader>();
-        const auto& EPSLlcHeader = packet->removeAtFront<Ieee8022LlcHeader>();
-        const auto& EPSData = packet->removeAtFront<MyOffloadingReq>();
+        const auto& ERSFrameHeader = packet->removeAtFront<EthernetMacHeader>();
+        const auto& ERSLlcHeader = packet->removeAtFront<Ieee8022LlcHeader>();
+        const auto& ERSData = packet->removeAtFront<ERSReq>();
 
-        EV_INFO << "Switch : received data value : " << EPSData->getData()<<'\n';
-        EV_INFO << "Switch : received Constraint value : " << EPSData->getConstraint()<<'\n';
-        EV_INFO << "Switch : received Cycle value : " << EPSData->getCycle()<<'\n';
+        EV_INFO << "Switch : received ERS message TTL value : " << ERSData->getTTL()<<'\n';
 
-        const auto& data = makeShared<MyOffloadingReq>();
+        //discard this packet
+        if(ERSData->getTTL() == 1){
+            EV_INFO << "This ERS Packet has TTL value 1, discard.\n";
+            delete packet;
+            return ;
+        }
 
-        //내가 임의로 정한 size임.
-        data->setChunkLength(B(800));  //수정필수.
-        data->setConstraint(1);
-        data->setCycle(2);
-        data->setData(9999);
-        data->addTag<CreationTimeTag>()->setCreationTime(simTime());
+        const auto& data = makeShared<ERSReq>();
 
-        EV_INFO << "Switch : generate data value : " << data->getData()<<'\n';
-        EV_INFO << "Switch : generate Constraint value : " << data->getConstraint()<<'\n';
-        EV_INFO << "Switch : generate Cycle value : " << data->getCycle()<<'\n';
+        data->setChunkLength(B(5));
+        data->setTTL(ERSData->getTTL()-1);
+        data->setFindTarget(ERSData->getFindTarget());
 
         packet->insertAtFront(data);
-        packet->insertAtFront(EPSLlcHeader);
-        packet->insertAtFront(EPSFrameHeader);
+        packet->insertAtFront(ERSLlcHeader);
+        packet->insertAtFront(ERSFrameHeader);
     }
     //수정 끝
 
