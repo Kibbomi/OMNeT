@@ -19,28 +19,17 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "MyEtherAppServer.h"
+#include "ServersideApp.h"
 
-#include "inet/applications/ethernet/EtherApp_m.h"
 #include "inet/common/TimeTag_m.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/lifecycle/NodeStatus.h"
-#include "inet/common/packet/Packet.h"
-#include "inet/linklayer/common/Ieee802Ctrl.h"
-#include "inet/linklayer/common/Ieee802SapTag_m.h"
-#include "inet/linklayer/common/MacAddressTag_m.h"
-
-
-//mac수정
-#include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
-
-
 
 namespace inet {
 
-Define_Module(MyEtherAppServer);
+Define_Module(ServersideApp);
 
-void MyEtherAppServer::initialize(int stage)
+void ServersideApp::initialize(int stage)
 {
     EV<<" Server Call initialize."<<std::endl;
     ApplicationBase::initialize(stage);
@@ -60,14 +49,14 @@ void MyEtherAppServer::initialize(int stage)
     }
 }
 
-void MyEtherAppServer::handleStartOperation(LifecycleOperation *operation)
+void ServersideApp::handleStartOperation(LifecycleOperation *operation)
 {
     EV<<" Server Call handleStartOperation."<<std::endl;
     EV_INFO << "Starting application\n";
     registerDsap(localSap);
 }
 
-void MyEtherAppServer::handleStopOperation(LifecycleOperation *operation)
+void ServersideApp::handleStopOperation(LifecycleOperation *operation)
 {
     EV<<" Server Call handleStopOperation."<<std::endl;
     EV_INFO << "Stop the application\n";
@@ -75,7 +64,7 @@ void MyEtherAppServer::handleStopOperation(LifecycleOperation *operation)
     delayActiveOperationFinish(par("stopOperationTimeout"));
 }
 
-void MyEtherAppServer::handleCrashOperation(LifecycleOperation *operation)
+void ServersideApp::handleCrashOperation(LifecycleOperation *operation)
 {
     EV<<" Server Call handleCrashOperation."<<std::endl;
     EV_INFO << "Crash the application\n";
@@ -83,33 +72,62 @@ void MyEtherAppServer::handleCrashOperation(LifecycleOperation *operation)
         llcSocket.destroy();
 }
 
-void MyEtherAppServer::socketClosed(Ieee8022LlcSocket *socket)
+void ServersideApp::socketClosed(Ieee8022LlcSocket *socket)
 {
     EV<<" Server Call socketClosed."<<std::endl;
     if (operationalState == State::STOPPING_OPERATION && !llcSocket.isOpen())
         startActiveOperationExtraTimeOrFinish(par("stopOperationExtraTime"));
 }
 
-void MyEtherAppServer::handleMessageWhenUp(cMessage *msg)
+void ServersideApp::handleMessageWhenUp(cMessage *msg)
 {
     EV<<" Server Call handleMessageWhenUp."<<std::endl;
     llcSocket.processMessage(msg);
 }
 
-void MyEtherAppServer::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
+void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
 {
     EV<<" Server Call socketDataArrived."<<std::endl;
     EV_INFO << "Received packet `" << msg->getName() << "'\n";
-    //const auto& req = msg->peekAtFront<EtherAppReq>();
 
-    //이부분 함수로 만들어 놓기
-    if(strcmp(msg->getName(),"MYMSG_REQ")==0)
-        msg->setKind(MYMSG_REQ);
-    else if(strcmp(msg->getName(),"OFFLOADING_REQ")==0)
-            msg->setKind(OFFLOADING_REQ);
-    else if(strcmp(msg->getName(),"ES_AVAILABILITY_REQ")==0)
-            msg->setKind(ES_AVAILABILITY_REQ);
+    if(strcmp(msg->getName(),"ERSReq") == 0)
+    {
+        const auto& req = msg->peekAtFront<ERSReq>();
+        if (req == nullptr)
+                        throw cRuntimeError("data type error: not an ERSReq arrived in packet %s", msg->str().c_str());
 
+        emit(packetReceivedSignal, msg);
+
+
+        //discard the packet because 'this' is a Edge server.
+        if(req->getFindTarget()==OnlyRSU)
+        {
+            delete msg;
+            return;
+        }
+
+        MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
+        int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
+
+        //send back packets asked by RSU.
+        Packet *outPacket = new Packet("ERSResp", IEEE802CTRL_DATA);
+        const auto& outPayload = makeShared<ERSResp>();
+
+        //Edge server information
+        outPayload->setChunkLength(B(21));
+        outPayload->setCapacity(10);
+        outPayload->setF(2);
+        outPayload->setInfo(OnlyES);
+
+        //not used
+        outPayload->setY(0);
+        outPayload->setX(0);
+        outPayload->setCoverage(0);
+        outPacket->insertAtBack(outPayload);
+
+        EV_INFO << "Server :  Send ERS response\n";
+        sendPacket(outPacket, srcAddr, srcSap);
+    }
  //기존에 있던 것들.. 참고해서 작성하기
     /*
             const auto& req = msg->peekAtFront<MyEtherAppReq>();
@@ -146,6 +164,11 @@ void MyEtherAppServer::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
             }
     */
 
+
+
+
+    //테스트로 짰던 것들...
+    /*
     if(msg->getKind() == MYMSG_REQ){
         const auto& req = msg->peekAtFront<MyEtherAppReq>();
         if (req == nullptr)
@@ -259,11 +282,11 @@ void MyEtherAppServer::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
         EV_INFO << "Server :  Send Offloading Value : "<< outPayload->getData()<<std::endl;
         sendPacket(outPacket, srcAddr, srcSap);
     }
-
+     */
     delete msg;
 }
 
-void MyEtherAppServer::sendPacket(Packet *datapacket, const MacAddress& destAddr, int destSap)
+void ServersideApp::sendPacket(Packet *datapacket, const MacAddress& destAddr, int destSap)
 {
     EV<<" Server Call sendPacket."<<std::endl;
     datapacket->addTagIfAbsent<MacAddressReq>()->setDestAddress(destAddr);
@@ -276,7 +299,7 @@ void MyEtherAppServer::sendPacket(Packet *datapacket, const MacAddress& destAddr
     packetsSent++;
 }
 
-void MyEtherAppServer::registerDsap(int dsap)
+void ServersideApp::registerDsap(int dsap)
 {
     EV<<" Server Call registerDsap."<<std::endl;
     EV_DEBUG << getFullPath() << " registering DSAP " << dsap << "\n";
@@ -284,7 +307,7 @@ void MyEtherAppServer::registerDsap(int dsap)
     llcSocket.open(-1, dsap);
 }
 
-void MyEtherAppServer::finish()
+void ServersideApp::finish()
 {
 }
 
