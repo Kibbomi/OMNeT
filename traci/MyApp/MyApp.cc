@@ -21,12 +21,13 @@ void MyApp::initialize(int stage)
     else if (stage == 1) {
         // Initializing members that require initialized other modules goes here
 
-        //"name", "kind"
-        cMessage* msg = new cMessage("Offloading_MSG",Msg_MsgOffloading);
+
+        //trigger
+        //cMessage* msg = new cMessage("Offloading_MSG",Msg_MsgOffloading);//"name", "kind"
         //msg->setKind(Msg_MsgOffloading);
         //msg->setName("Offloading_MSG");
-        EV<<"I schedule at.."<<std::endl;
-        scheduleAt(simTime() + 4, msg);
+        //EV<<"I schedule at.."<<std::endl;
+        //scheduleAt(simTime() + 4, msg);
     }
 }
 

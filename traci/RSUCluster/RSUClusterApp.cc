@@ -20,7 +20,7 @@
 // Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 
-#include "veins/modules/application/traci/MyApp/MyRSU.h"
+#include "RSUClusterApp.h"
 
 #include "veins/modules/application/traci/TraCIDemo11pMessage_m.h"
 
@@ -30,26 +30,25 @@
 #include "veins/modules/application/traci/MyApp/MyMsgType.h"
 
 #include "inet/applications/ethernet/EtherApp_m.h"
-#include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"
 #include "inet/common/TimeTag_m.h"
 #include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
-//for emit
 
 using namespace veins;
 
-//Define_Module(veins::MyRSU);
-Define_Module(MyRSU);
+Define_Module(RSUClusterApp);
 
 //추가
-//initialize할 때 부모 클래스의 initialize실행시켜주고 하는 것 잊지말기!!!!!!!!!!!!!!!!!!!
-void MyRSU::initialize(int stage)
+void RSUClusterApp::initialize(int stage)
 {
+    //initialize function of super class
     MyDemoBaseApplLayer::initialize(stage);
+
     if(stage == 0){
+        //EV<<"RSU call this->getParentModule()->getFullName()!! : " <<this->getParentModule()->getFullName()<<'\n';   //appl
+
         //소프트웨어적으로 게이트를 찾는것. 물리적 연결은 ned에서 함.
         ethIn_ID=findGate("ethIn");
         ethOut_ID=findGate("ethOut");
-
 
         localSap = 0xf0;
         remoteSap = 0xf1;
@@ -60,9 +59,15 @@ void MyRSU::initialize(int stage)
 
         EV<<"RSU is initialized!!!!!"<<std::endl;
     }
+    else if (stage == 1)
+    {
+        //사전에  ES를 적어도 1개 찾아놓을 것.
+        EV<<"RSU call BeginERS!!\n";
+        BeginERS(10,2,2);
+    }
 }
 
-void MyRSU::onWSA(DemoServiceAdvertisment* wsa)
+void RSUClusterApp::onWSA(DemoServiceAdvertisment* wsa)
 {
     // if this RSU receives a WSA for service 42, it will tune to the chan
     if (wsa->getPsid() == 42) {
@@ -70,7 +75,7 @@ void MyRSU::onWSA(DemoServiceAdvertisment* wsa)
     }
 }
 
-void MyRSU::onWSM(BaseFrame1609_4* frame)
+void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 {
     //MyMsg* wsm = check_and_cast<MyMsg*>(frame);
     // this rsu repeats the received traffic update in 2 seconds plus some random delay
@@ -141,7 +146,7 @@ void MyRSU::onWSM(BaseFrame1609_4* frame)
 }
 
 //HandleMessage
-void MyRSU::handleMessage(cMessage* msg)
+void RSUClusterApp::handleMessage(cMessage* msg)
 {
     EV<<"RSU Handle Message has called\n";
     if (msg->isSelfMessage()) {
@@ -196,13 +201,53 @@ void MyRSU::handleMessage(cMessage* msg)
 
 
 //for 802.2
-void MyRSU::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Packet *msg)
+//This function is called when the Ethernet packet comes through wire
+void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Packet *msg)
 {
     EV<<" Client : Call socketDataArrived."<<std::endl;
 
     EV_INFO << "The name of received packet " << msg->getName() << "'\n";
 
-    if(strcmp(msg->getName(),"MYMSG_RESP")==0)
+    if(strcmp(msg->getName(),"ERSResp") == 0)
+    {
+        const auto& resp = msg->peekAtFront<inet::ERSResp>();
+
+        if (resp == nullptr)
+           throw cRuntimeError("data type error: not an ERSResp arrived in packet %s", msg->str().c_str());
+
+
+        if(resp->getInfo() == inet::OnlyES)
+        {
+            inet::Format_EdgeServer item = inet::Format_EdgeServer();
+            item.f = resp->getF();
+            item.capacity = resp->getCapacity();
+            item.addr = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
+
+            //check and insert to map
+            std::string key_string = item.addr.str();
+
+            if(ESs.count(key_string) == 0)
+                ESs.insert(std::make_pair(key_string,item));
+        }
+        else
+        {
+            //RSU
+            inet::Format_RSUCluster item = inet::Format_RSUCluster();
+
+            item.y = resp->getY();
+            item.x = resp->getX();
+            item.coverage = resp->getCoverage();
+            item.addr = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
+
+            //check and insert to map
+            std::string key_string = item.addr.str();
+
+            if(RSUs.count(key_string) == 0)
+                RSUs.insert(std::make_pair(key_string,item));
+        }
+    }
+
+    /*if(strcmp(msg->getName(),"MYMSG_RESP")==0)
         msg->setKind(MYMSG_RESP);
     else if(strcmp(msg->getName(),"OFFLOADING_RESP")==0)
         msg->setKind(OFFLOADING_RESP);
@@ -229,15 +274,43 @@ void MyRSU::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Packet *msg
 
         EV<<"RSU : Sent MyOffloading RESP.... : "<<std::endl;
     }
-
+*/
 
 }
 
-void MyRSU::socketClosed(inet::Ieee8022LlcSocket *socket)
+void RSUClusterApp::socketClosed(inet::Ieee8022LlcSocket *socket)
 {
     EV<<" Client : Call socketClosed."<<std::endl;
     //implement a socket close method
     llcSocket.close();
     llcSocket.destroy();
 }
+
+//implementation EPS
+bool RSUClusterApp::BeginERS(int threshold, int increasement, int init){
+
+    //Ethernet Message Type
+    inet::Packet *datapacket = new inet::Packet("ERSReq",inet::IEEE802CTRL_DATA);
+
+    const auto& data = inet::makeShared<inet::ERSReq>();
+    data->setChunkLength(inet::units::values::B(5));  //unsigned int, unsigned char
+    data->setTTL(init);
+    data->setFindTarget(inet::RSU_ES);
+
+    datapacket->insertAtBack(data);
+
+
+    datapacket->addTag<inet::MacAddressReq>()->setDestAddress(inet::MacAddress::BROADCAST_ADDRESS);
+    EV<<"RSU send the ERS Request!\n";
+    auto ieee802SapReq = datapacket->addTag<inet::Ieee802SapReq>();
+    ieee802SapReq->setSsap(0xf0);
+    ieee802SapReq->setDsap(0xf1);
+
+    omnetpp::cComponent::emit(inet::packetSentSignal,datapacket);
+    llcSocket.send(datapacket);
+    EV<<"RSU send the ERS Request to Link!!\n";
+
+    return true;
+}
+
 
