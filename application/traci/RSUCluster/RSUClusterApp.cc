@@ -63,7 +63,7 @@ void RSUClusterApp::initialize(int stage)
     {
         //사전에  ES를 적어도 1개 찾아놓을 것.
         EV<<"RSU call BeginERS!!\n";
-        BeginERS(10,2,2);
+        BeginERS(1, 10);
     }
 }
 
@@ -199,6 +199,31 @@ void RSUClusterApp::handleMessage(cMessage* msg)
         }
 }
 
+//override함.
+void RSUClusterApp::handleSelfMsg(cMessage* msg)
+{
+    if(msg->getKind() == Self_ERSReq ){
+            //generate Message
+            //ERS Request timeout..
+
+            //increase TTL value, and begin the ERS process.
+            if(TTL_init + TTL_increasement <= TTL_threshold)
+                BeginERS(TTL_init + TTL_increasement, TTL_threshold);
+            else
+                EV_INFO << "RSUClusterApp : TTL value exceeds the TTL_threshold value. \n";
+
+        }
+        else
+        {
+            //이 함수에 else에 Error를 뱉기 때문에 이 부분이 마지막에 와야 됨.
+            MyDemoBaseApplLayer::handleSelfMsg(msg);
+        }
+
+
+    return;
+}
+
+
 
 //for 802.2
 //This function is called when the Ethernet packet comes through wire
@@ -210,6 +235,13 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
     if(strcmp(msg->getName(),"ERSResp") == 0)
     {
+        //schedule되어있다면 삭제할 것. 충돌 등으로 폐기되는 것 이외로, TTL범위 이내에 ES가 없어서 안 오는 것으로 가정.
+        if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled()){
+            cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
+            self_ptr_ERSReq = nullptr;
+            //cancelEvent(self_ptr_ERSReq);
+        }
+
         const auto& resp = msg->peekAtFront<inet::ERSResp>();
 
         if (resp == nullptr)
@@ -228,6 +260,9 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
             if(ESs.count(key_string) == 0)
                 ESs.insert(std::make_pair(key_string,item));
+            else
+                EV<<"RSU : This Edge server already exist\n";
+
         }
         else
         {
@@ -245,6 +280,15 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             if(RSUs.count(key_string) == 0)
                 RSUs.insert(std::make_pair(key_string,item));
         }
+
+        EV<< "RSU updates its map table \n";
+        EV<< "ES Table\n";
+        for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter)
+            EV<<"MAC : "<<(*iter).first<<'\n';
+
+        EV<< "RSU Table\n";
+        for(auto iter = RSUs.begin(); iter!=RSUs.end(); ++iter)
+            EV<<"MAC : "<<(*iter).first<<'\n';
     }
 
     /*if(strcmp(msg->getName(),"MYMSG_RESP")==0)
@@ -287,7 +331,11 @@ void RSUClusterApp::socketClosed(inet::Ieee8022LlcSocket *socket)
 }
 
 //implementation EPS
-bool RSUClusterApp::BeginERS(int threshold, int increasement, int init){
+void RSUClusterApp::BeginERS(int init, int threshold){
+
+    //to memorize state
+    TTL_init = init;
+    TTL_threshold = threshold;
 
     //Ethernet Message Type
     inet::Packet *datapacket = new inet::Packet("ERSReq",inet::IEEE802CTRL_DATA);
@@ -310,7 +358,11 @@ bool RSUClusterApp::BeginERS(int threshold, int increasement, int init){
     llcSocket.send(datapacket);
     EV<<"RSU send the ERS Request to Link!!\n";
 
-    return true;
+    //if ERSResp message don't come back, it will be run.
+    self_ptr_ERSReq = new cMessage("",Self_ERSReq);
+    scheduleAt(simTime() + ERS_WaitTime, self_ptr_ERSReq);
+
+    return;
 }
 
 

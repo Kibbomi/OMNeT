@@ -47,6 +47,8 @@
 #include "inet/applications/ethernet/MyEthernetExample/MyEthernetMsgType.h"
 #include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
 
+//for self message
+#include "veins/modules/application/traci/RSUCluster/SelfMessageType.h"
 
 //Header to implement Expanding Ring Search
 //to manage other ES or RSU , EPS messages
@@ -68,15 +70,18 @@ public:
     void initialize(int stage) override;
 
     //for Expanding Ring Search
-    //필요한가?
     int TTL_threshold = 10;
-    int TTL_increasement = 2;
+    int TTL_increasement = 2;   //const..?
     int TTL_init = 1;
+    double ERS_WaitTime = 0.5;  //0.5s
 
     //to manage other ES/RSU
     // pair -> <Macaddress to string, information>
     std::map<std::string,inet::Format_RSUCluster> RSUs;
     std::map<std::string,inet::Format_EdgeServer> ESs;
+
+    //Handle self Message pointer..
+    cMessage* self_ptr_ERSReq = nullptr;
 
 
     //for IEEE 802.2 Llc
@@ -96,8 +101,12 @@ public:
     //Message
     void handleMessage(cMessage*) override;
 
+    //For self message
+    //추가함.
+    void handleSelfMsg(cMessage*) override;
+
     //for Expanding Ring Search
-    bool BeginERS(int threshold, int increasement, int init);
+    void BeginERS(int threshold, int init);
 
 protected:
     void onWSM(BaseFrame1609_4* wsm) override;

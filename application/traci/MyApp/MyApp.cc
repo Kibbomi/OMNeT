@@ -27,7 +27,7 @@ void MyApp::initialize(int stage)
         //msg->setKind(Msg_MsgOffloading);
         //msg->setName("Offloading_MSG");
         //EV<<"I schedule at.."<<std::endl;
-        //scheduleAt(simTime() + 4, msg);
+        //scheduleAt(simTime() + 4, msg);   //4초마다.. 0,4,8이 아니고 4,8,12,...임.
     }
 }
 
