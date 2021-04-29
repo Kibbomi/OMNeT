@@ -9,6 +9,7 @@
 #define INET_APPLICATIONS_ETHERNET_EDGESERVER_EN_DATASTRUCTURE_H_
 
 #include "inet/linklayer/common/MacAddress.h"
+#include <string>
 
 namespace inet{
 class Format_RSUCluster{
@@ -26,8 +27,26 @@ class Format_EdgeServer{
     public:
         inet::MacAddress addr;
         unsigned int f;
-        unsigned int capacity;
+        unsigned int capacity;  //availability
 };
+
+class Format_Car{
+    public:
+        std:: string CarName;
+};
+
+class Format_Task{
+    public:
+
+};
+
+class RSU_Advertisement{
+    public:
+    int distance;   //long long..
+    simtime_t   advertisementTime;
+};
+
+
 
 }
 #endif /* INET_APPLICATIONS_ETHERNET_EDGESERVER_EN_DATASTRUCTURE_H_ */

@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program; if not, see <http://www.gnu.org/licenses/>.
 //
-
-#ifndef __INET_MYETHERAPPSERVER_H
-#define __INET_MYETHERAPPSERVER_H
+#ifndef __INET_SERVERSIDEAPP_H
+//#ifndef __INET_MYETHERAPPSERVER_H
+//#define __INET_MYETHERAPPSERVER_H
+#define __INET_SERVERSIDEAPP_H
 
 #include "inet/common/INETDefs.h"
 
@@ -33,12 +34,13 @@
 //for message
 #include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"
 #include "inet/applications/ethernet/MyEthernetExample/MyEthernetMsgType.h"
+#include "inet/applications/ethernet/edgeserver/EN_DataStructure.h"
 #include <map>
 #include <string>
 
 //Expanding Ring Search
-#include "inet/applications/ethernet/EPS/ExpandingRingSearch_m.h"
-#include "inet/applications/ethernet/EPS/findTarget.h"
+#include "../ERS/ExpandingRingSearch_m.h"
+#include "../ERS/findTarget.h"
 
 
 namespace inet {
@@ -60,8 +62,8 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     long packetsReceived = 0;
 
 
-    //Availability
-    //std::map<std::string,bool> Availability_RSU;
+    //Availability,,, to send message to RSUs periodically
+    std::map<std::string,Format_RSUCluster> RSUs;
 
     //Offloading
     //This value can be changed by ini information, so that each server can have different value
@@ -87,5 +89,5 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
 
 } // namespace inet
 
-#endif // ifndef __INET_MYETHERAPPSERVER_H
+#endif // ifndef __INET_SERVERSIDEAPP_H
 

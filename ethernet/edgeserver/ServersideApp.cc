@@ -44,6 +44,9 @@ void ServersideApp::initialize(int stage)
         llcSocket.setOutputGate(gate("out"));
         llcSocket.setCallback(this);
 
+        f = (int)ceil(uniform(1,5));
+        capacity = 10;
+
         WATCH(packetsSent);
         WATCH(packetsReceived);
     }
@@ -90,11 +93,12 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
     EV<<" Server Call socketDataArrived."<<std::endl;
     EV_INFO << "Received packet `" << msg->getName() << "'\n";
 
+
     if(strcmp(msg->getName(),"ERSReq") == 0)
     {
         const auto& req = msg->peekAtFront<ERSReq>();
         if (req == nullptr)
-                        throw cRuntimeError("data type error: not an ERSReq arrived in packet %s", msg->str().c_str());
+            throw cRuntimeError("data type error: not an ERSReq arrived in packet %s", msg->str().c_str());
 
         emit(packetReceivedSignal, msg);
 
@@ -109,14 +113,35 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
         MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
         int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
 
+        //save RSU data
+        Format_RSUCluster item = Format_RSUCluster();
+        item.addr = srcAddr;
+
+        std::string key_string = item.addr.str();
+
+        if(RSUs.count(key_string) == 0){
+            RSUs.insert(std::make_pair(key_string,item));
+
+            EV<< "ES : RSU Table\n";
+            for(auto iter = RSUs.begin(); iter!=RSUs.end(); ++iter)
+                EV<<"MAC : "<<(*iter).first<<'\n';
+        }
+        else
+        {
+            EV<< "ES already has this RSU, discard request.\n";
+            delete msg;
+            return ;
+        }
+
+
         //send back packets asked by RSU.
         Packet *outPacket = new Packet("ERSResp", IEEE802CTRL_DATA);
         const auto& outPayload = makeShared<ERSResp>();
 
         //Edge server information
         outPayload->setChunkLength(B(21));
-        outPayload->setCapacity(10);
-        outPayload->setF(2);
+        outPayload->setCapacity(capacity);
+        outPayload->setF(f);
         outPayload->setInfo(OnlyES);
 
         //not used
