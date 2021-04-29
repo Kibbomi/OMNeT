@@ -76,7 +76,7 @@ public:
 
     //for Expanding Ring Search
     int TTL_threshold = 10;
-    int TTL_increasement = 2;   //const..?
+    int TTL_increasement = 1;   //2
     int TTL_init = 1;
     double ERS_WaitTime = 0.5;  //0.5s
 
@@ -84,7 +84,7 @@ public:
     // pair -> <Macaddress to string, information>
     std::map<std::string,inet::Format_RSUCluster> RSUs; //정보를 받는 곳
     std::map<std::string,inet::Format_RSUCluster> RSUsMaster;   //정보를 보내야 하는 곳
-    std::map<std::string,inet::Format_EdgeServer> ESs;
+    std::map<std::string,inet::Format_EdgeServer> ESs;  //내가 알고 있는 ES
     std::map<std::string,inet::Format_Car> Cars;    //그냥 Vector로 해도 괜찮을 듯.
     std::map<std::string,inet::Format_EdgeServer> OptimalESs;  //Key : optimal RSU Value : optimal ES of each RSU in cluster..
     inet::Format_EdgeServer myOptimalES;

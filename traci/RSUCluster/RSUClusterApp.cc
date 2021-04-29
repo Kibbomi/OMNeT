@@ -366,8 +366,10 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
     {
         //schedule되어있다면 삭제할 것. 충돌 등으로 폐기되는 것 이외로, TTL범위 이내에 ES가 없어서 안 오는 것으로 가정.
         if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled()){
-            cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
-            self_ptr_ERSReq = nullptr;
+           // cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
+            //self_ptr_ERSReq = nullptr;
+
+
             //cancelEvent(self_ptr_ERSReq);
         }
 
@@ -446,7 +448,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
         EV<<this->getParentModule()->getFullName()<<" update my OptimalES table\n";
         for(auto iter = OptimalESs.begin(); iter != OptimalESs.end(); ++iter){
-            EV<<"MAC : "<<(*iter).first<<'\n';
+            EV<<"MAC : "<<(*iter).second.addr<<'\n';
             EV<<"f : "<<(*iter).second.f<<'\n';
         }
     }
