@@ -23,8 +23,9 @@ void VehicleApp::initialize(int stage)
 
 
         //trigger
-        cMessage* self_msg = new cMessage("",Self_COReq);
-        scheduleAt(simTime() + 4, self_msg);
+        //주석 풀면 됨.. 오프로딩 이벤트 시작.
+        /*cMessage* self_msg = new cMessage("",Self_COReq);
+        scheduleAt(simTime() + 4, self_msg);*/
     }
 }
 
@@ -61,9 +62,18 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
             int distance = (curLocation.x - msg->getX())*(curLocation.x - msg->getX())
                     -(curLocation.y - msg->getY())*(curLocation.y - msg->getY());
 
+            inet::RSU_Advertisement item = inet::RSU_Advertisement();
+            item.distance = distance;
+            item.advertisementTime = msg->getAdvertisementTime();
+
             //do not sqrt, because we just compare the values..
-            RSUs.insert(std::make_pair(msg->getRSUName(),distance));
+            RSUs.insert(std::make_pair(msg->getRSUName(),item));
             EV<<"Car1 connect to new RSU\n";
+        }
+        else
+        {
+            //시간이 오래 된 애들은 여기서 순회하면서 삭제.
+
         }
     }
     else if(strcmp(pac->getName(), "CarCOResp") == 0){
@@ -136,9 +146,9 @@ void VehicleApp::handlePositionUpdate(cObject* obj)
     // member variables such as currentPosition and currentSpeed are updated in the parent class
 
     //여기서 거리가 멀어짐에 따라 RSU와 연결을 맺고 안 맺고
-    EV<<"Speed of Car1 : " << mobility->getSpeed()<<'\n';
-    Coord cur = mobility->getPositionAt(simTime());
-    EV<<"location of Car1 : (" <<cur.y<<","<<cur.x<<")\n";
+    //EV<<"Speed of Car1 : " << mobility->getSpeed()<<'\n';
+    //Coord cur = mobility->getPositionAt(simTime());
+    //EV<<"location of Car1 : (" <<cur.y<<","<<cur.x<<")\n";
 
     //compare all of knowing RSUs
     //for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter){

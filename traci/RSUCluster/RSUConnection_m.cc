@@ -184,6 +184,7 @@ RSUAdvertisement::RSUAdvertisement(const char *name, short kind) : ::veins::Base
 {
     this->y = 0;
     this->x = 0;
+    this->advertisementTime = 0;
 }
 
 RSUAdvertisement::RSUAdvertisement(const RSUAdvertisement& other) : ::veins::BaseFrame1609_4(other)
@@ -208,6 +209,7 @@ void RSUAdvertisement::copy(const RSUAdvertisement& other)
     this->RSUName = other.RSUName;
     this->y = other.y;
     this->x = other.x;
+    this->advertisementTime = other.advertisementTime;
 }
 
 void RSUAdvertisement::parsimPack(omnetpp::cCommBuffer *b) const
@@ -216,6 +218,7 @@ void RSUAdvertisement::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->RSUName);
     doParsimPacking(b,this->y);
     doParsimPacking(b,this->x);
+    doParsimPacking(b,this->advertisementTime);
 }
 
 void RSUAdvertisement::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -224,6 +227,7 @@ void RSUAdvertisement::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->RSUName);
     doParsimUnpacking(b,this->y);
     doParsimUnpacking(b,this->x);
+    doParsimUnpacking(b,this->advertisementTime);
 }
 
 const char * RSUAdvertisement::getRSUName() const
@@ -254,6 +258,16 @@ int RSUAdvertisement::getX() const
 void RSUAdvertisement::setX(int x)
 {
     this->x = x;
+}
+
+::omnetpp::simtime_t RSUAdvertisement::getAdvertisementTime() const
+{
+    return this->advertisementTime;
+}
+
+void RSUAdvertisement::setAdvertisementTime(::omnetpp::simtime_t advertisementTime)
+{
+    this->advertisementTime = advertisementTime;
 }
 
 class RSUAdvertisementDescriptor : public omnetpp::cClassDescriptor
@@ -321,7 +335,7 @@ const char *RSUAdvertisementDescriptor::getProperty(const char *propertyname) co
 int RSUAdvertisementDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 3+basedesc->getFieldCount() : 3;
+    return basedesc ? 4+basedesc->getFieldCount() : 4;
 }
 
 unsigned int RSUAdvertisementDescriptor::getFieldTypeFlags(int field) const
@@ -336,8 +350,9 @@ unsigned int RSUAdvertisementDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
+        FD_ISEDITABLE,
     };
-    return (field>=0 && field<3) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<4) ? fieldTypeFlags[field] : 0;
 }
 
 const char *RSUAdvertisementDescriptor::getFieldName(int field) const
@@ -352,8 +367,9 @@ const char *RSUAdvertisementDescriptor::getFieldName(int field) const
         "RSUName",
         "y",
         "x",
+        "advertisementTime",
     };
-    return (field>=0 && field<3) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<4) ? fieldNames[field] : nullptr;
 }
 
 int RSUAdvertisementDescriptor::findField(const char *fieldName) const
@@ -363,6 +379,7 @@ int RSUAdvertisementDescriptor::findField(const char *fieldName) const
     if (fieldName[0]=='R' && strcmp(fieldName, "RSUName")==0) return base+0;
     if (fieldName[0]=='y' && strcmp(fieldName, "y")==0) return base+1;
     if (fieldName[0]=='x' && strcmp(fieldName, "x")==0) return base+2;
+    if (fieldName[0]=='a' && strcmp(fieldName, "advertisementTime")==0) return base+3;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -378,8 +395,9 @@ const char *RSUAdvertisementDescriptor::getFieldTypeString(int field) const
         "string",
         "int",
         "int",
+        "simtime_t",
     };
-    return (field>=0 && field<3) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<4) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **RSUAdvertisementDescriptor::getFieldPropertyNames(int field) const
@@ -449,6 +467,7 @@ std::string RSUAdvertisementDescriptor::getFieldValueAsString(void *object, int 
         case 0: return oppstring2string(pp->getRSUName());
         case 1: return long2string(pp->getY());
         case 2: return long2string(pp->getX());
+        case 3: return simtime2string(pp->getAdvertisementTime());
         default: return "";
     }
 }
@@ -466,6 +485,7 @@ bool RSUAdvertisementDescriptor::setFieldValueAsString(void *object, int field, 
         case 0: pp->setRSUName((value)); return true;
         case 1: pp->setY(string2long(value)); return true;
         case 2: pp->setX(string2long(value)); return true;
+        case 3: pp->setAdvertisementTime(string2simtime(value)); return true;
         default: return false;
     }
 }

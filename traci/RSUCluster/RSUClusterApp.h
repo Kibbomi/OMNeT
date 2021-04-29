@@ -43,9 +43,9 @@
 
 
 //INET Messages...
-#include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"
-#include "inet/applications/ethernet/MyEthernetExample/MyEthernetMsgType.h"
-#include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"
+#include "inet/applications/ethernet/MyEthernetExample/MyEtherMsg_m.h"  //지울것
+#include "inet/applications/ethernet/MyEthernetExample/MyEthernetMsgType.h"//지울것
+#include "inet/applications/ethernet/MyEthernetExample/MyTTLTag_m.h"//지울것
 
 //for self message
 #include "veins/modules/application/traci/RSUCluster/SelfMessageType.h"
@@ -53,12 +53,11 @@
 //Header to implement Expanding Ring Search
 //to manage other ES or RSU , EPS messages
 #include "inet/applications/ethernet/edgeserver/EN_DataStructure.h"
-#include "inet/common/InitStages.h"
 #include <map>
 #include <string>
 #include "inet/applications/ethernet/ERS/ExpandingRingSearch_m.h"
 #include "inet/applications/ethernet/ERS/findTarget.h"
-
+#include "inet/applications/ethernet/edgeserver/ENComputationOffloading_m.h"
 
 //to manage cars
 #include "veins/modules/application/traci/RSUCluster/RSUConnection_m.h"
@@ -83,10 +82,12 @@ public:
 
     //to manage other ES/RSU
     // pair -> <Macaddress to string, information>
-    std::map<std::string,inet::Format_RSUCluster> RSUs;
+    std::map<std::string,inet::Format_RSUCluster> RSUs; //정보를 받는 곳
+    std::map<std::string,inet::Format_RSUCluster> RSUsMaster;   //정보를 보내야 하는 곳
     std::map<std::string,inet::Format_EdgeServer> ESs;
     std::map<std::string,inet::Format_Car> Cars;    //그냥 Vector로 해도 괜찮을 듯.
-
+    std::map<std::string,inet::Format_EdgeServer> OptimalESs;  //Key : optimal RSU Value : optimal ES of each RSU in cluster..
+    inet::Format_EdgeServer myOptimalES;
 
     //Handle self Message pointer..
     cMessage* self_ptr_ERSReq = nullptr;
@@ -115,6 +116,9 @@ public:
 
     //for Expanding Ring Search
     void BeginERS(int threshold, int init);
+
+    //for get Optimal RSU..
+    void FindOptimalES();
 
 protected:
     void onWSM(BaseFrame1609_4* wsm) override;

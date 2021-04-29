@@ -26,6 +26,7 @@
 #include <cmath>
 #include <vector>
 #include "veins/modules/application/traci/RSUCluster/RSUConnection_m.h"
+#include "inet/applications/ethernet/edgeserver/EN_DataStructure.h"
 
 //for offloading
 #include "veins/modules/application/traci/RSUCluster/CarComputationOffloading_m.h"
@@ -38,11 +39,9 @@ namespace veins {
 class VEINS_API VehicleApp : public DemoBaseApplLayer {
 public:
     std::string curConnectingRSU;
-    std::map<std::string,int> RSUs; // not overflow,,, int.. -> long long
+    std::map<std::string,inet::RSU_Advertisement> RSUs; // not overflow,,, int.. -> long long
 
-    std::vector<bool> finishedTask;
-
-
+    std::vector<bool> finishedTask; //이름 isfinished_Task로 바꾸기
 
     void initialize(int stage) override;
     void finish() override;

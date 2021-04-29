@@ -50,13 +50,14 @@ void RSUClusterApp::initialize(int stage)
         ethIn_ID=findGate("ethIn");
         ethOut_ID=findGate("ethOut");
 
-        localSap = 0xf0;
+        localSap = 0xf1;    //0xf0
         remoteSap = 0xf1;
         llcSocket.setOutputGate(gate("ethOut"));
 
         llcSocket.setCallback(this);
         llcSocket.open(-1, localSap);
 
+        myOptimalES.f = 0;
         EV<<"RSU is initialized!!!!!"<<std::endl;
     }
     else if (stage == 1)
@@ -64,14 +65,17 @@ void RSUClusterApp::initialize(int stage)
         //Expanding Ring Search..
 
         //사전에  ES를 적어도 1개 찾아놓을 것.
-        //EV<<"RSU call BeginERS!!\n";
-        //BeginERS(1, 10);
+        EV<<"RSU call BeginERS!!\n";
+        BeginERS(1, 10);
 
 
 
         //periodical Advertisement..
+        /*
+         * 주석풀면 됨.. 광고 이벤트 시작
         cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
         scheduleAt(simTime() + uniform(0.01, 0.2),selfMsg);
+        */
     }
 }
 
@@ -246,6 +250,9 @@ void RSUClusterApp::handleSelfMsg(cMessage* msg)
         RSUAdvertisement* msg = new RSUAdvertisement();
         msg->setRSUName(this->getParentModule()->getFullName());
         msg->setName("RSUAdvertisement");   //속 메시지
+        msg->setAdvertisementTime(simTime());
+        msg->setX(curPosition.x);
+        msg->setY(curPosition.y);
 
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->encapsulate(msg);
@@ -278,7 +285,84 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
     EV_INFO << "The name of received packet " << msg->getName() << "'\n";
 
-    if(strcmp(msg->getName(),"ERSResp") == 0)
+    if(strcmp(msg->getName(), "ERSReq") == 0){
+
+        const auto& req = msg->peekAtFront<inet::ERSReq>();
+        if (req == nullptr)
+           throw cRuntimeError("data type error: not an ERSReq arrived in packet %s", msg->str().c_str());
+
+        emit(inet::packetReceivedSignal, msg);
+        if(req->getFindTarget()== inet::OnlyES)
+        {
+            delete msg;
+            return;
+        }
+
+        inet::MacAddress srcAddr = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
+        int srcSap = msg->getTag<inet::Ieee802SapInd>()->getSsap();
+
+
+        //save RSU(Master) data..
+        inet::Format_RSUCluster item = inet::Format_RSUCluster();
+        item.addr = srcAddr;
+
+        std::string key_string = item.addr.str();
+
+        if(RSUsMaster.count(key_string) == 0){
+            RSUsMaster.insert(std::make_pair(key_string,item));
+
+            EV<<this->getParentModule()->getFullName()<< " : RSU Master Table\n";
+            for(auto iter = RSUsMaster.begin(); iter!=RSUsMaster.end(); ++iter)
+                EV<<"MAC : "<<(*iter).first<<'\n';
+        }
+        else
+        {
+            EV<< "RSU already has this RSU, discard request.\n";
+            delete msg;
+            return;
+        }
+
+
+        //return Resp..
+        inet::Packet *outPacket = new inet::Packet("ERSResp", inet::IEEE802CTRL_DATA);
+        const auto& outPayload = inet::makeShared<inet::ERSResp>();
+
+        //RSU information
+        outPayload->setChunkLength(inet::units::values::B(21));
+        outPayload->setY(0);    //설정하기 RSU에 맞게
+        outPayload->setX(0);
+        outPayload->setCoverage(10);
+        outPayload->setInfo(inet::OnlyRSU);
+
+
+        //not used
+        outPayload->setCapacity(0);
+        outPayload->setF(0);
+
+
+        outPacket->insertAtBack(outPayload);
+
+        EV_INFO << "RSU : Send ERS response\n";
+
+        outPacket->addTagIfAbsent<inet::MacAddressReq>()->setDestAddress(srcAddr);
+        auto ieee802SapReq = outPacket->addTagIfAbsent<inet::Ieee802SapReq>();
+        ieee802SapReq->setSsap(localSap);
+        ieee802SapReq->setDsap(srcSap);
+
+        emit(inet::packetSentSignal,outPacket);
+        llcSocket.send(outPacket);
+
+        EV<< this->getParentModule()->getFullName()<<" updates its map table \n";
+        EV<< "ES Table\n";
+        for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter)
+            EV<<"MAC : "<<(*iter).first<<'\n';
+
+        EV<< "RSU Master Table\n";
+        for(auto iter = RSUsMaster.begin(); iter!=RSUsMaster.end(); ++iter)
+            EV<<"MAC : "<<(*iter).first<<'\n';
+
+    }
+    else if(strcmp(msg->getName(),"ERSResp") == 0)
     {
         //schedule되어있다면 삭제할 것. 충돌 등으로 폐기되는 것 이외로, TTL범위 이내에 ES가 없어서 안 오는 것으로 가정.
         if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled()){
@@ -303,11 +387,22 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             //check and insert to map
             std::string key_string = item.addr.str();
 
-            if(ESs.count(key_string) == 0)
+            if(ESs.count(key_string) == 0){
                 ESs.insert(std::make_pair(key_string,item));
+
+                EV<< this->getParentModule()->getFullName()<<" updates its map table \n";
+                EV<< "ES Table\n";
+                for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
+                    EV<<"MAC : "<<(*iter).first<<'\n';
+                    EV<<"MAC : "<<(*iter).second.f<<'\n';
+                }
+
+                //updated.. so find out new optimal ES
+                FindOptimalES();
+                //find myOptimalES.
+            }
             else
                 EV<<"RSU : This Edge server already exist\n";
-
         }
         else
         {
@@ -322,18 +417,38 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             //check and insert to map
             std::string key_string = item.addr.str();
 
-            if(RSUs.count(key_string) == 0)
+            if(RSUs.count(key_string) == 0){
                 RSUs.insert(std::make_pair(key_string,item));
+
+                EV<< this->getParentModule()->getFullName()<<" updates its map table \n";
+                EV<< "RSU Table\n";
+                for(auto iter = RSUs.begin(); iter!=RSUs.end(); ++iter)
+                    EV<<"MAC : "<<(*iter).first<<'\n';
+            }
+            else
+                EV<<"RSU : This Edge server already exist\n";
         }
+    }
+    else if(strcmp(msg->getName(),"OptimalESInfo") == 0)
+    {
+        const auto& resp = msg->peekAtFront<inet::OptimalESInfo>();
+        if (resp == nullptr)
+           throw cRuntimeError("data type error: not an OptimalESInfo arrived in packet %s", msg->str().c_str());
 
-        EV<< "RSU updates its map table \n";
-        EV<< "ES Table\n";
-        for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter)
-            EV<<"MAC : "<<(*iter).first<<'\n';
+        inet::Format_EdgeServer OptimalES;
 
-        EV<< "RSU Table\n";
-        for(auto iter = RSUs.begin(); iter!=RSUs.end(); ++iter)
+        OptimalES.addr = resp->getESMacAddr();
+        OptimalES.f=resp->getF();
+
+        inet::MacAddress srcAddress = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
+
+        OptimalESs[srcAddress.str()] = OptimalES;
+
+        EV<<this->getParentModule()->getFullName()<<" update my OptimalES table\n";
+        for(auto iter = OptimalESs.begin(); iter != OptimalESs.end(); ++iter){
             EV<<"MAC : "<<(*iter).first<<'\n';
+            EV<<"f : "<<(*iter).second.f<<'\n';
+        }
     }
 
     /*if(strcmp(msg->getName(),"MYMSG_RESP")==0)
@@ -386,7 +501,8 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     inet::Packet *datapacket = new inet::Packet("ERSReq",inet::IEEE802CTRL_DATA);
 
     const auto& data = inet::makeShared<inet::ERSReq>();
-    data->setChunkLength(inet::units::values::B(5));  //unsigned int, unsigned char
+    //data->setChunkLength(inet::units::values::B(5));  //unsigned int, unsigned char
+    data->setChunkLength(inet::units::values::B(64));  //unsigned int, unsigned char
     data->setTTL(init);
     data->setFindTarget(inet::RSU_ES);
 
@@ -396,8 +512,9 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     datapacket->addTag<inet::MacAddressReq>()->setDestAddress(inet::MacAddress::BROADCAST_ADDRESS);
     EV<<"RSU send the ERS Request!\n";
     auto ieee802SapReq = datapacket->addTag<inet::Ieee802SapReq>();
-    ieee802SapReq->setSsap(0xf0);
-    ieee802SapReq->setDsap(0xf1);
+    //ieee802SapReq->setSsap(0xf0);
+    ieee802SapReq->setSsap(localSap);
+    ieee802SapReq->setDsap(remoteSap);
 
     omnetpp::cComponent::emit(inet::packetSentSignal,datapacket);
     llcSocket.send(datapacket);
@@ -405,9 +522,56 @@ void RSUClusterApp::BeginERS(int init, int threshold){
 
     //if ERSResp message don't come back, it will be run.
     self_ptr_ERSReq = new cMessage("",Self_ERSReq);
-    scheduleAt(simTime() + ERS_WaitTime, self_ptr_ERSReq);
+    scheduleAt(simTime() + uniform(0.01, 0.2) + ERS_WaitTime, self_ptr_ERSReq);
 
     return;
 }
 
+void RSUClusterApp::FindOptimalES(){
+    EV<<"RSU call FindOptimalES\n";
+    inet::Format_EdgeServer OptimalES;
+    OptimalES.f = 0;    //기본생성자가 실행이 안 됨.   명시적 초기화.
+
+    for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
+        if((*iter).second.capacity > 0 && OptimalES.f < (*iter).second.f)
+        {
+            OptimalES.addr=(*iter).second.addr;
+            OptimalES.f = (*iter).second.f;
+            OptimalES.capacity = (*iter).second.capacity;
+        }
+    }
+
+    if(myOptimalES.f < OptimalES.f){
+        myOptimalES = OptimalES;
+
+        for(auto iter=RSUsMaster.begin(); iter!= RSUsMaster.end(); ++iter){
+            //send to master RSUs
+
+            inet::Packet  *datapacket = new inet::Packet("OptimalESInfo",inet::IEEE802CTRL_DATA);
+
+            const auto& data = inet::makeShared<inet::OptimalESInfo>();
+            data->setChunkLength(inet::units::values::B(64));  //수정?
+            data->setESMacAddr(myOptimalES.addr);
+            //data->setRSUMacAddr()
+            data->setF(myOptimalES.f);
+
+            datapacket->insertAtBack(data);
+
+            datapacket->addTag<inet::MacAddressReq>()->setDestAddress((*iter).second.addr);
+            auto ieee802SapReq = datapacket->addTag<inet::Ieee802SapReq>();
+            ieee802SapReq->setSsap(localSap);
+            ieee802SapReq->setDsap(remoteSap);
+
+            omnetpp::cComponent::emit(inet::packetSentSignal,datapacket);
+            llcSocket.send(datapacket);
+        }
+
+    }
+    else if(myOptimalES.f == OptimalES.f){
+        EV<<"there no reason to send Optimal packet\n";
+        //nothing..
+    }
+
+    return;
+}
 

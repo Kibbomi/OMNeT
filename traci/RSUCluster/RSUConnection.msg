@@ -33,6 +33,9 @@ packet RSUAdvertisement extends BaseFrame1609_4
     string RSUName;
     int y;
     int x;
+    
+    //Time
+    simtime_t	advertisementTime;
 }
 
 packet CARConnectionReq extends BaseFrame1609_4
