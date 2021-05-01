@@ -27,6 +27,9 @@ namespace veins;
 class BaseFrame1609_4;
 class noncobject Coord;
 
+//for Beacon Message
+class LAddress::L2Type extends void;
+
 packet RSUAdvertisement extends BaseFrame1609_4 
 {
     //SYN
@@ -60,5 +63,15 @@ packet CARDisconnectionResp extends BaseFrame1609_4
 {
     //FIN ACK
     string RSUName;	//이거 없어도 될 것 같음.
+}
+
+packet RSUBeacon extends BaseFrame1609_4
+{
+    //new, I added
+    LAddress::L2Type senderMacAddr;
+    
+    //for legacy.. 
+    Coord senderPos;
+    Coord senderSpeed;
 }
 

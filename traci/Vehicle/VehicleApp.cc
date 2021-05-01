@@ -39,6 +39,16 @@ void VehicleApp::onBSM(DemoSafetyMessage* bsm)
 {
     // Your application has received a beacon message from another car or RSU
     // code for handling the message goes here
+
+    EV<< this->getParentModule()->getFullName()<<" received beacon message\n";
+    EV<<"----------Beacon Message INFO----------\n";
+    EV<<"Beacon Message RSSI value : "<<check_and_cast<DeciderResult80211*>(check_and_cast<PhyToMacControlInfo*>(bsm -> getControlInfo()) -> getDeciderResult()) -> getRecvPower_dBm()<<'\n';
+    //자동완성에는 보이지 않음..
+    EV<<"Sender's Mac address : "<< bsm->getSenderMacAddr()<<'\n';
+
+    EV<<"this->mac->getmacaddress :"<<this->mac->getMACAddress()<<'\n'; //L2Address(long)자료형임.
+
+    //EV<<"Beacon Message comes from : ";
 }
 
 void VehicleApp::onWSM(BaseFrame1609_4* wsm)
@@ -56,6 +66,12 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
         if(curConnectingRSU == ""){
             curConnectingRSU = msg->getRSUName();
         }
+
+        //test
+        /*EV<<"----------Ad Message INFO----------\n";
+        EV<<"sender parent fullname"<<wsm->getSenderModule()->getParentModule()->getId()<<'\n';
+        */
+
 
         if(RSUs.count(msg->getRSUName()) == 0){
             Coord curLocation = mobility->getPositionAt(simTime());

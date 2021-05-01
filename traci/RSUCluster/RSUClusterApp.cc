@@ -65,23 +65,25 @@ void RSUClusterApp::initialize(int stage)
         //Expanding Ring Search..
 
         //사전에  ES를 적어도 1개 찾아놓을 것.
-        EV<<"RSU call BeginERS!!\n";
-        BeginERS(1, 10);
+        //ERS 주석풀면 바로 시작.
+       // EV<<"RSU call BeginERS!!\n";
+        //BeginERS(1, 10);
 
 
 
+        this->beaconInterval+=uniform(0.01,0.2);
         //periodical Advertisement..
-        /*
-         * 주석풀면 됨.. 광고 이벤트 시작
-        cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
-        scheduleAt(simTime() + uniform(0.01, 0.2),selfMsg);
-        */
+        //주석 풀면 됨. 광고 이벤트 시작.
+
+        //cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
+        //scheduleAt(simTime() + uniform(1.01, 1.2),selfMsg);
+
     }
 }
 
 void RSUClusterApp::onWSA(DemoServiceAdvertisment* wsa)
 {
-    // if this RSU receives a WSA for service 42, it will tune to the chan
+    // if this RSU receives a WSA for service 42, it will tune to the channel
     if (wsa->getPsid() == 42) {
         mac->changeServiceChannel(static_cast<Channel>(wsa->getTargetChannel()));
     }
@@ -116,6 +118,9 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         wsm->setName("CarCOResp");
         populateWSM(wsm);
         send(wsm,lowerLayerOut);
+
+
+
     }
 
 
@@ -292,6 +297,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
            throw cRuntimeError("data type error: not an ERSReq arrived in packet %s", msg->str().c_str());
 
         emit(inet::packetReceivedSignal, msg);
+        //Because it is RSU, so discard if msg want to find ES only
         if(req->getFindTarget()== inet::OnlyES)
         {
             delete msg;
@@ -361,16 +367,36 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         for(auto iter = RSUsMaster.begin(); iter!=RSUsMaster.end(); ++iter)
             EV<<"MAC : "<<(*iter).first<<'\n';
 
+
+        //send optimal RSU
+        if(myOptimalES.f != 0){
+            inet::Packet* outPacket_optimal = new inet::Packet("OptimalESInfo",inet::IEEE802CTRL_DATA);
+            const auto& outPayload_optimal = inet::makeShared<inet::OptimalESInfo>();
+
+            outPayload_optimal->setChunkLength(inet::units::values::B(64));
+            outPayload_optimal->setESMacAddr(myOptimalES.addr);
+            outPayload_optimal->setF(myOptimalES.f);
+
+            outPacket_optimal->insertAtBack(outPayload_optimal);
+
+            outPacket_optimal->addTagIfAbsent<inet::MacAddressReq>()->setDestAddress(srcAddr);
+            auto ieee802SapReq_optimal = outPacket_optimal->addTagIfAbsent<inet::Ieee802SapReq>();
+            ieee802SapReq_optimal->setSsap(localSap);
+            ieee802SapReq_optimal->setDsap(srcSap);
+
+            emit(inet::packetSentSignal,outPacket_optimal);
+            llcSocket.send(outPacket_optimal);
+        }
+
+
     }
     else if(strcmp(msg->getName(),"ERSResp") == 0)
     {
         //schedule되어있다면 삭제할 것. 충돌 등으로 폐기되는 것 이외로, TTL범위 이내에 ES가 없어서 안 오는 것으로 가정.
+        //cancelAndDelete하면 우선, 1개 새로운것을 찾으면 멈추도록 하는 것임.
         if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled()){
-           // cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
-            //self_ptr_ERSReq = nullptr;
-
-
-            //cancelEvent(self_ptr_ERSReq);
+            cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
+            self_ptr_ERSReq = nullptr;
         }
 
         const auto& resp = msg->peekAtFront<inet::ERSResp>();
@@ -428,7 +454,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                     EV<<"MAC : "<<(*iter).first<<'\n';
             }
             else
-                EV<<"RSU : This Edge server already exist\n";
+                EV<<"RSU : This RSU already exist\n";
         }
     }
     else if(strcmp(msg->getName(),"OptimalESInfo") == 0)
@@ -440,7 +466,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         inet::Format_EdgeServer OptimalES;
 
         OptimalES.addr = resp->getESMacAddr();
-        OptimalES.f=resp->getF();
+        OptimalES.f = resp->getF();
 
         inet::MacAddress srcAddress = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
 
@@ -576,4 +602,3 @@ void RSUClusterApp::FindOptimalES(){
 
     return;
 }
-

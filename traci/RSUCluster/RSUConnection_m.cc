@@ -1634,5 +1634,325 @@ void *CARDisconnectionRespDescriptor::getFieldStructValuePointer(void *object, i
     }
 }
 
+Register_Class(RSUBeacon)
+
+RSUBeacon::RSUBeacon(const char *name, short kind) : ::veins::BaseFrame1609_4(name,kind)
+{
+}
+
+RSUBeacon::RSUBeacon(const RSUBeacon& other) : ::veins::BaseFrame1609_4(other)
+{
+    copy(other);
+}
+
+RSUBeacon::~RSUBeacon()
+{
+}
+
+RSUBeacon& RSUBeacon::operator=(const RSUBeacon& other)
+{
+    if (this==&other) return *this;
+    ::veins::BaseFrame1609_4::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void RSUBeacon::copy(const RSUBeacon& other)
+{
+    this->senderMacAddr = other.senderMacAddr;
+    this->senderPos = other.senderPos;
+    this->senderSpeed = other.senderSpeed;
+}
+
+void RSUBeacon::parsimPack(omnetpp::cCommBuffer *b) const
+{
+    ::veins::BaseFrame1609_4::parsimPack(b);
+    doParsimPacking(b,this->senderMacAddr);
+    doParsimPacking(b,this->senderPos);
+    doParsimPacking(b,this->senderSpeed);
+}
+
+void RSUBeacon::parsimUnpack(omnetpp::cCommBuffer *b)
+{
+    ::veins::BaseFrame1609_4::parsimUnpack(b);
+    doParsimUnpacking(b,this->senderMacAddr);
+    doParsimUnpacking(b,this->senderPos);
+    doParsimUnpacking(b,this->senderSpeed);
+}
+
+LAddress::L2Type& RSUBeacon::getSenderMacAddr()
+{
+    return this->senderMacAddr;
+}
+
+void RSUBeacon::setSenderMacAddr(const LAddress::L2Type& senderMacAddr)
+{
+    this->senderMacAddr = senderMacAddr;
+}
+
+Coord& RSUBeacon::getSenderPos()
+{
+    return this->senderPos;
+}
+
+void RSUBeacon::setSenderPos(const Coord& senderPos)
+{
+    this->senderPos = senderPos;
+}
+
+Coord& RSUBeacon::getSenderSpeed()
+{
+    return this->senderSpeed;
+}
+
+void RSUBeacon::setSenderSpeed(const Coord& senderSpeed)
+{
+    this->senderSpeed = senderSpeed;
+}
+
+class RSUBeaconDescriptor : public omnetpp::cClassDescriptor
+{
+  private:
+    mutable const char **propertynames;
+  public:
+    RSUBeaconDescriptor();
+    virtual ~RSUBeaconDescriptor();
+
+    virtual bool doesSupport(omnetpp::cObject *obj) const override;
+    virtual const char **getPropertyNames() const override;
+    virtual const char *getProperty(const char *propertyname) const override;
+    virtual int getFieldCount() const override;
+    virtual const char *getFieldName(int field) const override;
+    virtual int findField(const char *fieldName) const override;
+    virtual unsigned int getFieldTypeFlags(int field) const override;
+    virtual const char *getFieldTypeString(int field) const override;
+    virtual const char **getFieldPropertyNames(int field) const override;
+    virtual const char *getFieldProperty(int field, const char *propertyname) const override;
+    virtual int getFieldArraySize(void *object, int field) const override;
+
+    virtual const char *getFieldDynamicTypeString(void *object, int field, int i) const override;
+    virtual std::string getFieldValueAsString(void *object, int field, int i) const override;
+    virtual bool setFieldValueAsString(void *object, int field, int i, const char *value) const override;
+
+    virtual const char *getFieldStructName(int field) const override;
+    virtual void *getFieldStructValuePointer(void *object, int field, int i) const override;
+};
+
+Register_ClassDescriptor(RSUBeaconDescriptor)
+
+RSUBeaconDescriptor::RSUBeaconDescriptor() : omnetpp::cClassDescriptor("veins::RSUBeacon", "veins::BaseFrame1609_4")
+{
+    propertynames = nullptr;
+}
+
+RSUBeaconDescriptor::~RSUBeaconDescriptor()
+{
+    delete[] propertynames;
+}
+
+bool RSUBeaconDescriptor::doesSupport(omnetpp::cObject *obj) const
+{
+    return dynamic_cast<RSUBeacon *>(obj)!=nullptr;
+}
+
+const char **RSUBeaconDescriptor::getPropertyNames() const
+{
+    if (!propertynames) {
+        static const char *names[] = {  nullptr };
+        omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+        const char **basenames = basedesc ? basedesc->getPropertyNames() : nullptr;
+        propertynames = mergeLists(basenames, names);
+    }
+    return propertynames;
+}
+
+const char *RSUBeaconDescriptor::getProperty(const char *propertyname) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? basedesc->getProperty(propertyname) : nullptr;
+}
+
+int RSUBeaconDescriptor::getFieldCount() const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? 3+basedesc->getFieldCount() : 3;
+}
+
+unsigned int RSUBeaconDescriptor::getFieldTypeFlags(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldTypeFlags(field);
+        field -= basedesc->getFieldCount();
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISCOMPOUND,
+        FD_ISCOMPOUND,
+        FD_ISCOMPOUND,
+    };
+    return (field>=0 && field<3) ? fieldTypeFlags[field] : 0;
+}
+
+const char *RSUBeaconDescriptor::getFieldName(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldName(field);
+        field -= basedesc->getFieldCount();
+    }
+    static const char *fieldNames[] = {
+        "senderMacAddr",
+        "senderPos",
+        "senderSpeed",
+    };
+    return (field>=0 && field<3) ? fieldNames[field] : nullptr;
+}
+
+int RSUBeaconDescriptor::findField(const char *fieldName) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    int base = basedesc ? basedesc->getFieldCount() : 0;
+    if (fieldName[0]=='s' && strcmp(fieldName, "senderMacAddr")==0) return base+0;
+    if (fieldName[0]=='s' && strcmp(fieldName, "senderPos")==0) return base+1;
+    if (fieldName[0]=='s' && strcmp(fieldName, "senderSpeed")==0) return base+2;
+    return basedesc ? basedesc->findField(fieldName) : -1;
+}
+
+const char *RSUBeaconDescriptor::getFieldTypeString(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldTypeString(field);
+        field -= basedesc->getFieldCount();
+    }
+    static const char *fieldTypeStrings[] = {
+        "LAddress::L2Type",
+        "Coord",
+        "Coord",
+    };
+    return (field>=0 && field<3) ? fieldTypeStrings[field] : nullptr;
+}
+
+const char **RSUBeaconDescriptor::getFieldPropertyNames(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldPropertyNames(field);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+const char *RSUBeaconDescriptor::getFieldProperty(int field, const char *propertyname) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldProperty(field, propertyname);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+int RSUBeaconDescriptor::getFieldArraySize(void *object, int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldArraySize(object, field);
+        field -= basedesc->getFieldCount();
+    }
+    RSUBeacon *pp = (RSUBeacon *)object; (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+const char *RSUBeaconDescriptor::getFieldDynamicTypeString(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldDynamicTypeString(object,field,i);
+        field -= basedesc->getFieldCount();
+    }
+    RSUBeacon *pp = (RSUBeacon *)object; (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+std::string RSUBeaconDescriptor::getFieldValueAsString(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldValueAsString(object,field,i);
+        field -= basedesc->getFieldCount();
+    }
+    RSUBeacon *pp = (RSUBeacon *)object; (void)pp;
+    switch (field) {
+        case 0: {std::stringstream out; out << pp->getSenderMacAddr(); return out.str();}
+        case 1: {std::stringstream out; out << pp->getSenderPos(); return out.str();}
+        case 2: {std::stringstream out; out << pp->getSenderSpeed(); return out.str();}
+        default: return "";
+    }
+}
+
+bool RSUBeaconDescriptor::setFieldValueAsString(void *object, int field, int i, const char *value) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->setFieldValueAsString(object,field,i,value);
+        field -= basedesc->getFieldCount();
+    }
+    RSUBeacon *pp = (RSUBeacon *)object; (void)pp;
+    switch (field) {
+        default: return false;
+    }
+}
+
+const char *RSUBeaconDescriptor::getFieldStructName(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldStructName(field);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        case 0: return omnetpp::opp_typename(typeid(LAddress::L2Type));
+        case 1: return omnetpp::opp_typename(typeid(Coord));
+        case 2: return omnetpp::opp_typename(typeid(Coord));
+        default: return nullptr;
+    };
+}
+
+void *RSUBeaconDescriptor::getFieldStructValuePointer(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldStructValuePointer(object, field, i);
+        field -= basedesc->getFieldCount();
+    }
+    RSUBeacon *pp = (RSUBeacon *)object; (void)pp;
+    switch (field) {
+        case 0: return (void *)(&pp->getSenderMacAddr()); break;
+        case 1: return (void *)(&pp->getSenderPos()); break;
+        case 2: return (void *)(&pp->getSenderSpeed()); break;
+        default: return nullptr;
+    }
+}
+
 } // namespace veins
 

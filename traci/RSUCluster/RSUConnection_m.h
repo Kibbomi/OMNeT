@@ -39,7 +39,7 @@
 namespace veins {
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:31</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:34</tt> by nedtool.
  * <pre>
  * packet RSUAdvertisement extends BaseFrame1609_4
  * {
@@ -92,7 +92,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const RSUAdvertisement& obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, RSUAdvertisement& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:42</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:45</tt> by nedtool.
  * <pre>
  * packet CARConnectionReq extends BaseFrame1609_4
  * {
@@ -131,7 +131,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARConnectionReq& obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARConnectionReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:48</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:51</tt> by nedtool.
  * <pre>
  * packet CARConnectionResp extends BaseFrame1609_4
  * {
@@ -170,7 +170,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARConnectionResp& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARConnectionResp& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:54</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:57</tt> by nedtool.
  * <pre>
  * packet CARDisconnectionReq extends BaseFrame1609_4
  * {
@@ -209,7 +209,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARDisconnectionReq& 
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARDisconnectionReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:60</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:63</tt> by nedtool.
  * <pre>
  * packet CARDisconnectionResp extends BaseFrame1609_4
  * {
@@ -246,6 +246,58 @@ class VEINS_API CARDisconnectionResp : public ::veins::BaseFrame1609_4
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARDisconnectionResp& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARDisconnectionResp& obj) {obj.parsimUnpack(b);}
+
+/**
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:69</tt> by nedtool.
+ * <pre>
+ * packet RSUBeacon extends BaseFrame1609_4
+ * {
+ *     //new, I added
+ *     LAddress::L2Type senderMacAddr;
+ * 
+ *     //for legacy.. 
+ *     Coord senderPos;
+ *     Coord senderSpeed;
+ * }
+ * </pre>
+ */
+class VEINS_API RSUBeacon : public ::veins::BaseFrame1609_4
+{
+  protected:
+    LAddress::L2Type senderMacAddr;
+    Coord senderPos;
+    Coord senderSpeed;
+
+  private:
+    void copy(const RSUBeacon& other);
+
+  protected:
+    // protected and unimplemented operator==(), to prevent accidental usage
+    bool operator==(const RSUBeacon&);
+
+  public:
+    RSUBeacon(const char *name=nullptr, short kind=0);
+    RSUBeacon(const RSUBeacon& other);
+    virtual ~RSUBeacon();
+    RSUBeacon& operator=(const RSUBeacon& other);
+    virtual RSUBeacon *dup() const override {return new RSUBeacon(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    // field getter/setter methods
+    virtual LAddress::L2Type& getSenderMacAddr();
+    virtual const LAddress::L2Type& getSenderMacAddr() const {return const_cast<RSUBeacon*>(this)->getSenderMacAddr();}
+    virtual void setSenderMacAddr(const LAddress::L2Type& senderMacAddr);
+    virtual Coord& getSenderPos();
+    virtual const Coord& getSenderPos() const {return const_cast<RSUBeacon*>(this)->getSenderPos();}
+    virtual void setSenderPos(const Coord& senderPos);
+    virtual Coord& getSenderSpeed();
+    virtual const Coord& getSenderSpeed() const {return const_cast<RSUBeacon*>(this)->getSenderSpeed();}
+    virtual void setSenderSpeed(const Coord& senderSpeed);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const RSUBeacon& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, RSUBeacon& obj) {obj.parsimUnpack(b);}
 
 } // namespace veins
 
