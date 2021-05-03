@@ -49,18 +49,26 @@ namespace inet {
  * <pre>
  * class ENCOReq extends FieldsChunk
  * {
- *     long requestId;
- *     long responseBytes;
- *     int hello;
+ *     //Task Information
+ *     int taskID;
+ *     double constraint;
+ *     int requiredCycle;
+ *     int taskCode;	//필요 없을 것 같음.Code는..	이미 시간에 반영..
+ * 
+ *     long CarId;
+ *     simtime_t reqTime;
  * }
  * </pre>
  */
 class INET_API ENCOReq : public ::inet::FieldsChunk
 {
   protected:
-    long requestId = 0;
-    long responseBytes = 0;
-    int hello = 0;
+    int taskID = 0;
+    double constraint = 0;
+    int requiredCycle = 0;
+    int taskCode = 0;
+    long CarId = 0;
+    omnetpp::simtime_t reqTime = SIMTIME_ZERO;
 
   private:
     void copy(const ENCOReq& other);
@@ -79,34 +87,38 @@ class INET_API ENCOReq : public ::inet::FieldsChunk
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
     // field getter/setter methods
-    virtual long getRequestId() const;
-    virtual void setRequestId(long requestId);
-    virtual long getResponseBytes() const;
-    virtual void setResponseBytes(long responseBytes);
-    virtual int getHello() const;
-    virtual void setHello(int hello);
+    virtual int getTaskID() const;
+    virtual void setTaskID(int taskID);
+    virtual double getConstraint() const;
+    virtual void setConstraint(double constraint);
+    virtual int getRequiredCycle() const;
+    virtual void setRequiredCycle(int requiredCycle);
+    virtual int getTaskCode() const;
+    virtual void setTaskCode(int taskCode);
+    virtual long getCarId() const;
+    virtual void setCarId(long CarId);
+    virtual omnetpp::simtime_t getReqTime() const;
+    virtual void setReqTime(omnetpp::simtime_t reqTime);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const ENCOReq& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:31</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:36</tt> by nedtool.
  * <pre>
  * class ENCOResp extends FieldsChunk
  * {
- *     int requestId;
- *     int numFrames;
- *     int hello;
+ *     int taskID;
+ *     int COResult;
  * }
  * </pre>
  */
 class INET_API ENCOResp : public ::inet::FieldsChunk
 {
   protected:
-    int requestId = 0;
-    int numFrames = 0;
-    int hello = 0;
+    int taskID = 0;
+    int COResult = 0;
 
   private:
     void copy(const ENCOResp& other);
@@ -125,19 +137,17 @@ class INET_API ENCOResp : public ::inet::FieldsChunk
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
     // field getter/setter methods
-    virtual int getRequestId() const;
-    virtual void setRequestId(int requestId);
-    virtual int getNumFrames() const;
-    virtual void setNumFrames(int numFrames);
-    virtual int getHello() const;
-    virtual void setHello(int hello);
+    virtual int getTaskID() const;
+    virtual void setTaskID(int taskID);
+    virtual int getCOResult() const;
+    virtual void setCOResult(int COResult);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const ENCOResp& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOResp& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:38</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:42</tt> by nedtool.
  * <pre>
  * class OptimalESInfo extends FieldsChunk
  * {

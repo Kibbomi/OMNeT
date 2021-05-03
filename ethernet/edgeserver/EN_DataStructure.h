@@ -8,7 +8,8 @@
 #ifndef INET_APPLICATIONS_ETHERNET_EDGESERVER_EN_DATASTRUCTURE_H_
 #define INET_APPLICATIONS_ETHERNET_EDGESERVER_EN_DATASTRUCTURE_H_
 
-#include "inet/linklayer/common/MacAddress.h"
+#include "inet/linklayer/common/MacAddress.h"   //for eth macaddress
+//#include "veins/base/utils/SimpleAddress.h"
 #include <string>
 
 namespace inet{
@@ -28,11 +29,15 @@ class Format_EdgeServer{
         inet::MacAddress addr;
         unsigned int f;
         unsigned int capacity;  //availability
+        //availability 삭제 후 True로 관리하면 될듯.
+        //capacity는 Edge server의 멤버변수로 삽입하면 될 듯.
+        //availability 구현할 때 처리.
 };
 
 class Format_Car{
     public:
-        std:: string CarName;
+        std:: string CarName;   //이거는 필요없을 것 같은데
+        long CarId;
 };
 
 class Format_Task{
@@ -42,11 +47,16 @@ class Format_Task{
 
 class RSU_Advertisement{
     public:
-    int distance;   //long long..
-    simtime_t   advertisementTime;
+        int distance;   //long long..
+        simtime_t   advertisementTime;
+        long RSU_ID;
 };
 
-
+class RSU_INFO{
+    public:
+        double rssi;
+        long RSU_ID;
+};
 
 }
 #endif /* INET_APPLICATIONS_ETHERNET_EDGESERVER_EN_DATASTRUCTURE_H_ */

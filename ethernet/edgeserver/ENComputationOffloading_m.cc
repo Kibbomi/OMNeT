@@ -232,58 +232,100 @@ ENCOReq& ENCOReq::operator=(const ENCOReq& other)
 
 void ENCOReq::copy(const ENCOReq& other)
 {
-    this->requestId = other.requestId;
-    this->responseBytes = other.responseBytes;
-    this->hello = other.hello;
+    this->taskID = other.taskID;
+    this->constraint = other.constraint;
+    this->requiredCycle = other.requiredCycle;
+    this->taskCode = other.taskCode;
+    this->CarId = other.CarId;
+    this->reqTime = other.reqTime;
 }
 
 void ENCOReq::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::inet::FieldsChunk::parsimPack(b);
-    doParsimPacking(b,this->requestId);
-    doParsimPacking(b,this->responseBytes);
-    doParsimPacking(b,this->hello);
+    doParsimPacking(b,this->taskID);
+    doParsimPacking(b,this->constraint);
+    doParsimPacking(b,this->requiredCycle);
+    doParsimPacking(b,this->taskCode);
+    doParsimPacking(b,this->CarId);
+    doParsimPacking(b,this->reqTime);
 }
 
 void ENCOReq::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::inet::FieldsChunk::parsimUnpack(b);
-    doParsimUnpacking(b,this->requestId);
-    doParsimUnpacking(b,this->responseBytes);
-    doParsimUnpacking(b,this->hello);
+    doParsimUnpacking(b,this->taskID);
+    doParsimUnpacking(b,this->constraint);
+    doParsimUnpacking(b,this->requiredCycle);
+    doParsimUnpacking(b,this->taskCode);
+    doParsimUnpacking(b,this->CarId);
+    doParsimUnpacking(b,this->reqTime);
 }
 
-long ENCOReq::getRequestId() const
+int ENCOReq::getTaskID() const
 {
-    return this->requestId;
+    return this->taskID;
 }
 
-void ENCOReq::setRequestId(long requestId)
-{
-    handleChange();
-    this->requestId = requestId;
-}
-
-long ENCOReq::getResponseBytes() const
-{
-    return this->responseBytes;
-}
-
-void ENCOReq::setResponseBytes(long responseBytes)
+void ENCOReq::setTaskID(int taskID)
 {
     handleChange();
-    this->responseBytes = responseBytes;
+    this->taskID = taskID;
 }
 
-int ENCOReq::getHello() const
+double ENCOReq::getConstraint() const
 {
-    return this->hello;
+    return this->constraint;
 }
 
-void ENCOReq::setHello(int hello)
+void ENCOReq::setConstraint(double constraint)
 {
     handleChange();
-    this->hello = hello;
+    this->constraint = constraint;
+}
+
+int ENCOReq::getRequiredCycle() const
+{
+    return this->requiredCycle;
+}
+
+void ENCOReq::setRequiredCycle(int requiredCycle)
+{
+    handleChange();
+    this->requiredCycle = requiredCycle;
+}
+
+int ENCOReq::getTaskCode() const
+{
+    return this->taskCode;
+}
+
+void ENCOReq::setTaskCode(int taskCode)
+{
+    handleChange();
+    this->taskCode = taskCode;
+}
+
+long ENCOReq::getCarId() const
+{
+    return this->CarId;
+}
+
+void ENCOReq::setCarId(long CarId)
+{
+    handleChange();
+    this->CarId = CarId;
+}
+
+omnetpp::simtime_t ENCOReq::getReqTime() const
+{
+    return this->reqTime;
+}
+
+void ENCOReq::setReqTime(omnetpp::simtime_t reqTime)
+{
+    handleChange();
+    this->reqTime = reqTime;
 }
 
 class ENCOReqDescriptor : public omnetpp::cClassDescriptor
@@ -291,9 +333,12 @@ class ENCOReqDescriptor : public omnetpp::cClassDescriptor
   private:
     mutable const char **propertynames;
     enum FieldConstants {
-        FIELD_requestId,
-        FIELD_responseBytes,
-        FIELD_hello,
+        FIELD_taskID,
+        FIELD_constraint,
+        FIELD_requiredCycle,
+        FIELD_taskCode,
+        FIELD_CarId,
+        FIELD_reqTime,
     };
   public:
     ENCOReqDescriptor();
@@ -356,7 +401,7 @@ const char *ENCOReqDescriptor::getProperty(const char *propertyname) const
 int ENCOReqDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 3+basedesc->getFieldCount() : 3;
+    return basedesc ? 6+basedesc->getFieldCount() : 6;
 }
 
 unsigned int ENCOReqDescriptor::getFieldTypeFlags(int field) const
@@ -368,11 +413,14 @@ unsigned int ENCOReqDescriptor::getFieldTypeFlags(int field) const
         field -= basedesc->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
-        FD_ISEDITABLE,    // FIELD_requestId
-        FD_ISEDITABLE,    // FIELD_responseBytes
-        FD_ISEDITABLE,    // FIELD_hello
+        FD_ISEDITABLE,    // FIELD_taskID
+        FD_ISEDITABLE,    // FIELD_constraint
+        FD_ISEDITABLE,    // FIELD_requiredCycle
+        FD_ISEDITABLE,    // FIELD_taskCode
+        FD_ISEDITABLE,    // FIELD_CarId
+        0,    // FIELD_reqTime
     };
-    return (field >= 0 && field < 3) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 6) ? fieldTypeFlags[field] : 0;
 }
 
 const char *ENCOReqDescriptor::getFieldName(int field) const
@@ -384,20 +432,26 @@ const char *ENCOReqDescriptor::getFieldName(int field) const
         field -= basedesc->getFieldCount();
     }
     static const char *fieldNames[] = {
-        "requestId",
-        "responseBytes",
-        "hello",
+        "taskID",
+        "constraint",
+        "requiredCycle",
+        "taskCode",
+        "CarId",
+        "reqTime",
     };
-    return (field >= 0 && field < 3) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 6) ? fieldNames[field] : nullptr;
 }
 
 int ENCOReqDescriptor::findField(const char *fieldName) const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
-    if (fieldName[0] == 'r' && strcmp(fieldName, "requestId") == 0) return base+0;
-    if (fieldName[0] == 'r' && strcmp(fieldName, "responseBytes") == 0) return base+1;
-    if (fieldName[0] == 'h' && strcmp(fieldName, "hello") == 0) return base+2;
+    if (fieldName[0] == 't' && strcmp(fieldName, "taskID") == 0) return base+0;
+    if (fieldName[0] == 'c' && strcmp(fieldName, "constraint") == 0) return base+1;
+    if (fieldName[0] == 'r' && strcmp(fieldName, "requiredCycle") == 0) return base+2;
+    if (fieldName[0] == 't' && strcmp(fieldName, "taskCode") == 0) return base+3;
+    if (fieldName[0] == 'C' && strcmp(fieldName, "CarId") == 0) return base+4;
+    if (fieldName[0] == 'r' && strcmp(fieldName, "reqTime") == 0) return base+5;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -410,11 +464,14 @@ const char *ENCOReqDescriptor::getFieldTypeString(int field) const
         field -= basedesc->getFieldCount();
     }
     static const char *fieldTypeStrings[] = {
-        "long",    // FIELD_requestId
-        "long",    // FIELD_responseBytes
-        "int",    // FIELD_hello
+        "int",    // FIELD_taskID
+        "double",    // FIELD_constraint
+        "int",    // FIELD_requiredCycle
+        "int",    // FIELD_taskCode
+        "long",    // FIELD_CarId
+        "omnetpp::simtime_t",    // FIELD_reqTime
     };
-    return (field >= 0 && field < 3) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 6) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **ENCOReqDescriptor::getFieldPropertyNames(int field) const
@@ -481,9 +538,12 @@ std::string ENCOReqDescriptor::getFieldValueAsString(void *object, int field, in
     }
     ENCOReq *pp = (ENCOReq *)object; (void)pp;
     switch (field) {
-        case FIELD_requestId: return long2string(pp->getRequestId());
-        case FIELD_responseBytes: return long2string(pp->getResponseBytes());
-        case FIELD_hello: return long2string(pp->getHello());
+        case FIELD_taskID: return long2string(pp->getTaskID());
+        case FIELD_constraint: return double2string(pp->getConstraint());
+        case FIELD_requiredCycle: return long2string(pp->getRequiredCycle());
+        case FIELD_taskCode: return long2string(pp->getTaskCode());
+        case FIELD_CarId: return long2string(pp->getCarId());
+        case FIELD_reqTime: return simtime2string(pp->getReqTime());
         default: return "";
     }
 }
@@ -498,9 +558,11 @@ bool ENCOReqDescriptor::setFieldValueAsString(void *object, int field, int i, co
     }
     ENCOReq *pp = (ENCOReq *)object; (void)pp;
     switch (field) {
-        case FIELD_requestId: pp->setRequestId(string2long(value)); return true;
-        case FIELD_responseBytes: pp->setResponseBytes(string2long(value)); return true;
-        case FIELD_hello: pp->setHello(string2long(value)); return true;
+        case FIELD_taskID: pp->setTaskID(string2long(value)); return true;
+        case FIELD_constraint: pp->setConstraint(string2double(value)); return true;
+        case FIELD_requiredCycle: pp->setRequiredCycle(string2long(value)); return true;
+        case FIELD_taskCode: pp->setTaskCode(string2long(value)); return true;
+        case FIELD_CarId: pp->setCarId(string2long(value)); return true;
         default: return false;
     }
 }
@@ -557,58 +619,44 @@ ENCOResp& ENCOResp::operator=(const ENCOResp& other)
 
 void ENCOResp::copy(const ENCOResp& other)
 {
-    this->requestId = other.requestId;
-    this->numFrames = other.numFrames;
-    this->hello = other.hello;
+    this->taskID = other.taskID;
+    this->COResult = other.COResult;
 }
 
 void ENCOResp::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::inet::FieldsChunk::parsimPack(b);
-    doParsimPacking(b,this->requestId);
-    doParsimPacking(b,this->numFrames);
-    doParsimPacking(b,this->hello);
+    doParsimPacking(b,this->taskID);
+    doParsimPacking(b,this->COResult);
 }
 
 void ENCOResp::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::inet::FieldsChunk::parsimUnpack(b);
-    doParsimUnpacking(b,this->requestId);
-    doParsimUnpacking(b,this->numFrames);
-    doParsimUnpacking(b,this->hello);
+    doParsimUnpacking(b,this->taskID);
+    doParsimUnpacking(b,this->COResult);
 }
 
-int ENCOResp::getRequestId() const
+int ENCOResp::getTaskID() const
 {
-    return this->requestId;
+    return this->taskID;
 }
 
-void ENCOResp::setRequestId(int requestId)
-{
-    handleChange();
-    this->requestId = requestId;
-}
-
-int ENCOResp::getNumFrames() const
-{
-    return this->numFrames;
-}
-
-void ENCOResp::setNumFrames(int numFrames)
+void ENCOResp::setTaskID(int taskID)
 {
     handleChange();
-    this->numFrames = numFrames;
+    this->taskID = taskID;
 }
 
-int ENCOResp::getHello() const
+int ENCOResp::getCOResult() const
 {
-    return this->hello;
+    return this->COResult;
 }
 
-void ENCOResp::setHello(int hello)
+void ENCOResp::setCOResult(int COResult)
 {
     handleChange();
-    this->hello = hello;
+    this->COResult = COResult;
 }
 
 class ENCORespDescriptor : public omnetpp::cClassDescriptor
@@ -616,9 +664,8 @@ class ENCORespDescriptor : public omnetpp::cClassDescriptor
   private:
     mutable const char **propertynames;
     enum FieldConstants {
-        FIELD_requestId,
-        FIELD_numFrames,
-        FIELD_hello,
+        FIELD_taskID,
+        FIELD_COResult,
     };
   public:
     ENCORespDescriptor();
@@ -681,7 +728,7 @@ const char *ENCORespDescriptor::getProperty(const char *propertyname) const
 int ENCORespDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 3+basedesc->getFieldCount() : 3;
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
 }
 
 unsigned int ENCORespDescriptor::getFieldTypeFlags(int field) const
@@ -693,11 +740,10 @@ unsigned int ENCORespDescriptor::getFieldTypeFlags(int field) const
         field -= basedesc->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
-        FD_ISEDITABLE,    // FIELD_requestId
-        FD_ISEDITABLE,    // FIELD_numFrames
-        FD_ISEDITABLE,    // FIELD_hello
+        FD_ISEDITABLE,    // FIELD_taskID
+        FD_ISEDITABLE,    // FIELD_COResult
     };
-    return (field >= 0 && field < 3) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *ENCORespDescriptor::getFieldName(int field) const
@@ -709,20 +755,18 @@ const char *ENCORespDescriptor::getFieldName(int field) const
         field -= basedesc->getFieldCount();
     }
     static const char *fieldNames[] = {
-        "requestId",
-        "numFrames",
-        "hello",
+        "taskID",
+        "COResult",
     };
-    return (field >= 0 && field < 3) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 2) ? fieldNames[field] : nullptr;
 }
 
 int ENCORespDescriptor::findField(const char *fieldName) const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
-    if (fieldName[0] == 'r' && strcmp(fieldName, "requestId") == 0) return base+0;
-    if (fieldName[0] == 'n' && strcmp(fieldName, "numFrames") == 0) return base+1;
-    if (fieldName[0] == 'h' && strcmp(fieldName, "hello") == 0) return base+2;
+    if (fieldName[0] == 't' && strcmp(fieldName, "taskID") == 0) return base+0;
+    if (fieldName[0] == 'C' && strcmp(fieldName, "COResult") == 0) return base+1;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -735,11 +779,10 @@ const char *ENCORespDescriptor::getFieldTypeString(int field) const
         field -= basedesc->getFieldCount();
     }
     static const char *fieldTypeStrings[] = {
-        "int",    // FIELD_requestId
-        "int",    // FIELD_numFrames
-        "int",    // FIELD_hello
+        "int",    // FIELD_taskID
+        "int",    // FIELD_COResult
     };
-    return (field >= 0 && field < 3) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 2) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **ENCORespDescriptor::getFieldPropertyNames(int field) const
@@ -806,9 +849,8 @@ std::string ENCORespDescriptor::getFieldValueAsString(void *object, int field, i
     }
     ENCOResp *pp = (ENCOResp *)object; (void)pp;
     switch (field) {
-        case FIELD_requestId: return long2string(pp->getRequestId());
-        case FIELD_numFrames: return long2string(pp->getNumFrames());
-        case FIELD_hello: return long2string(pp->getHello());
+        case FIELD_taskID: return long2string(pp->getTaskID());
+        case FIELD_COResult: return long2string(pp->getCOResult());
         default: return "";
     }
 }
@@ -823,9 +865,8 @@ bool ENCORespDescriptor::setFieldValueAsString(void *object, int field, int i, c
     }
     ENCOResp *pp = (ENCOResp *)object; (void)pp;
     switch (field) {
-        case FIELD_requestId: pp->setRequestId(string2long(value)); return true;
-        case FIELD_numFrames: pp->setNumFrames(string2long(value)); return true;
-        case FIELD_hello: pp->setHello(string2long(value)); return true;
+        case FIELD_taskID: pp->setTaskID(string2long(value)); return true;
+        case FIELD_COResult: pp->setCOResult(string2long(value)); return true;
         default: return false;
     }
 }

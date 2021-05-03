@@ -139,7 +139,8 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
         const auto& outPayload = makeShared<ERSResp>();
 
         //Edge server information
-        outPayload->setChunkLength(B(21));
+        //outPayload->setChunkLength(B(21));
+        outPayload->setChunkLength(B(64));
         outPayload->setCapacity(capacity);
         outPayload->setF(f);
         outPayload->setInfo(OnlyES);
@@ -152,6 +153,21 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
 
         EV_INFO << "Server :  Send ERS response\n";
         sendPacket(outPacket, srcAddr, srcSap);
+    }
+    else if(strcmp(msg->getName(),"ENCOResp") == 0)
+    {
+        const auto& req = msg->peekAtFront<ENCOResp>();
+        if (req == nullptr)
+            throw cRuntimeError("data type error: not an ENCOResp arrived in packet %s", msg->str().c_str());
+
+        emit(packetReceivedSignal, msg);
+
+        MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
+        int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
+
+        //Here..
+
+
     }
  //기존에 있던 것들.. 참고해서 작성하기
     /*

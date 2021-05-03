@@ -22,16 +22,20 @@ namespace inet;
 
 class ENCOReq extends FieldsChunk
 {
-    long requestId;
-    long responseBytes;
-    int hello;
+   //Task Information
+   int taskID;
+   double constraint;
+   int requiredCycle;
+   int taskCode;	//필요 없을 것 같음.Code는..	이미 시간에 반영..
+   
+   long CarId;
+   simtime_t reqTime;
 }
 
 class ENCOResp extends FieldsChunk
 {
-    int requestId;
-    int numFrames;
-    int hello;
+    int taskID;
+    int COResult;
 }
 
 class OptimalESInfo extends FieldsChunk

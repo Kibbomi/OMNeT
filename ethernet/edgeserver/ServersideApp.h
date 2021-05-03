@@ -70,6 +70,7 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     unsigned int f;
     unsigned int capacity;
 
+    double COThreshold;
 
   protected:
     virtual void initialize(int stage) override;
