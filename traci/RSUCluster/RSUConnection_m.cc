@@ -209,6 +209,7 @@ void RSUAdvertisement::copy(const RSUAdvertisement& other)
     this->RSUName = other.RSUName;
     this->y = other.y;
     this->x = other.x;
+    this->senderMacAddr = other.senderMacAddr;
     this->advertisementTime = other.advertisementTime;
 }
 
@@ -218,6 +219,7 @@ void RSUAdvertisement::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->RSUName);
     doParsimPacking(b,this->y);
     doParsimPacking(b,this->x);
+    doParsimPacking(b,this->senderMacAddr);
     doParsimPacking(b,this->advertisementTime);
 }
 
@@ -227,6 +229,7 @@ void RSUAdvertisement::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->RSUName);
     doParsimUnpacking(b,this->y);
     doParsimUnpacking(b,this->x);
+    doParsimUnpacking(b,this->senderMacAddr);
     doParsimUnpacking(b,this->advertisementTime);
 }
 
@@ -258,6 +261,16 @@ int RSUAdvertisement::getX() const
 void RSUAdvertisement::setX(int x)
 {
     this->x = x;
+}
+
+LAddress::L2Type& RSUAdvertisement::getSenderMacAddr()
+{
+    return this->senderMacAddr;
+}
+
+void RSUAdvertisement::setSenderMacAddr(const LAddress::L2Type& senderMacAddr)
+{
+    this->senderMacAddr = senderMacAddr;
 }
 
 ::omnetpp::simtime_t RSUAdvertisement::getAdvertisementTime() const
@@ -335,7 +348,7 @@ const char *RSUAdvertisementDescriptor::getProperty(const char *propertyname) co
 int RSUAdvertisementDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 4+basedesc->getFieldCount() : 4;
+    return basedesc ? 5+basedesc->getFieldCount() : 5;
 }
 
 unsigned int RSUAdvertisementDescriptor::getFieldTypeFlags(int field) const
@@ -350,9 +363,10 @@ unsigned int RSUAdvertisementDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
+        FD_ISCOMPOUND,
         FD_ISEDITABLE,
     };
-    return (field>=0 && field<4) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<5) ? fieldTypeFlags[field] : 0;
 }
 
 const char *RSUAdvertisementDescriptor::getFieldName(int field) const
@@ -367,9 +381,10 @@ const char *RSUAdvertisementDescriptor::getFieldName(int field) const
         "RSUName",
         "y",
         "x",
+        "senderMacAddr",
         "advertisementTime",
     };
-    return (field>=0 && field<4) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<5) ? fieldNames[field] : nullptr;
 }
 
 int RSUAdvertisementDescriptor::findField(const char *fieldName) const
@@ -379,7 +394,8 @@ int RSUAdvertisementDescriptor::findField(const char *fieldName) const
     if (fieldName[0]=='R' && strcmp(fieldName, "RSUName")==0) return base+0;
     if (fieldName[0]=='y' && strcmp(fieldName, "y")==0) return base+1;
     if (fieldName[0]=='x' && strcmp(fieldName, "x")==0) return base+2;
-    if (fieldName[0]=='a' && strcmp(fieldName, "advertisementTime")==0) return base+3;
+    if (fieldName[0]=='s' && strcmp(fieldName, "senderMacAddr")==0) return base+3;
+    if (fieldName[0]=='a' && strcmp(fieldName, "advertisementTime")==0) return base+4;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -395,9 +411,10 @@ const char *RSUAdvertisementDescriptor::getFieldTypeString(int field) const
         "string",
         "int",
         "int",
+        "LAddress::L2Type",
         "simtime_t",
     };
-    return (field>=0 && field<4) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<5) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **RSUAdvertisementDescriptor::getFieldPropertyNames(int field) const
@@ -467,7 +484,8 @@ std::string RSUAdvertisementDescriptor::getFieldValueAsString(void *object, int 
         case 0: return oppstring2string(pp->getRSUName());
         case 1: return long2string(pp->getY());
         case 2: return long2string(pp->getX());
-        case 3: return simtime2string(pp->getAdvertisementTime());
+        case 3: {std::stringstream out; out << pp->getSenderMacAddr(); return out.str();}
+        case 4: return simtime2string(pp->getAdvertisementTime());
         default: return "";
     }
 }
@@ -485,7 +503,7 @@ bool RSUAdvertisementDescriptor::setFieldValueAsString(void *object, int field, 
         case 0: pp->setRSUName((value)); return true;
         case 1: pp->setY(string2long(value)); return true;
         case 2: pp->setX(string2long(value)); return true;
-        case 3: pp->setAdvertisementTime(string2simtime(value)); return true;
+        case 4: pp->setAdvertisementTime(string2simtime(value)); return true;
         default: return false;
     }
 }
@@ -499,6 +517,7 @@ const char *RSUAdvertisementDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
+        case 3: return omnetpp::opp_typename(typeid(LAddress::L2Type));
         default: return nullptr;
     };
 }
@@ -513,6 +532,7 @@ void *RSUAdvertisementDescriptor::getFieldStructValuePointer(void *object, int f
     }
     RSUAdvertisement *pp = (RSUAdvertisement *)object; (void)pp;
     switch (field) {
+        case 3: return (void *)(&pp->getSenderMacAddr()); break;
         default: return nullptr;
     }
 }
@@ -543,18 +563,21 @@ CARConnectionReq& CARConnectionReq::operator=(const CARConnectionReq& other)
 void CARConnectionReq::copy(const CARConnectionReq& other)
 {
     this->CarName = other.CarName;
+    this->CarAddr = other.CarAddr;
 }
 
 void CARConnectionReq::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::veins::BaseFrame1609_4::parsimPack(b);
     doParsimPacking(b,this->CarName);
+    doParsimPacking(b,this->CarAddr);
 }
 
 void CARConnectionReq::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::veins::BaseFrame1609_4::parsimUnpack(b);
     doParsimUnpacking(b,this->CarName);
+    doParsimUnpacking(b,this->CarAddr);
 }
 
 const char * CARConnectionReq::getCarName() const
@@ -565,6 +588,16 @@ const char * CARConnectionReq::getCarName() const
 void CARConnectionReq::setCarName(const char * CarName)
 {
     this->CarName = CarName;
+}
+
+LAddress::L2Type& CARConnectionReq::getCarAddr()
+{
+    return this->CarAddr;
+}
+
+void CARConnectionReq::setCarAddr(const LAddress::L2Type& CarAddr)
+{
+    this->CarAddr = CarAddr;
 }
 
 class CARConnectionReqDescriptor : public omnetpp::cClassDescriptor
@@ -632,7 +665,7 @@ const char *CARConnectionReqDescriptor::getProperty(const char *propertyname) co
 int CARConnectionReqDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 1+basedesc->getFieldCount() : 1;
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
 }
 
 unsigned int CARConnectionReqDescriptor::getFieldTypeFlags(int field) const
@@ -645,8 +678,9 @@ unsigned int CARConnectionReqDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,
+        FD_ISCOMPOUND,
     };
-    return (field>=0 && field<1) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *CARConnectionReqDescriptor::getFieldName(int field) const
@@ -659,8 +693,9 @@ const char *CARConnectionReqDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "CarName",
+        "CarAddr",
     };
-    return (field>=0 && field<1) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
 }
 
 int CARConnectionReqDescriptor::findField(const char *fieldName) const
@@ -668,6 +703,7 @@ int CARConnectionReqDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='C' && strcmp(fieldName, "CarName")==0) return base+0;
+    if (fieldName[0]=='C' && strcmp(fieldName, "CarAddr")==0) return base+1;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -681,8 +717,9 @@ const char *CARConnectionReqDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "string",
+        "LAddress::L2Type",
     };
-    return (field>=0 && field<1) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **CARConnectionReqDescriptor::getFieldPropertyNames(int field) const
@@ -750,6 +787,7 @@ std::string CARConnectionReqDescriptor::getFieldValueAsString(void *object, int 
     CARConnectionReq *pp = (CARConnectionReq *)object; (void)pp;
     switch (field) {
         case 0: return oppstring2string(pp->getCarName());
+        case 1: {std::stringstream out; out << pp->getCarAddr(); return out.str();}
         default: return "";
     }
 }
@@ -778,6 +816,7 @@ const char *CARConnectionReqDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
+        case 1: return omnetpp::opp_typename(typeid(LAddress::L2Type));
         default: return nullptr;
     };
 }
@@ -792,6 +831,7 @@ void *CARConnectionReqDescriptor::getFieldStructValuePointer(void *object, int f
     }
     CARConnectionReq *pp = (CARConnectionReq *)object; (void)pp;
     switch (field) {
+        case 1: return (void *)(&pp->getCarAddr()); break;
         default: return nullptr;
     }
 }
@@ -822,19 +862,32 @@ CARConnectionResp& CARConnectionResp::operator=(const CARConnectionResp& other)
 
 void CARConnectionResp::copy(const CARConnectionResp& other)
 {
+    this->RSUAddr = other.RSUAddr;
     this->success = other.success;
 }
 
 void CARConnectionResp::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::veins::BaseFrame1609_4::parsimPack(b);
+    doParsimPacking(b,this->RSUAddr);
     doParsimPacking(b,this->success);
 }
 
 void CARConnectionResp::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::veins::BaseFrame1609_4::parsimUnpack(b);
+    doParsimUnpacking(b,this->RSUAddr);
     doParsimUnpacking(b,this->success);
+}
+
+LAddress::L2Type& CARConnectionResp::getRSUAddr()
+{
+    return this->RSUAddr;
+}
+
+void CARConnectionResp::setRSUAddr(const LAddress::L2Type& RSUAddr)
+{
+    this->RSUAddr = RSUAddr;
 }
 
 bool CARConnectionResp::getSuccess() const
@@ -912,7 +965,7 @@ const char *CARConnectionRespDescriptor::getProperty(const char *propertyname) c
 int CARConnectionRespDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 1+basedesc->getFieldCount() : 1;
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
 }
 
 unsigned int CARConnectionRespDescriptor::getFieldTypeFlags(int field) const
@@ -924,9 +977,10 @@ unsigned int CARConnectionRespDescriptor::getFieldTypeFlags(int field) const
         field -= basedesc->getFieldCount();
     }
     static unsigned int fieldTypeFlags[] = {
+        FD_ISCOMPOUND,
         FD_ISEDITABLE,
     };
-    return (field>=0 && field<1) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *CARConnectionRespDescriptor::getFieldName(int field) const
@@ -938,16 +992,18 @@ const char *CARConnectionRespDescriptor::getFieldName(int field) const
         field -= basedesc->getFieldCount();
     }
     static const char *fieldNames[] = {
+        "RSUAddr",
         "success",
     };
-    return (field>=0 && field<1) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
 }
 
 int CARConnectionRespDescriptor::findField(const char *fieldName) const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
-    if (fieldName[0]=='s' && strcmp(fieldName, "success")==0) return base+0;
+    if (fieldName[0]=='R' && strcmp(fieldName, "RSUAddr")==0) return base+0;
+    if (fieldName[0]=='s' && strcmp(fieldName, "success")==0) return base+1;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -960,9 +1016,10 @@ const char *CARConnectionRespDescriptor::getFieldTypeString(int field) const
         field -= basedesc->getFieldCount();
     }
     static const char *fieldTypeStrings[] = {
+        "LAddress::L2Type",
         "bool",
     };
-    return (field>=0 && field<1) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **CARConnectionRespDescriptor::getFieldPropertyNames(int field) const
@@ -1029,7 +1086,8 @@ std::string CARConnectionRespDescriptor::getFieldValueAsString(void *object, int
     }
     CARConnectionResp *pp = (CARConnectionResp *)object; (void)pp;
     switch (field) {
-        case 0: return bool2string(pp->getSuccess());
+        case 0: {std::stringstream out; out << pp->getRSUAddr(); return out.str();}
+        case 1: return bool2string(pp->getSuccess());
         default: return "";
     }
 }
@@ -1044,7 +1102,7 @@ bool CARConnectionRespDescriptor::setFieldValueAsString(void *object, int field,
     }
     CARConnectionResp *pp = (CARConnectionResp *)object; (void)pp;
     switch (field) {
-        case 0: pp->setSuccess(string2bool(value)); return true;
+        case 1: pp->setSuccess(string2bool(value)); return true;
         default: return false;
     }
 }
@@ -1058,6 +1116,7 @@ const char *CARConnectionRespDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
+        case 0: return omnetpp::opp_typename(typeid(LAddress::L2Type));
         default: return nullptr;
     };
 }
@@ -1072,6 +1131,7 @@ void *CARConnectionRespDescriptor::getFieldStructValuePointer(void *object, int 
     }
     CARConnectionResp *pp = (CARConnectionResp *)object; (void)pp;
     switch (field) {
+        case 0: return (void *)(&pp->getRSUAddr()); break;
         default: return nullptr;
     }
 }
@@ -1102,18 +1162,21 @@ CARDisconnectionReq& CARDisconnectionReq::operator=(const CARDisconnectionReq& o
 void CARDisconnectionReq::copy(const CARDisconnectionReq& other)
 {
     this->CarName = other.CarName;
+    this->CarAddr = other.CarAddr;
 }
 
 void CARDisconnectionReq::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::veins::BaseFrame1609_4::parsimPack(b);
     doParsimPacking(b,this->CarName);
+    doParsimPacking(b,this->CarAddr);
 }
 
 void CARDisconnectionReq::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::veins::BaseFrame1609_4::parsimUnpack(b);
     doParsimUnpacking(b,this->CarName);
+    doParsimUnpacking(b,this->CarAddr);
 }
 
 const char * CARDisconnectionReq::getCarName() const
@@ -1124,6 +1187,16 @@ const char * CARDisconnectionReq::getCarName() const
 void CARDisconnectionReq::setCarName(const char * CarName)
 {
     this->CarName = CarName;
+}
+
+LAddress::L2Type& CARDisconnectionReq::getCarAddr()
+{
+    return this->CarAddr;
+}
+
+void CARDisconnectionReq::setCarAddr(const LAddress::L2Type& CarAddr)
+{
+    this->CarAddr = CarAddr;
 }
 
 class CARDisconnectionReqDescriptor : public omnetpp::cClassDescriptor
@@ -1191,7 +1264,7 @@ const char *CARDisconnectionReqDescriptor::getProperty(const char *propertyname)
 int CARDisconnectionReqDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 1+basedesc->getFieldCount() : 1;
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
 }
 
 unsigned int CARDisconnectionReqDescriptor::getFieldTypeFlags(int field) const
@@ -1204,8 +1277,9 @@ unsigned int CARDisconnectionReqDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,
+        FD_ISCOMPOUND,
     };
-    return (field>=0 && field<1) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *CARDisconnectionReqDescriptor::getFieldName(int field) const
@@ -1218,8 +1292,9 @@ const char *CARDisconnectionReqDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "CarName",
+        "CarAddr",
     };
-    return (field>=0 && field<1) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
 }
 
 int CARDisconnectionReqDescriptor::findField(const char *fieldName) const
@@ -1227,6 +1302,7 @@ int CARDisconnectionReqDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='C' && strcmp(fieldName, "CarName")==0) return base+0;
+    if (fieldName[0]=='C' && strcmp(fieldName, "CarAddr")==0) return base+1;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -1240,8 +1316,9 @@ const char *CARDisconnectionReqDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "string",
+        "LAddress::L2Type",
     };
-    return (field>=0 && field<1) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **CARDisconnectionReqDescriptor::getFieldPropertyNames(int field) const
@@ -1309,6 +1386,7 @@ std::string CARDisconnectionReqDescriptor::getFieldValueAsString(void *object, i
     CARDisconnectionReq *pp = (CARDisconnectionReq *)object; (void)pp;
     switch (field) {
         case 0: return oppstring2string(pp->getCarName());
+        case 1: {std::stringstream out; out << pp->getCarAddr(); return out.str();}
         default: return "";
     }
 }
@@ -1337,6 +1415,7 @@ const char *CARDisconnectionReqDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
+        case 1: return omnetpp::opp_typename(typeid(LAddress::L2Type));
         default: return nullptr;
     };
 }
@@ -1351,6 +1430,7 @@ void *CARDisconnectionReqDescriptor::getFieldStructValuePointer(void *object, in
     }
     CARDisconnectionReq *pp = (CARDisconnectionReq *)object; (void)pp;
     switch (field) {
+        case 1: return (void *)(&pp->getCarAddr()); break;
         default: return nullptr;
     }
 }
@@ -1381,18 +1461,21 @@ CARDisconnectionResp& CARDisconnectionResp::operator=(const CARDisconnectionResp
 void CARDisconnectionResp::copy(const CARDisconnectionResp& other)
 {
     this->RSUName = other.RSUName;
+    this->RSUAddr = other.RSUAddr;
 }
 
 void CARDisconnectionResp::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::veins::BaseFrame1609_4::parsimPack(b);
     doParsimPacking(b,this->RSUName);
+    doParsimPacking(b,this->RSUAddr);
 }
 
 void CARDisconnectionResp::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::veins::BaseFrame1609_4::parsimUnpack(b);
     doParsimUnpacking(b,this->RSUName);
+    doParsimUnpacking(b,this->RSUAddr);
 }
 
 const char * CARDisconnectionResp::getRSUName() const
@@ -1403,6 +1486,16 @@ const char * CARDisconnectionResp::getRSUName() const
 void CARDisconnectionResp::setRSUName(const char * RSUName)
 {
     this->RSUName = RSUName;
+}
+
+LAddress::L2Type& CARDisconnectionResp::getRSUAddr()
+{
+    return this->RSUAddr;
+}
+
+void CARDisconnectionResp::setRSUAddr(const LAddress::L2Type& RSUAddr)
+{
+    this->RSUAddr = RSUAddr;
 }
 
 class CARDisconnectionRespDescriptor : public omnetpp::cClassDescriptor
@@ -1470,7 +1563,7 @@ const char *CARDisconnectionRespDescriptor::getProperty(const char *propertyname
 int CARDisconnectionRespDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 1+basedesc->getFieldCount() : 1;
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
 }
 
 unsigned int CARDisconnectionRespDescriptor::getFieldTypeFlags(int field) const
@@ -1483,8 +1576,9 @@ unsigned int CARDisconnectionRespDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISEDITABLE,
+        FD_ISCOMPOUND,
     };
-    return (field>=0 && field<1) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *CARDisconnectionRespDescriptor::getFieldName(int field) const
@@ -1497,8 +1591,9 @@ const char *CARDisconnectionRespDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "RSUName",
+        "RSUAddr",
     };
-    return (field>=0 && field<1) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
 }
 
 int CARDisconnectionRespDescriptor::findField(const char *fieldName) const
@@ -1506,6 +1601,7 @@ int CARDisconnectionRespDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='R' && strcmp(fieldName, "RSUName")==0) return base+0;
+    if (fieldName[0]=='R' && strcmp(fieldName, "RSUAddr")==0) return base+1;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -1519,8 +1615,9 @@ const char *CARDisconnectionRespDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "string",
+        "LAddress::L2Type",
     };
-    return (field>=0 && field<1) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **CARDisconnectionRespDescriptor::getFieldPropertyNames(int field) const
@@ -1588,6 +1685,7 @@ std::string CARDisconnectionRespDescriptor::getFieldValueAsString(void *object, 
     CARDisconnectionResp *pp = (CARDisconnectionResp *)object; (void)pp;
     switch (field) {
         case 0: return oppstring2string(pp->getRSUName());
+        case 1: {std::stringstream out; out << pp->getRSUAddr(); return out.str();}
         default: return "";
     }
 }
@@ -1616,6 +1714,7 @@ const char *CARDisconnectionRespDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
+        case 1: return omnetpp::opp_typename(typeid(LAddress::L2Type));
         default: return nullptr;
     };
 }
@@ -1630,6 +1729,7 @@ void *CARDisconnectionRespDescriptor::getFieldStructValuePointer(void *object, i
     }
     CARDisconnectionResp *pp = (CARDisconnectionResp *)object; (void)pp;
     switch (field) {
+        case 1: return (void *)(&pp->getRSUAddr()); break;
         default: return nullptr;
     }
 }

@@ -25,6 +25,8 @@ namespace veins;
 
 class BaseFrame1609_4;
 class noncobject Coord;
+class LAddress::L2Type extends void;
+
 
 packet CarCOReq extends BaseFrame1609_4 
 {
@@ -34,6 +36,7 @@ packet CarCOReq extends BaseFrame1609_4
     int direction;
     double speed;
     string carName;
+    LAddress::L2Type CarAddr;
     
     //Task information
     int taskID;

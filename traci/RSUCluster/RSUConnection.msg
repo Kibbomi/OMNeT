@@ -36,20 +36,25 @@ packet RSUAdvertisement extends BaseFrame1609_4
     string RSUName;
     int y;
     int x;
+    LAddress::L2Type senderMacAddr;
     
     //Time
     simtime_t	advertisementTime;
 }
 
+//Beacon message of RSU is SYN message.
+
 packet CARConnectionReq extends BaseFrame1609_4
 {
     //SYN + ACK
     string CarName;
+    LAddress::L2Type CarAddr;
 }
 
 packet CARConnectionResp extends BaseFrame1609_4
 {
     //ACK
+    LAddress::L2Type RSUAddr;
     bool success;
 }
 
@@ -57,12 +62,14 @@ packet CARDisconnectionReq extends BaseFrame1609_4
 {
     //FIN
     string CarName;
+    LAddress::L2Type CarAddr;
 }
 
 packet CARDisconnectionResp extends BaseFrame1609_4
 {
     //FIN ACK
     string RSUName;	//이거 없어도 될 것 같음.
+    LAddress::L2Type RSUAddr;
 }
 
 packet RSUBeacon extends BaseFrame1609_4

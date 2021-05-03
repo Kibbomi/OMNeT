@@ -21,11 +21,15 @@ void VehicleApp::initialize(int stage)
     else if (stage == 1) {
         // Initializing members that require initialized other modules goes here
 
+        //Current connecting RSU init.
+        curConnectingRSU.rssi = -987654321;
+        curConnectingRSU.RSU_ID = -1;
+
 
         //trigger
         //주석 풀면 됨.. 오프로딩 이벤트 시작.
-        /*cMessage* self_msg = new cMessage("",Self_COReq);
-        scheduleAt(simTime() + 4, self_msg);*/
+        cMessage* self_msg = new cMessage("",Self_COReq);
+        scheduleAt(simTime() + 2, self_msg);
     }
 }
 
@@ -42,11 +46,40 @@ void VehicleApp::onBSM(DemoSafetyMessage* bsm)
 
     EV<< this->getParentModule()->getFullName()<<" received beacon message\n";
     EV<<"----------Beacon Message INFO----------\n";
-    EV<<"Beacon Message RSSI value : "<<check_and_cast<DeciderResult80211*>(check_and_cast<PhyToMacControlInfo*>(bsm -> getControlInfo()) -> getDeciderResult()) -> getRecvPower_dBm()<<'\n';
+    double BeaconRSSIValue = check_and_cast<DeciderResult80211*>(check_and_cast<PhyToMacControlInfo*>(bsm -> getControlInfo()) -> getDeciderResult()) -> getRecvPower_dBm();
+    EV<<"Beacon Message RSSI value : "<<BeaconRSSIValue<<'\n';
+
     //자동완성에는 보이지 않음..
     EV<<"Sender's Mac address : "<< bsm->getSenderMacAddr()<<'\n';
 
-    EV<<"this->mac->getmacaddress :"<<this->mac->getMACAddress()<<'\n'; //L2Address(long)자료형임.
+    //check condition
+    if(curConnectingRSU.rssi < BeaconRSSIValue){
+
+        //just updating current rssi value
+        if(bsm->getSenderMacAddr() == curConnectingRSU.RSU_ID){
+            curConnectingRSU.rssi = BeaconRSSIValue;
+            EV<<this->getParentModule()->getFullName()<<"just Updated its RSSI value\n";
+            return;
+        }
+
+        if(curConnectingRSU.RSU_ID!=-1){
+        //new connection begin!
+
+            //send CarConnectionReq
+        //send disconnect message to current RSU
+
+            //message end.
+        }
+        //SYN + ACK end
+
+        curConnectingRSU.rssi = BeaconRSSIValue;
+        curConnectingRSU.RSU_ID = bsm->getSenderMacAddr();
+
+        EV<<this->getParentModule()->getFullName()<<"Updated its CurConnectingRSU\n";
+    }
+    //else, nothing to do.
+    //disconnect or keep current connection
+
 
     //EV<<"Beacon Message comes from : ";
 }
@@ -63,16 +96,6 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
     {
         RSUAdvertisement* msg = dynamic_cast<RSUAdvertisement*>(pac);
 
-        if(curConnectingRSU == ""){
-            curConnectingRSU = msg->getRSUName();
-        }
-
-        //test
-        /*EV<<"----------Ad Message INFO----------\n";
-        EV<<"sender parent fullname"<<wsm->getSenderModule()->getParentModule()->getId()<<'\n';
-        */
-
-
         if(RSUs.count(msg->getRSUName()) == 0){
             Coord curLocation = mobility->getPositionAt(simTime());
             int distance = (curLocation.x - msg->getX())*(curLocation.x - msg->getX())
@@ -81,6 +104,7 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
             inet::RSU_Advertisement item = inet::RSU_Advertisement();
             item.distance = distance;
             item.advertisementTime = msg->getAdvertisementTime();
+            item.RSU_ID = msg->getSenderMacAddr();
 
             //do not sqrt, because we just compare the values..
             RSUs.insert(std::make_pair(msg->getRSUName(),item));
@@ -91,6 +115,10 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
             //시간이 오래 된 애들은 여기서 순회하면서 삭제.
 
         }
+    }
+    else if(strcmp(pac->getName(), "CARConnectionResp") == 0){
+        CARConnectionResp* msg = dynamic_cast<CARConnectionResp*>(pac);
+        EV<<this->getParentModule()->getFullName()<<" received Connection ACK packet\n";
     }
     else if(strcmp(pac->getName(), "CarCOResp") == 0){
 
@@ -134,6 +162,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         msg->setTaskCode(100);  //byte;
 
         msg->setReqTime(simTime());
+        msg->setCarAddr(this->mac->getMACAddress());
         msg->setName("CarCOReq");
         //push Task
         finishedTask.push_back(false);
@@ -141,7 +170,8 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->setName("CarCOReq");
         wsm->encapsulate(msg);
-        populateWSM(wsm);
+        //populateWSM(wsm);
+        populateWSM(wsm,curConnectingRSU.RSU_ID);
         send(wsm,lowerLayerOut);
 
         //for next send

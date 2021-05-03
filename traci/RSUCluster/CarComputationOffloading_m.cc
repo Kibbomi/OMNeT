@@ -217,6 +217,7 @@ void CarCOReq::copy(const CarCOReq& other)
     this->direction = other.direction;
     this->speed = other.speed;
     this->carName = other.carName;
+    this->CarAddr = other.CarAddr;
     this->taskID = other.taskID;
     this->constraint = other.constraint;
     this->requiredCycle = other.requiredCycle;
@@ -232,6 +233,7 @@ void CarCOReq::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->direction);
     doParsimPacking(b,this->speed);
     doParsimPacking(b,this->carName);
+    doParsimPacking(b,this->CarAddr);
     doParsimPacking(b,this->taskID);
     doParsimPacking(b,this->constraint);
     doParsimPacking(b,this->requiredCycle);
@@ -247,6 +249,7 @@ void CarCOReq::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->direction);
     doParsimUnpacking(b,this->speed);
     doParsimUnpacking(b,this->carName);
+    doParsimUnpacking(b,this->CarAddr);
     doParsimUnpacking(b,this->taskID);
     doParsimUnpacking(b,this->constraint);
     doParsimUnpacking(b,this->requiredCycle);
@@ -302,6 +305,16 @@ const char * CarCOReq::getCarName() const
 void CarCOReq::setCarName(const char * carName)
 {
     this->carName = carName;
+}
+
+LAddress::L2Type& CarCOReq::getCarAddr()
+{
+    return this->CarAddr;
+}
+
+void CarCOReq::setCarAddr(const LAddress::L2Type& CarAddr)
+{
+    this->CarAddr = CarAddr;
 }
 
 int CarCOReq::getTaskID() const
@@ -419,7 +432,7 @@ const char *CarCOReqDescriptor::getProperty(const char *propertyname) const
 int CarCOReqDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 10+basedesc->getFieldCount() : 10;
+    return basedesc ? 11+basedesc->getFieldCount() : 11;
 }
 
 unsigned int CarCOReqDescriptor::getFieldTypeFlags(int field) const
@@ -436,13 +449,14 @@ unsigned int CarCOReqDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
+        FD_ISCOMPOUND,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISEDITABLE,
     };
-    return (field>=0 && field<10) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<11) ? fieldTypeFlags[field] : 0;
 }
 
 const char *CarCOReqDescriptor::getFieldName(int field) const
@@ -459,13 +473,14 @@ const char *CarCOReqDescriptor::getFieldName(int field) const
         "direction",
         "speed",
         "carName",
+        "CarAddr",
         "taskID",
         "constraint",
         "requiredCycle",
         "taskCode",
         "reqTime",
     };
-    return (field>=0 && field<10) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<11) ? fieldNames[field] : nullptr;
 }
 
 int CarCOReqDescriptor::findField(const char *fieldName) const
@@ -477,11 +492,12 @@ int CarCOReqDescriptor::findField(const char *fieldName) const
     if (fieldName[0]=='d' && strcmp(fieldName, "direction")==0) return base+2;
     if (fieldName[0]=='s' && strcmp(fieldName, "speed")==0) return base+3;
     if (fieldName[0]=='c' && strcmp(fieldName, "carName")==0) return base+4;
-    if (fieldName[0]=='t' && strcmp(fieldName, "taskID")==0) return base+5;
-    if (fieldName[0]=='c' && strcmp(fieldName, "constraint")==0) return base+6;
-    if (fieldName[0]=='r' && strcmp(fieldName, "requiredCycle")==0) return base+7;
-    if (fieldName[0]=='t' && strcmp(fieldName, "taskCode")==0) return base+8;
-    if (fieldName[0]=='r' && strcmp(fieldName, "reqTime")==0) return base+9;
+    if (fieldName[0]=='C' && strcmp(fieldName, "CarAddr")==0) return base+5;
+    if (fieldName[0]=='t' && strcmp(fieldName, "taskID")==0) return base+6;
+    if (fieldName[0]=='c' && strcmp(fieldName, "constraint")==0) return base+7;
+    if (fieldName[0]=='r' && strcmp(fieldName, "requiredCycle")==0) return base+8;
+    if (fieldName[0]=='t' && strcmp(fieldName, "taskCode")==0) return base+9;
+    if (fieldName[0]=='r' && strcmp(fieldName, "reqTime")==0) return base+10;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -499,13 +515,14 @@ const char *CarCOReqDescriptor::getFieldTypeString(int field) const
         "int",
         "double",
         "string",
+        "LAddress::L2Type",
         "int",
         "double",
         "int",
         "int",
         "simtime_t",
     };
-    return (field>=0 && field<10) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<11) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **CarCOReqDescriptor::getFieldPropertyNames(int field) const
@@ -577,11 +594,12 @@ std::string CarCOReqDescriptor::getFieldValueAsString(void *object, int field, i
         case 2: return long2string(pp->getDirection());
         case 3: return double2string(pp->getSpeed());
         case 4: return oppstring2string(pp->getCarName());
-        case 5: return long2string(pp->getTaskID());
-        case 6: return double2string(pp->getConstraint());
-        case 7: return long2string(pp->getRequiredCycle());
-        case 8: return long2string(pp->getTaskCode());
-        case 9: return simtime2string(pp->getReqTime());
+        case 5: {std::stringstream out; out << pp->getCarAddr(); return out.str();}
+        case 6: return long2string(pp->getTaskID());
+        case 7: return double2string(pp->getConstraint());
+        case 8: return long2string(pp->getRequiredCycle());
+        case 9: return long2string(pp->getTaskCode());
+        case 10: return simtime2string(pp->getReqTime());
         default: return "";
     }
 }
@@ -601,11 +619,11 @@ bool CarCOReqDescriptor::setFieldValueAsString(void *object, int field, int i, c
         case 2: pp->setDirection(string2long(value)); return true;
         case 3: pp->setSpeed(string2double(value)); return true;
         case 4: pp->setCarName((value)); return true;
-        case 5: pp->setTaskID(string2long(value)); return true;
-        case 6: pp->setConstraint(string2double(value)); return true;
-        case 7: pp->setRequiredCycle(string2long(value)); return true;
-        case 8: pp->setTaskCode(string2long(value)); return true;
-        case 9: pp->setReqTime(string2simtime(value)); return true;
+        case 6: pp->setTaskID(string2long(value)); return true;
+        case 7: pp->setConstraint(string2double(value)); return true;
+        case 8: pp->setRequiredCycle(string2long(value)); return true;
+        case 9: pp->setTaskCode(string2long(value)); return true;
+        case 10: pp->setReqTime(string2simtime(value)); return true;
         default: return false;
     }
 }
@@ -619,6 +637,7 @@ const char *CarCOReqDescriptor::getFieldStructName(int field) const
         field -= basedesc->getFieldCount();
     }
     switch (field) {
+        case 5: return omnetpp::opp_typename(typeid(LAddress::L2Type));
         default: return nullptr;
     };
 }
@@ -633,6 +652,7 @@ void *CarCOReqDescriptor::getFieldStructValuePointer(void *object, int field, in
     }
     CarCOReq *pp = (CarCOReq *)object; (void)pp;
     switch (field) {
+        case 5: return (void *)(&pp->getCarAddr()); break;
         default: return nullptr;
     }
 }

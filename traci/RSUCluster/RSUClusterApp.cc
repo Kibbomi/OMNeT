@@ -66,16 +66,16 @@ void RSUClusterApp::initialize(int stage)
 
         //사전에  ES를 적어도 1개 찾아놓을 것.
         //ERS 주석풀면 바로 시작.
-       // EV<<"RSU call BeginERS!!\n";
-        //BeginERS(1, 10);
+        EV<<"RSU call BeginERS!!\n";
+        BeginERS(1, 10);
 
 
 
-        this->beaconInterval+=uniform(0.01,0.2);
+        this->beaconInterval+=uniform(0.1,0.5);
         //periodical Advertisement..
         //주석 풀면 됨. 광고 이벤트 시작.
 
-        //cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
+       // cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
         //scheduleAt(simTime() + uniform(1.01, 1.2),selfMsg);
 
     }
@@ -100,13 +100,38 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
     if(strcmp(pac->getName(),"CarCOReq") == 0){
 
+        EV<<this->getParentModule()->getFullName()<<"received CarCOReq Message!\n";
         CarCOReq* msg = dynamic_cast<CarCOReq*>(pac);
 
         //parse
+        inet::Packet *outPacket = new inet::Packet("ENCOReq",inet::IEEE802CTRL_DATA);
+        const auto& outPayload = inet::makeShared<inet::ENCOReq>();
+
+        outPayload->setChunkLength(inet::units::values::B(64));
+        outPayload->setTaskID(msg->getTaskID());
+        outPayload->setConstraint(msg->getConstraint());
+        outPayload->setRequiredCycle(msg->getRequiredCycle());
+        outPayload->setTaskCode(msg->getTaskCode());
+        outPayload->setCarId(msg->getCarAddr());
+        outPayload->setReqTime(msg->getReqTime());
+
+        outPacket->insertAtBack(outPayload);
+
+        outPacket->addTag<inet::MacAddressReq>()->setDestAddress(myOptimalES.addr);
+        auto ieee802SapReq = outPacket->addTag<inet::Ieee802SapReq>();
+        ieee802SapReq->setSsap(localSap);
+        ieee802SapReq->setDsap(remoteSap);
+
+        omnetpp::cComponent::emit(inet::packetSentSignal,outPacket);
+        llcSocket.send(outPacket);
+
+        EV<<this->getParentModule()->getFullName()<<" send CO req to EN\n";
+
+
 
 
         //이거는 나중에 Ethernet으로 받으면 보내면 됨. 지금은 잠깐 테스트용
-        CarCOResp* resp = new CarCOResp();
+        /*CarCOResp* resp = new CarCOResp();
 
         resp->setName("CarCOResp");
 
@@ -116,14 +141,37 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->encapsulate(resp);
         wsm->setName("CarCOResp");
-        populateWSM(wsm);
-        send(wsm,lowerLayerOut);
+        //populateWSM(wsm);
+        populateWSM(wsm,msg->getCarAddr());
+        send(wsm,lowerLayerOut);*/
 
 
 
     }
+    else if(strcmp(pac->getName(),"CARConnectionReq")==0)
+    {
+        EV<<this->getParentModule()->getFullName()<<"received CARConnectionReq Message!\n";
 
+        CARConnectionReq* msg = dynamic_cast<CARConnectionReq*>(pac);
+        inet::Format_Car item;
+        item.CarName = msg->getCarName();
+        item.CarId = msg->getCarAddr();
 
+        if(Cars.count(item.CarName) == 0)
+            Cars.insert(std::make_pair(item.CarName,item));
+
+        CARConnectionResp* resp = new CARConnectionResp();
+        resp->setName("CARConnectionResp");
+        resp->setRSUAddr(this->mac->getMACAddress());
+        resp->setSuccess(true);
+
+        BaseFrame1609_4* wsm = new BaseFrame1609_4();
+        wsm->encapsulate(resp);
+        wsm->setName("CARConnectionResp");
+        populateWSM(wsm,item.CarId);
+        send(wsm,lowerLayerOut);
+    }
+    //밑에는 보고 지울 예정 한번 보기.
     if(pac->getKind()==Msg_MsgOffloading){
 
         //802.11p Message Type
@@ -258,6 +306,7 @@ void RSUClusterApp::handleSelfMsg(cMessage* msg)
         msg->setAdvertisementTime(simTime());
         msg->setX(curPosition.x);
         msg->setY(curPosition.y);
+        msg->setSenderMacAddr(this->mac->getMACAddress());
 
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->encapsulate(msg);

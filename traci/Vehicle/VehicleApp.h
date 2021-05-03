@@ -45,8 +45,9 @@ namespace veins {
 
 class VEINS_API VehicleApp : public DemoBaseApplLayer {
 public:
-    std::string curConnectingRSU;
-    std::map<std::string,inet::RSU_Advertisement> RSUs; // not overflow,,, int.. -> long long   //삭제 예정
+
+    inet::RSU_INFO curConnectingRSU;
+    std::map<std::string,inet::RSU_Advertisement> RSUs; // not overflow,,, int.. -> long long   //삭제 예정 beacon으로 구현했음.
 
 
     std::vector<bool> finishedTask; //이름 isfinished_Task로 바꾸기

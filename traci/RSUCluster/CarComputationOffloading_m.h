@@ -38,7 +38,7 @@
 namespace veins {
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/CarComputationOffloading.msg:30</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/CarComputationOffloading.msg:32</tt> by nedtool.
  * <pre>
  * packet CarCOReq extends BaseFrame1609_4
  * {
@@ -48,6 +48,7 @@ namespace veins {
  *     int direction;
  *     double speed;
  *     string carName;
+ *     LAddress::L2Type CarAddr;
  * 
  *     //Task information
  *     int taskID;
@@ -69,6 +70,7 @@ class VEINS_API CarCOReq : public ::veins::BaseFrame1609_4
     int direction;
     double speed;
     ::omnetpp::opp_string carName;
+    LAddress::L2Type CarAddr;
     int taskID;
     double constraint;
     int requiredCycle;
@@ -102,6 +104,9 @@ class VEINS_API CarCOReq : public ::veins::BaseFrame1609_4
     virtual void setSpeed(double speed);
     virtual const char * getCarName() const;
     virtual void setCarName(const char * carName);
+    virtual LAddress::L2Type& getCarAddr();
+    virtual const LAddress::L2Type& getCarAddr() const {return const_cast<CarCOReq*>(this)->getCarAddr();}
+    virtual void setCarAddr(const LAddress::L2Type& CarAddr);
     virtual int getTaskID() const;
     virtual void setTaskID(int taskID);
     virtual double getConstraint() const;
@@ -118,7 +123,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const CarCOReq& obj) {obj.p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CarCOReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/CarComputationOffloading.msg:50</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/CarComputationOffloading.msg:53</tt> by nedtool.
  * <pre>
  * packet CarCOResp extends BaseFrame1609_4
  * {
