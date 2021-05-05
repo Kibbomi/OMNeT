@@ -112,7 +112,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         outPayload->setConstraint(msg->getConstraint());
         outPayload->setRequiredCycle(msg->getRequiredCycle());
         outPayload->setTaskCode(msg->getTaskCode());
-        outPayload->setCarId(msg->getCarAddr());
+        outPayload->setCarAddr(msg->getCarAddr());
         outPayload->setReqTime(msg->getReqTime());
 
         outPacket->insertAtBack(outPayload);
@@ -527,36 +527,23 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             EV<<"f : "<<(*iter).second.f<<'\n';
         }
     }
-
-    /*if(strcmp(msg->getName(),"MYMSG_RESP")==0)
-        msg->setKind(MYMSG_RESP);
-    else if(strcmp(msg->getName(),"OFFLOADING_RESP")==0)
-        msg->setKind(OFFLOADING_RESP);
-    else if(strcmp(msg->getName(),"ES_AVAILABILITY_RESP")==0)
-        msg->setKind(ES_AVAILABILITY_RESP);
-
-
-    if(msg->getKind() == OFFLOADING_RESP)
+    else if(strcmp(msg->getName(),"ENCOResp") == 0)
     {
-        const auto& req = msg->peekAtFront<inet::MyOffloadingResp>();
-        if (req == nullptr)
-                   throw cRuntimeError("data type error: not an MyOffloadingResp arrived in packet %s", msg->str().c_str());
+        const auto& resp = msg->peekAtFront<inet::ENCOResp>();
+        if (resp == nullptr)
+            throw cRuntimeError("data type error: not an ENCOResp arrived in packet %s", msg->str().c_str());
 
-        EV<<"RSU : Received MyOffloading RESP.... Data is : " <<req->getData()<<std::endl;
+        CarCOResp* msg = new CarCOResp("CarCOResp");
+        msg->setTaskID(resp->getTaskID());
+        msg->setCOResult(resp->getCOResult());
 
-        MsgOffloading *offloading = new MsgOffloading();
-        offloading->setRet(req->getData());
-        offloading->setKind(Msg_MsgOffloading);
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
-        wsm->encapsulate(offloading);
-        populateWSM(wsm);
-
+        wsm->encapsulate(msg);
+        wsm->setName("CarCOResp");   //겉으로 보이는
+        populateWSM(wsm, resp->getCarAddr());
         send(wsm,lowerLayerOut);
-
-        EV<<"RSU : Sent MyOffloading RESP.... : "<<std::endl;
+        EV<<this->getParentModule()->getFullName()<<" send ENCOResp Message to "<< resp->getCarAddr()<<'\n';
     }
-*/
-
 }
 
 void RSUClusterApp::socketClosed(inet::Ieee8022LlcSocket *socket)

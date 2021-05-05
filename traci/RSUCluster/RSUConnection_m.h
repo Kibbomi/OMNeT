@@ -105,7 +105,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, RSUAdvertisement& obj) {o
  * {
  *     //SYN + ACK
  *     string CarName;
- *     LAddress::L2Type CarAddr;
+ *     LAddress::L2Type CarAddr;	//car ID..
  * }
  * </pre>
  */

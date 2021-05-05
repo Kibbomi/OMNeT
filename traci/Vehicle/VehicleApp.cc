@@ -158,7 +158,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //custom value
         msg->setConstraint(2.0);
-        msg->setRequiredCycle(10000);
+        msg->setRequiredCycle(7);  //7G cycle
         msg->setTaskCode(100);  //byte;
 
         msg->setReqTime(simTime());
