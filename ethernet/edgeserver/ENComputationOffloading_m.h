@@ -55,7 +55,7 @@ namespace inet {
  *     int requiredCycle;
  *     int taskCode;	//필요 없을 것 같음.Code는..	이미 시간에 반영..
  * 
- *     long CarId;
+ *     long CarAddr;	//MacAddress임.
  *     simtime_t reqTime;
  * }
  * </pre>
@@ -67,7 +67,7 @@ class INET_API ENCOReq : public ::inet::FieldsChunk
     double constraint = 0;
     int requiredCycle = 0;
     int taskCode = 0;
-    long CarId = 0;
+    long CarAddr = 0;
     omnetpp::simtime_t reqTime = SIMTIME_ZERO;
 
   private:
@@ -95,8 +95,8 @@ class INET_API ENCOReq : public ::inet::FieldsChunk
     virtual void setRequiredCycle(int requiredCycle);
     virtual int getTaskCode() const;
     virtual void setTaskCode(int taskCode);
-    virtual long getCarId() const;
-    virtual void setCarId(long CarId);
+    virtual long getCarAddr() const;
+    virtual void setCarAddr(long CarAddr);
     virtual omnetpp::simtime_t getReqTime() const;
     virtual void setReqTime(omnetpp::simtime_t reqTime);
 };
@@ -111,6 +111,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOReq& obj) {obj.parsim
  * {
  *     int taskID;
  *     int COResult;
+ *     long CarAddr;
  * }
  * </pre>
  */
@@ -119,6 +120,7 @@ class INET_API ENCOResp : public ::inet::FieldsChunk
   protected:
     int taskID = 0;
     int COResult = 0;
+    long CarAddr = 0;
 
   private:
     void copy(const ENCOResp& other);
@@ -141,13 +143,15 @@ class INET_API ENCOResp : public ::inet::FieldsChunk
     virtual void setTaskID(int taskID);
     virtual int getCOResult() const;
     virtual void setCOResult(int COResult);
+    virtual long getCarAddr() const;
+    virtual void setCarAddr(long CarAddr);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const ENCOResp& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOResp& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:42</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:43</tt> by nedtool.
  * <pre>
  * class OptimalESInfo extends FieldsChunk
  * {

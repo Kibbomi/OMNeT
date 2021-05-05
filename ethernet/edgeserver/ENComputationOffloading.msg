@@ -28,7 +28,7 @@ class ENCOReq extends FieldsChunk
    int requiredCycle;
    int taskCode;	//필요 없을 것 같음.Code는..	이미 시간에 반영..
    
-   long CarId;
+   long CarAddr;	//MacAddress임.
    simtime_t reqTime;
 }
 
@@ -36,6 +36,7 @@ class ENCOResp extends FieldsChunk
 {
     int taskID;
     int COResult;
+    long CarAddr;
 }
 
 class OptimalESInfo extends FieldsChunk

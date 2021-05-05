@@ -37,6 +37,10 @@ void ServersideApp::initialize(int stage)
     if (stage == INITSTAGE_LOCAL) {
         localSap = par("localSAP");
 
+
+        //내가 추가
+        remoteSap = 0xf1;
+
         // statistics
         packetsSent = packetsReceived = 0;
 
@@ -85,7 +89,49 @@ void ServersideApp::socketClosed(Ieee8022LlcSocket *socket)
 void ServersideApp::handleMessageWhenUp(cMessage *msg)
 {
     EV<<" Server Call handleMessageWhenUp."<<std::endl;
-    llcSocket.processMessage(msg);
+
+    if(msg->isSelfMessage()){
+        //작성..
+        handleSelfMessage(msg);
+    }
+    else
+       llcSocket.processMessage(msg);
+    //llcSocket.processMessage(msg);
+}
+
+void ServersideApp::handleSelfMessage(cMessage* msg)
+{
+    if(msg->getKind() == Self_COEN)
+    {
+        std::string CarKey = msg->getName();
+
+        if(Tasks.count(CarKey) != 0){
+
+            EV<<this->getParentModule()->getFullName()<<"Send CO Resp\n";
+
+            Packet* outPacket = new Packet("ENCOResp",IEEE802CTRL_DATA);
+            const auto& outPayload = makeShared<ENCOResp>();
+
+            outPayload->setChunkLength(B(64));
+            outPayload->setTaskID(Tasks[CarKey].TaskId);
+            outPayload->setCarAddr(Tasks[CarKey].CarAddr);
+            outPayload->setCOResult(Tasks[CarKey].COResult);
+
+            outPacket->insertAtBack(outPayload);
+
+            outPacket->addTag<MacAddressReq>()->setDestAddress(Tasks[CarKey].RSUAddr);
+
+            auto ieee802SapReq = outPacket->addTag<inet::Ieee802SapReq>();
+            ieee802SapReq->setSsap(localSap);
+            ieee802SapReq->setDsap(remoteSap);
+
+            emit(packetSentSignal,outPacket);
+            llcSocket.send(outPacket);
+
+            //자료구조에서 삭제.
+            Tasks.erase(CarKey);
+        }
+    }
 }
 
 void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
@@ -154,176 +200,47 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
         EV_INFO << "Server :  Send ERS response\n";
         sendPacket(outPacket, srcAddr, srcSap);
     }
-    else if(strcmp(msg->getName(),"ENCOResp") == 0)
+    else if(strcmp(msg->getName(),"ENCOReq") == 0)
     {
-        const auto& req = msg->peekAtFront<ENCOResp>();
+        const auto& req = msg->peekAtFront<ENCOReq>();
         if (req == nullptr)
-            throw cRuntimeError("data type error: not an ENCOResp arrived in packet %s", msg->str().c_str());
+            throw cRuntimeError("data type error: not an ENCOReq arrived in packet %s", msg->str().c_str());
 
         emit(packetReceivedSignal, msg);
 
         MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
         int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
 
-        //Here..
+        //Save Car EN information.
+        //map..
+        std::string CarKey = std::to_string(req->getCarAddr()) + std::to_string(req->getTaskID());
+        //CarKey = "CarAddr + TaskID" it is unique value;
+
+        if(Tasks.count(CarKey) == 0){
+            Format_Task curTask;
+
+            curTask.CarAddr = req->getCarAddr();
+            //curTask.RSUAddr
+            //도착지 RSU계산할 것.
+            curTask.TaskId = req->getTaskID();
+            curTask.COResult = 200;
+
+            //여기는 예상위치 구현 시 수정.
+            curTask.RSUAddr = srcAddr;
 
 
-    }
- //기존에 있던 것들.. 참고해서 작성하기
-    /*
-            const auto& req = msg->peekAtFront<MyEtherAppReq>();
-            if (req == nullptr)
-                throw cRuntimeError("data type error: not an EtherAppReq arrived in packet %s", msg->str().c_str());
-            packetsReceived++;
-            emit(packetReceivedSignal, msg);
+            Tasks[CarKey] = curTask;
 
-            MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
-            int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
-            long requestId = req->getRequestId();
-            long replyBytes = req->getResponseBytes();
-            int repHello = req->getHello() + 1;
+            double processingTime = (double)req->getRequiredCycle()/(double)f;
 
-            // send back packets asked by EtherAppClient side
-            for (int k = 0; replyBytes > 0; k++) {
-                int l = replyBytes > MAX_REPLY_CHUNK_SIZE ? MAX_REPLY_CHUNK_SIZE : replyBytes;
-                replyBytes -= l;
-
-                std::ostringstream s;
-                s << msg->getName() << "-resp-" << k;
-
-                Packet *outPacket = new Packet(s.str().c_str(), IEEE802CTRL_DATA);
-                const auto& outPayload = makeShared<MyEtherAppResp>();
-                outPayload->setRequestId(requestId);
-                outPayload->setChunkLength(B(l));
-                outPayload->setHello(repHello);
-                outPayload->addTag<CreationTimeTag>()->setCreationTime(simTime());
-                outPacket->insertAtBack(outPayload);
-
-                EV_INFO << "Send response `" << outPacket->getName() << "' to " << srcAddr << " ssap=" << localSap << " dsap=" << srcSap << " length=" << l << "B requestId=" << requestId << "\n";
-                EV_INFO << "Server :  Send Hello Value : "<< outPayload->getHello()<<std::endl;
-                sendPacket(outPacket, srcAddr, srcSap);
-            }
-    */
-
-
-
-
-    //테스트로 짰던 것들...
-    /*
-    if(msg->getKind() == MYMSG_REQ){
-        const auto& req = msg->peekAtFront<MyEtherAppReq>();
-        if (req == nullptr)
-            throw cRuntimeError("data type error: not an EtherAppReq arrived in packet %s", msg->str().c_str());
-        packetsReceived++;
-        emit(packetReceivedSignal, msg);
-
-        MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
-        int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
-        long requestId = req->getRequestId();
-        long replyBytes = req->getResponseBytes();
-        int repHello = req->getHello() + 1;
-
-        // send back packets asked by EtherAppClient side
-        for (int k = 0; replyBytes > 0; k++) {
-            int l = replyBytes > MAX_REPLY_CHUNK_SIZE ? MAX_REPLY_CHUNK_SIZE : replyBytes;
-            replyBytes -= l;
-
-            std::ostringstream s;
-            s << "MYMSG_RESP";
-
-            Packet *outPacket = new Packet(s.str().c_str(), IEEE802CTRL_DATA);
-            const auto& outPayload = makeShared<MyEtherAppResp>();
-            outPayload->setRequestId(requestId);
-            outPayload->setChunkLength(B(l));
-            outPayload->setHello(repHello);
-            outPayload->addTag<CreationTimeTag>()->setCreationTime(simTime());
-            outPacket->insertAtBack(outPayload);
-
-            EV_INFO << "Send response `" << outPacket->getName() << "' to " << srcAddr << " ssap=" << localSap << " dsap=" << srcSap << " length=" << l << "B requestId=" << requestId << "\n";
-            EV_INFO << "Server :  Send Hello Value : "<< outPayload->getHello()<<std::endl;
-            sendPacket(outPacket, srcAddr, srcSap);
+            cMessage* self_msg = new cMessage(CarKey.c_str(),Self_COEN);
+            scheduleAt(simTime() + processingTime, self_msg);    //1은 s임.
+            EV<<this->getParentModule()->getFullName()<<"received ENCOReq message It will reply at "<<simTime()+processingTime<<'\n';
         }
-       EV_INFO << "Server :  Send Hello Value : "<< req->getHello()<<std::endl;
+
+
     }
-    else if(msg->getKind() == ES_AVAILABILITY_REQ){
-        const auto& req = msg->peekAtFront<MyAvailabilityReq>();
-        if (req == nullptr)
-            throw cRuntimeError("data type error: not an MyAvailabilityReq arrived in packet %s", msg->str().c_str());
-        packetsReceived++;
-        emit(packetReceivedSignal, msg);
 
-        MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
-        int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
-
-        //요청 온 RSU의 목록을 추가함.
-        //Availability_RSU.insert(make_pair{})
-        EV<<"Server : Availability Request received!!!!!!"<<std::endl;
-        //추가동작..
-
-
-        std::ostringstream s;
-        s << "ES_AVAILABILITY_REQ";
-        Packet *outPacket = new Packet(s.str().c_str(), IEEE802CTRL_DATA);
-        const auto& outPayload = makeShared<MyAvailabilityResp>();
-        outPayload->setAvailability(100);
-        outPayload->setChunkLength(B(MAX_REPLY_CHUNK_SIZE));
-
-        outPayload->addTag<CreationTimeTag>()->setCreationTime(simTime());
-        outPacket->setKind(ES_AVAILABILITY_RESP);
-        outPacket->insertAtBack(outPayload);
-
-
-        EV_INFO << "Server :  Send Availability Value : "<< outPayload->getAvailability()<<std::endl;
-        sendPacket(outPacket, srcAddr, srcSap);
-    }
-    else if(msg->getKind() == OFFLOADING_REQ){
-        const auto& resp = msg->peekAtFront<MyOffloadingReq>();
-        if (resp == nullptr)
-            throw cRuntimeError("data type error: not an MyOffloadingReq arrived in packet %s", msg->str().c_str());
-        packetsReceived++;
-        emit(packetReceivedSignal, msg);
-
-        MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
-        int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
-
-
-          //수정
-          //int ttl = msg->getTag<CreationTTLTag>()->getTtl();
-          //EV<<"Mac Relay Unit : GET TAG!!!!!!!!!!!!" << ttl <<'\n';
-          //수정 끝
-
-
-
-        //요청 온 RSU의 목록을 추가함.
-        //delay.....
-
-        EV<<"Server : MyOffloading Request received!!!!!!"<<std::endl;
-        //추가동작..
-
-        EV_INFO << "Server : received data value : " << resp->getData()<<'\n';
-        EV_INFO << "Server : received Constraint value : " << resp->getConstraint()<<'\n';
-        EV_INFO << "Server : received Cycle value : " << resp->getCycle()<<'\n';
-        EV_INFO << "Server : received Time Tag value : " << resp->getTag<CreationTimeTag>()->getCreationTime()<<'\n';
-
-
-
-        std::ostringstream s;
-        s << "OFFLOADING_RESP";
-        Packet *outPacket = new Packet(s.str().c_str(), IEEE802CTRL_DATA);
-        const auto& outPayload = makeShared<MyOffloadingResp>();
-
-
-        outPayload->setData(resp->getCycle()*resp->getConstraint());
-        outPayload->setChunkLength(B(MAX_REPLY_CHUNK_SIZE));
-        outPayload->addTag<CreationTimeTag>()->setCreationTime(simTime());
-        outPacket->setKind(OFFLOADING_RESP);
-        outPacket->insertAtBack(outPayload);
-
-
-        EV_INFO << "Server :  Send Offloading Value : "<< outPayload->getData()<<std::endl;
-        sendPacket(outPacket, srcAddr, srcSap);
-    }
-     */
     delete msg;
 }
 

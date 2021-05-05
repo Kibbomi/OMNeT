@@ -42,10 +42,20 @@
 #include "../ERS/ExpandingRingSearch_m.h"
 #include "../ERS/findTarget.h"
 
-
+//Computation Offloading
+#include "inet/applications/ethernet/edgeserver/ENComputationOffloading_m.h"
 namespace inet {
 
 #define MAX_REPLY_CHUNK_SIZE    1497
+
+/**
+ * including Enum values
+ *  in inet namespace
+ */
+enum COSelfMessageType{
+    Self_COEN=200
+};
+
 
 /**
  * Server-side process EtherAppClient.
@@ -54,6 +64,7 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
 {
   protected:
     int localSap = 0;
+    int remoteSap = 0;  //remoteSap은 내가 추가.. 모두 동일하게 0xf1을 쓰기 때문에 상관없을 듯.
 
     Ieee8022LlcSocket llcSocket;
 
@@ -64,7 +75,7 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
 
     //Availability,,, to send message to RSUs periodically
     std::map<std::string,Format_RSUCluster> RSUs;
-
+    std::map<std::string,Format_Task> Tasks;    //string, Key is carID+taskID;
     //Offloading
     //This value can be changed by ini information, so that each server can have different value
     unsigned int f;
@@ -86,6 +97,9 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     void sendPacket(Packet *datapacket, const MacAddress& destAddr, int destSap);
     virtual void socketDataArrived(Ieee8022LlcSocket*, Packet *msg) override;
     virtual void socketClosed(Ieee8022LlcSocket* socket) override;
+
+    //for ScheduleAt
+    virtual void handleSelfMessage(cMessage* msg);
 };
 
 } // namespace inet

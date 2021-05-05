@@ -42,6 +42,10 @@ class Format_Car{
 
 class Format_Task{
     public:
+        long CarAddr;
+        inet::MacAddress RSUAddr;//dest
+        int TaskId;
+        int COResult;
 
 };
 
