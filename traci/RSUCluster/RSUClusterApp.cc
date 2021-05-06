@@ -460,6 +460,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             item.f = resp->getF();
             item.capacity = resp->getCapacity();
             item.addr = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
+            item.isAvailable = resp->isAvailableEN();
 
             //check and insert to map
             std::string key_string = item.addr.str();
@@ -472,6 +473,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                 for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
                     EV<<"MAC : "<<(*iter).first<<'\n';
                     EV<<"MAC : "<<(*iter).second.f<<'\n';
+                    EV<<"MAC : "<<(*iter).second.isAvailable<<'\n';
                 }
 
                 //updated.. so find out new optimal ES
@@ -544,6 +546,19 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         send(wsm,lowerLayerOut);
         EV<<this->getParentModule()->getFullName()<<" send ENCOResp Message to "<< resp->getCarAddr()<<'\n';
     }
+    else if(strcmp(msg->getName(),"AvailabilityInfo") == 0)
+    {
+        const auto& resp = msg->peekAtFront<inet::AvailabilityInfo>();
+        if (resp == nullptr)
+            throw cRuntimeError("data type error: not an AvailabilityInfo arrived in packet %s", msg->str().c_str());
+
+        bool isAvailable = resp->isAvailable();
+
+        inet::MacAddress srcAddress = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
+
+        ESs[srcAddress.str()].isAvailable = isAvailable;
+        FindOptimalES();
+    }
 }
 
 void RSUClusterApp::socketClosed(inet::Ieee8022LlcSocket *socket)
@@ -597,7 +612,9 @@ void RSUClusterApp::FindOptimalES(){
     OptimalES.f = 0;    //기본생성자가 실행이 안 됨.   명시적 초기화.
 
     for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
-        if((*iter).second.capacity > 0 && OptimalES.f < (*iter).second.f)
+        EV<<"(*iter).second.isAvailable " << (*iter).second.isAvailable<<'\n';
+        EV<<"(*iter).second.f " << (*iter).second.f<<'\n';
+        if((*iter).second.isAvailable == true && OptimalES.f < (*iter).second.f)
         {
             OptimalES.addr=(*iter).second.addr;
             OptimalES.f = (*iter).second.f;
@@ -605,7 +622,15 @@ void RSUClusterApp::FindOptimalES(){
         }
     }
 
-    if(myOptimalES.f < OptimalES.f){
+    if(OptimalES.f == 0){
+        //there is not any ES
+        //so, begin ERS.
+        if(TTL_init + TTL_increasement <= TTL_threshold)
+            BeginERS(TTL_init + TTL_increasement, TTL_threshold);
+        else
+            EV_INFO << "RSUClusterApp : TTL value exceeds the TTL_threshold value. \n";
+    }
+    else if(myOptimalES.f < OptimalES.f){
         myOptimalES = OptimalES;
 
         for(auto iter=RSUsMaster.begin(); iter!= RSUsMaster.end(); ++iter){
@@ -631,7 +656,7 @@ void RSUClusterApp::FindOptimalES(){
         }
 
     }
-    else if(myOptimalES.f == OptimalES.f){
+    else {
         EV<<"there no reason to send Optimal packet\n";
         //nothing..
     }
