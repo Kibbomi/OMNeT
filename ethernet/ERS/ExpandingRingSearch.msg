@@ -41,5 +41,5 @@ class ERSResp extends FieldsChunk
     unsigned int f;
     unsigned int capacity;
     //edge server dont need to have location information
-    
+    bool isAvailableEN;
 }

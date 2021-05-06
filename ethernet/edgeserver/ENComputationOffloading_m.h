@@ -33,6 +33,7 @@ namespace inet {
 class ENCOReq;
 class ENCOResp;
 class OptimalESInfo;
+class AvailabilityInfo;
 } // namespace inet
 
 #include "inet/common/INETDefs_m.h" // import inet.common.INETDefs
@@ -197,6 +198,45 @@ class INET_API OptimalESInfo : public ::inet::FieldsChunk
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const OptimalESInfo& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, OptimalESInfo& obj) {obj.parsimUnpack(b);}
+
+/**
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:50</tt> by nedtool.
+ * <pre>
+ * class AvailabilityInfo extends FieldsChunk
+ * {
+ *     //Mac주소는 송신자 Tag에서 구할 수 있음..
+ *     bool isAvailable;
+ * }
+ * </pre>
+ */
+class INET_API AvailabilityInfo : public ::inet::FieldsChunk
+{
+  protected:
+    bool isAvailable_ = false;
+
+  private:
+    void copy(const AvailabilityInfo& other);
+
+  protected:
+    // protected and unimplemented operator==(), to prevent accidental usage
+    bool operator==(const AvailabilityInfo&);
+
+  public:
+    AvailabilityInfo();
+    AvailabilityInfo(const AvailabilityInfo& other);
+    virtual ~AvailabilityInfo();
+    AvailabilityInfo& operator=(const AvailabilityInfo& other);
+    virtual AvailabilityInfo *dup() const override {return new AvailabilityInfo(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    // field getter/setter methods
+    virtual bool isAvailable() const;
+    virtual void setIsAvailable(bool isAvailable);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const AvailabilityInfo& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, AvailabilityInfo& obj) {obj.parsimUnpack(b);}
 
 } // namespace inet
 

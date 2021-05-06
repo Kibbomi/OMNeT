@@ -80,6 +80,7 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     //This value can be changed by ini information, so that each server can have different value
     unsigned int f;
     unsigned int capacity;
+    bool isAvailable;
 
     double COThreshold;
 

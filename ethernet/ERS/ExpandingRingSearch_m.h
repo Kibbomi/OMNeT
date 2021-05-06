@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by nedtool 5.6 from inet/applications/ethernet/EPS/ExpandingRingSearch.msg.
+// Generated file, do not edit! Created by nedtool 5.6 from inet/applications/ethernet/edgeserver/../ERS/ExpandingRingSearch.msg.
 //
 
 #ifndef __INET_EXPANDINGRINGSEARCH_M_H
@@ -42,7 +42,7 @@ class ERSResp;
 namespace inet {
 
 /**
- * Class generated from <tt>inet/applications/ethernet/EPS/ExpandingRingSearch.msg:23</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/../ERS/ExpandingRingSearch.msg:23</tt> by nedtool.
  * <pre>
  * class ERSReq extends FieldsChunk
  * {
@@ -85,7 +85,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ERSReq& obj) {obj.par
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ERSReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/EPS/ExpandingRingSearch.msg:30</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/../ERS/ExpandingRingSearch.msg:30</tt> by nedtool.
  * <pre>
  * class ERSResp extends FieldsChunk
  * {
@@ -102,7 +102,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ERSReq& obj) {obj.parsimU
  *     unsigned int f;
  *     unsigned int capacity;
  *     //edge server dont need to have location information
- * 
+ *     bool isAvailableEN;
  * }
  * </pre>
  */
@@ -115,6 +115,7 @@ class INET_API ERSResp : public ::inet::FieldsChunk
     int coverage = 0;
     unsigned int f = 0;
     unsigned int capacity = 0;
+    bool isAvailableEN_ = false;
 
   private:
     void copy(const ERSResp& other);
@@ -145,6 +146,8 @@ class INET_API ERSResp : public ::inet::FieldsChunk
     virtual void setF(unsigned int f);
     virtual unsigned int getCapacity() const;
     virtual void setCapacity(unsigned int capacity);
+    virtual bool isAvailableEN() const;
+    virtual void setIsAvailableEN(bool isAvailableEN);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const ERSResp& obj) {obj.parsimPack(b);}

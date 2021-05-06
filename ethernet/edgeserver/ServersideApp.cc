@@ -50,6 +50,8 @@ void ServersideApp::initialize(int stage)
 
         f = (int)ceil(uniform(1,5));
         capacity = 10;
+        isAvailable = true;
+        //capacity / f is limit.
 
         WATCH(packetsSent);
         WATCH(packetsReceived);
@@ -130,6 +132,29 @@ void ServersideApp::handleSelfMessage(cMessage* msg)
 
             //자료구조에서 삭제.
             Tasks.erase(CarKey);
+
+            //if(Tasks.size() < capacity/f * 0.6){
+
+            if(Tasks.size() == 0 ){ //test
+                for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter)
+                {
+                    Packet *outPacket = new Packet("AvailabilityInfo",IEEE802CTRL_DATA);
+                    const auto& outPayload = makeShared<AvailabilityInfo>();
+
+                    outPayload->setChunkLength(B(64));
+                    outPayload->setIsAvailable(true);
+                    outPacket->insertAtBack(outPayload);
+
+                    outPacket->addTagIfAbsent<MacAddressReq>()->setDestAddress((*iter).second.addr);
+                    auto ieee802SapReq = outPacket->addTagIfAbsent<Ieee802SapReq>();
+                    ieee802SapReq->setSsap(localSap);
+                    ieee802SapReq->setDsap(remoteSap);
+
+                    emit(packetSentSignal,outPacket);
+                    llcSocket.send(outPacket);
+                    EV<<this->getParentModule()->getFullName()<<" is available. Send a availableInfo message\n";
+                }
+            }
         }
     }
 }
@@ -189,6 +214,7 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
         outPayload->setChunkLength(B(64));
         outPayload->setCapacity(capacity);
         outPayload->setF(f);
+        outPayload->setIsAvailableEN(isAvailable);
         outPayload->setInfo(OnlyES);
 
         //not used
@@ -236,6 +262,33 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
             cMessage* self_msg = new cMessage(CarKey.c_str(),Self_COEN);
             scheduleAt(simTime() + processingTime, self_msg);    //1은 s임.
             EV<<this->getParentModule()->getFullName()<<"received ENCOReq message It will reply at "<<simTime()+processingTime<<'\n';
+
+
+            //availability check
+
+            //over the capacity
+            //if( (capacity / f)*0.6 < Tasks.size())
+            if(Tasks.size() == 1)   //for Test!!
+            {
+                for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter)
+                {
+                    Packet *outPacket = new Packet("AvailabilityInfo",IEEE802CTRL_DATA);
+                    const auto& outPayload = makeShared<AvailabilityInfo>();
+
+                    outPayload->setChunkLength(B(64));
+                    outPayload->setIsAvailable(false);
+                    outPacket->insertAtBack(outPayload);
+
+                    outPacket->addTagIfAbsent<MacAddressReq>()->setDestAddress((*iter).second.addr);
+                    auto ieee802SapReq = outPacket->addTagIfAbsent<Ieee802SapReq>();
+                    ieee802SapReq->setSsap(localSap);
+                    ieee802SapReq->setDsap(remoteSap);
+
+                    emit(packetSentSignal,outPacket);
+                    llcSocket.send(outPacket);
+                    EV<<this->getParentModule()->getFullName()<<" is not available. Send a availableInfo message\n";
+                }
+            }
         }
 
 

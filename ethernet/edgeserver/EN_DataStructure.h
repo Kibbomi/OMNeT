@@ -29,6 +29,7 @@ class Format_EdgeServer{
         inet::MacAddress addr;
         unsigned int f;
         unsigned int capacity;  //availability
+        bool isAvailable;
         //availability 삭제 후 True로 관리하면 될듯.
         //capacity는 Edge server의 멤버변수로 삽입하면 될 듯.
         //availability 구현할 때 처리.

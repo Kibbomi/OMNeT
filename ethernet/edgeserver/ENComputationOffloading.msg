@@ -45,3 +45,9 @@ class OptimalESInfo extends FieldsChunk
     MacAddress RSUMacAddr;
     int f;
 }
+
+class AvailabilityInfo extends FieldsChunk
+{
+    //Mac주소는 송신자 Tag에서 구할 수 있음..
+    bool isAvailable;
+}

@@ -1244,5 +1244,288 @@ void *OptimalESInfoDescriptor::getFieldStructValuePointer(void *object, int fiel
     }
 }
 
+Register_Class(AvailabilityInfo)
+
+AvailabilityInfo::AvailabilityInfo() : ::inet::FieldsChunk()
+{
+}
+
+AvailabilityInfo::AvailabilityInfo(const AvailabilityInfo& other) : ::inet::FieldsChunk(other)
+{
+    copy(other);
+}
+
+AvailabilityInfo::~AvailabilityInfo()
+{
+}
+
+AvailabilityInfo& AvailabilityInfo::operator=(const AvailabilityInfo& other)
+{
+    if (this == &other) return *this;
+    ::inet::FieldsChunk::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void AvailabilityInfo::copy(const AvailabilityInfo& other)
+{
+    this->isAvailable_ = other.isAvailable_;
+}
+
+void AvailabilityInfo::parsimPack(omnetpp::cCommBuffer *b) const
+{
+    ::inet::FieldsChunk::parsimPack(b);
+    doParsimPacking(b,this->isAvailable_);
+}
+
+void AvailabilityInfo::parsimUnpack(omnetpp::cCommBuffer *b)
+{
+    ::inet::FieldsChunk::parsimUnpack(b);
+    doParsimUnpacking(b,this->isAvailable_);
+}
+
+bool AvailabilityInfo::isAvailable() const
+{
+    return this->isAvailable_;
+}
+
+void AvailabilityInfo::setIsAvailable(bool isAvailable)
+{
+    handleChange();
+    this->isAvailable_ = isAvailable;
+}
+
+class AvailabilityInfoDescriptor : public omnetpp::cClassDescriptor
+{
+  private:
+    mutable const char **propertynames;
+    enum FieldConstants {
+        FIELD_isAvailable,
+    };
+  public:
+    AvailabilityInfoDescriptor();
+    virtual ~AvailabilityInfoDescriptor();
+
+    virtual bool doesSupport(omnetpp::cObject *obj) const override;
+    virtual const char **getPropertyNames() const override;
+    virtual const char *getProperty(const char *propertyname) const override;
+    virtual int getFieldCount() const override;
+    virtual const char *getFieldName(int field) const override;
+    virtual int findField(const char *fieldName) const override;
+    virtual unsigned int getFieldTypeFlags(int field) const override;
+    virtual const char *getFieldTypeString(int field) const override;
+    virtual const char **getFieldPropertyNames(int field) const override;
+    virtual const char *getFieldProperty(int field, const char *propertyname) const override;
+    virtual int getFieldArraySize(void *object, int field) const override;
+
+    virtual const char *getFieldDynamicTypeString(void *object, int field, int i) const override;
+    virtual std::string getFieldValueAsString(void *object, int field, int i) const override;
+    virtual bool setFieldValueAsString(void *object, int field, int i, const char *value) const override;
+
+    virtual const char *getFieldStructName(int field) const override;
+    virtual void *getFieldStructValuePointer(void *object, int field, int i) const override;
+};
+
+Register_ClassDescriptor(AvailabilityInfoDescriptor)
+
+AvailabilityInfoDescriptor::AvailabilityInfoDescriptor() : omnetpp::cClassDescriptor(omnetpp::opp_typename(typeid(inet::AvailabilityInfo)), "inet::FieldsChunk")
+{
+    propertynames = nullptr;
+}
+
+AvailabilityInfoDescriptor::~AvailabilityInfoDescriptor()
+{
+    delete[] propertynames;
+}
+
+bool AvailabilityInfoDescriptor::doesSupport(omnetpp::cObject *obj) const
+{
+    return dynamic_cast<AvailabilityInfo *>(obj)!=nullptr;
+}
+
+const char **AvailabilityInfoDescriptor::getPropertyNames() const
+{
+    if (!propertynames) {
+        static const char *names[] = {  nullptr };
+        omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+        const char **basenames = basedesc ? basedesc->getPropertyNames() : nullptr;
+        propertynames = mergeLists(basenames, names);
+    }
+    return propertynames;
+}
+
+const char *AvailabilityInfoDescriptor::getProperty(const char *propertyname) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? basedesc->getProperty(propertyname) : nullptr;
+}
+
+int AvailabilityInfoDescriptor::getFieldCount() const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? 1+basedesc->getFieldCount() : 1;
+}
+
+unsigned int AvailabilityInfoDescriptor::getFieldTypeFlags(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldTypeFlags(field);
+        field -= basedesc->getFieldCount();
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,    // FIELD_isAvailable
+    };
+    return (field >= 0 && field < 1) ? fieldTypeFlags[field] : 0;
+}
+
+const char *AvailabilityInfoDescriptor::getFieldName(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldName(field);
+        field -= basedesc->getFieldCount();
+    }
+    static const char *fieldNames[] = {
+        "isAvailable",
+    };
+    return (field >= 0 && field < 1) ? fieldNames[field] : nullptr;
+}
+
+int AvailabilityInfoDescriptor::findField(const char *fieldName) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    int base = basedesc ? basedesc->getFieldCount() : 0;
+    if (fieldName[0] == 'i' && strcmp(fieldName, "isAvailable") == 0) return base+0;
+    return basedesc ? basedesc->findField(fieldName) : -1;
+}
+
+const char *AvailabilityInfoDescriptor::getFieldTypeString(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldTypeString(field);
+        field -= basedesc->getFieldCount();
+    }
+    static const char *fieldTypeStrings[] = {
+        "bool",    // FIELD_isAvailable
+    };
+    return (field >= 0 && field < 1) ? fieldTypeStrings[field] : nullptr;
+}
+
+const char **AvailabilityInfoDescriptor::getFieldPropertyNames(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldPropertyNames(field);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+const char *AvailabilityInfoDescriptor::getFieldProperty(int field, const char *propertyname) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldProperty(field, propertyname);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+int AvailabilityInfoDescriptor::getFieldArraySize(void *object, int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldArraySize(object, field);
+        field -= basedesc->getFieldCount();
+    }
+    AvailabilityInfo *pp = (AvailabilityInfo *)object; (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+const char *AvailabilityInfoDescriptor::getFieldDynamicTypeString(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldDynamicTypeString(object,field,i);
+        field -= basedesc->getFieldCount();
+    }
+    AvailabilityInfo *pp = (AvailabilityInfo *)object; (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+std::string AvailabilityInfoDescriptor::getFieldValueAsString(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldValueAsString(object,field,i);
+        field -= basedesc->getFieldCount();
+    }
+    AvailabilityInfo *pp = (AvailabilityInfo *)object; (void)pp;
+    switch (field) {
+        case FIELD_isAvailable: return bool2string(pp->isAvailable());
+        default: return "";
+    }
+}
+
+bool AvailabilityInfoDescriptor::setFieldValueAsString(void *object, int field, int i, const char *value) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->setFieldValueAsString(object,field,i,value);
+        field -= basedesc->getFieldCount();
+    }
+    AvailabilityInfo *pp = (AvailabilityInfo *)object; (void)pp;
+    switch (field) {
+        case FIELD_isAvailable: pp->setIsAvailable(string2bool(value)); return true;
+        default: return false;
+    }
+}
+
+const char *AvailabilityInfoDescriptor::getFieldStructName(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldStructName(field);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    };
+}
+
+void *AvailabilityInfoDescriptor::getFieldStructValuePointer(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldStructValuePointer(object, field, i);
+        field -= basedesc->getFieldCount();
+    }
+    AvailabilityInfo *pp = (AvailabilityInfo *)object; (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
 } // namespace inet
 

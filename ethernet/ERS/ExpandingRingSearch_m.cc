@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by nedtool 5.6 from inet/applications/ethernet/EPS/ExpandingRingSearch.msg.
+// Generated file, do not edit! Created by nedtool 5.6 from inet/applications/ethernet/edgeserver/../ERS/ExpandingRingSearch.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -27,7 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include <memory>
-#include "../ERS/ExpandingRingSearch_m.h"
+#include "ExpandingRingSearch_m.h"
 
 namespace omnetpp {
 
@@ -542,6 +542,7 @@ void ERSResp::copy(const ERSResp& other)
     this->coverage = other.coverage;
     this->f = other.f;
     this->capacity = other.capacity;
+    this->isAvailableEN_ = other.isAvailableEN_;
 }
 
 void ERSResp::parsimPack(omnetpp::cCommBuffer *b) const
@@ -553,6 +554,7 @@ void ERSResp::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->coverage);
     doParsimPacking(b,this->f);
     doParsimPacking(b,this->capacity);
+    doParsimPacking(b,this->isAvailableEN_);
 }
 
 void ERSResp::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -564,6 +566,7 @@ void ERSResp::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->coverage);
     doParsimUnpacking(b,this->f);
     doParsimUnpacking(b,this->capacity);
+    doParsimUnpacking(b,this->isAvailableEN_);
 }
 
 unsigned char ERSResp::getInfo() const
@@ -632,6 +635,17 @@ void ERSResp::setCapacity(unsigned int capacity)
     this->capacity = capacity;
 }
 
+bool ERSResp::isAvailableEN() const
+{
+    return this->isAvailableEN_;
+}
+
+void ERSResp::setIsAvailableEN(bool isAvailableEN)
+{
+    handleChange();
+    this->isAvailableEN_ = isAvailableEN;
+}
+
 class ERSRespDescriptor : public omnetpp::cClassDescriptor
 {
   private:
@@ -643,6 +657,7 @@ class ERSRespDescriptor : public omnetpp::cClassDescriptor
         FIELD_coverage,
         FIELD_f,
         FIELD_capacity,
+        FIELD_isAvailableEN,
     };
   public:
     ERSRespDescriptor();
@@ -705,7 +720,7 @@ const char *ERSRespDescriptor::getProperty(const char *propertyname) const
 int ERSRespDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 6+basedesc->getFieldCount() : 6;
+    return basedesc ? 7+basedesc->getFieldCount() : 7;
 }
 
 unsigned int ERSRespDescriptor::getFieldTypeFlags(int field) const
@@ -723,8 +738,9 @@ unsigned int ERSRespDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_coverage
         FD_ISEDITABLE,    // FIELD_f
         FD_ISEDITABLE,    // FIELD_capacity
+        FD_ISEDITABLE,    // FIELD_isAvailableEN
     };
-    return (field >= 0 && field < 6) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 7) ? fieldTypeFlags[field] : 0;
 }
 
 const char *ERSRespDescriptor::getFieldName(int field) const
@@ -742,8 +758,9 @@ const char *ERSRespDescriptor::getFieldName(int field) const
         "coverage",
         "f",
         "capacity",
+        "isAvailableEN",
     };
-    return (field >= 0 && field < 6) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 7) ? fieldNames[field] : nullptr;
 }
 
 int ERSRespDescriptor::findField(const char *fieldName) const
@@ -756,6 +773,7 @@ int ERSRespDescriptor::findField(const char *fieldName) const
     if (fieldName[0] == 'c' && strcmp(fieldName, "coverage") == 0) return base+3;
     if (fieldName[0] == 'f' && strcmp(fieldName, "f") == 0) return base+4;
     if (fieldName[0] == 'c' && strcmp(fieldName, "capacity") == 0) return base+5;
+    if (fieldName[0] == 'i' && strcmp(fieldName, "isAvailableEN") == 0) return base+6;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -774,8 +792,9 @@ const char *ERSRespDescriptor::getFieldTypeString(int field) const
         "int",    // FIELD_coverage
         "unsigned int",    // FIELD_f
         "unsigned int",    // FIELD_capacity
+        "bool",    // FIELD_isAvailableEN
     };
-    return (field >= 0 && field < 6) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 7) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **ERSRespDescriptor::getFieldPropertyNames(int field) const
@@ -848,6 +867,7 @@ std::string ERSRespDescriptor::getFieldValueAsString(void *object, int field, in
         case FIELD_coverage: return long2string(pp->getCoverage());
         case FIELD_f: return ulong2string(pp->getF());
         case FIELD_capacity: return ulong2string(pp->getCapacity());
+        case FIELD_isAvailableEN: return bool2string(pp->isAvailableEN());
         default: return "";
     }
 }
@@ -868,6 +888,7 @@ bool ERSRespDescriptor::setFieldValueAsString(void *object, int field, int i, co
         case FIELD_coverage: pp->setCoverage(string2long(value)); return true;
         case FIELD_f: pp->setF(string2ulong(value)); return true;
         case FIELD_capacity: pp->setCapacity(string2ulong(value)); return true;
+        case FIELD_isAvailableEN: pp->setIsAvailableEN(string2bool(value)); return true;
         default: return false;
     }
 }
