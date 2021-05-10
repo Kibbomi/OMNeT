@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<!--debug config-->
+<launch>
+	<copy file="MyEnvironment.net.xml"/>
+	<copy file="MyEnvironment.rou.xml"/>
+	<copy file="MyEnvironment.sumocfg" type="config"/>
+</launch>

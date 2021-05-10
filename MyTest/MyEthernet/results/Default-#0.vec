@@ -1,0 +1,139 @@
+version 2
+run Default-0-20210510-16:09:57-1896
+attr configname Default
+attr datetime 20210510-16:09:57
+attr experiment Default
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network MyEthernet
+attr processid 1896
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 1896
+param *.playgroundSizeX 2500m
+param *.playgroundSizeY 2500m
+param *.playgroundSizeZ 50m
+param *.annotations.draw true
+param *.obstacles.debug false
+param *.manager.updateInterval 1s
+param *.manager.host "\"localhost\""
+param *.manager.port 9999
+param *.manager.autoShutdown true
+param *.manager.launchConfig "xmldoc(\"MyEnvironment.launchd.xml\")"
+param *.rsu[0].mobility.x 100
+param *.rsu[0].mobility.y 100
+param *.rsu[0].mobility.z 3
+param *.rsu[1].mobility.x 500
+param *.rsu[1].mobility.y 100
+param *.rsu[1].mobility.z 3
+param *.rsu[2].mobility.x 900
+param *.rsu[2].mobility.y 100
+param *.rsu[2].mobility.z 3
+param *.rsu[*].applType "\"RSUClusterApp\""
+param *.rsu[*].appl.headerLength "80 bit"
+param *.rsu[*].appl.sendBeacons true
+param *.rsu[*].appl.dataOnSch false
+param *.rsu[*].appl.beaconInterval 2s
+param *.rsu[*].appl.beaconUserPriority 7
+param *.rsu[*].appl.dataUserPriority 5
+param *.rsu[*].nic.phy80211p.antennaOffsetZ "0 m"
+param **.switch*.relayUnit.typename "\"MacRelayUnit\""
+param *.connectionManager.sendDirect true
+param *.connectionManager.maxInterfDist 2600m
+param *.connectionManager.drawMaxIntfDist false
+param *.**.nic.mac1609_4.useServiceChannel false
+param *.**.nic.mac1609_4.txPower 80mW
+param *.**.nic.mac1609_4.bitrate 24Mbps
+param *.**.nic.phy80211p.minPowerLevel -110dBm
+param *.**.nic.phy80211p.allowTxDuringRx true
+param *.**.nic.phy80211p.useNoiseFloor true
+param *.**.nic.phy80211p.noiseFloor -98dBm
+param *.**.nic.phy80211p.decider "xmldoc(\"config.xml\")"
+param *.**.nic.phy80211p.analogueModels "xmldoc(\"config.xml\")"
+param *.**.nic.phy80211p.usePropagationDelay true
+param *.**.nic.phy80211p.antenna "xmldoc(\"antenna.xml\", \"/root/Antenna[@id='monopole']\")"
+param *.node[*].nic.phy80211p.antennaOffsetY "0 m"
+param *.node[*].nic.phy80211p.antennaOffsetZ "1.895 m"
+param *.node[*].applType "\"VehicleApp\""
+param *.node[*].appl.headerLength "80 bit"
+param *.node[*].appl.sendBeacons false
+param *.node[*].appl.dataOnSch false
+param *.node[*].appl.beaconInterval 1s
+param *.node[*].veinsmobility.x 0
+param *.node[*].veinsmobility.y 0
+param *.node[*].veinsmobility.z 0
+param *.node[*].veinsmobility.setHostSpeed false
+param *.node[*0].veinsmobility.accidentCount 0
+param *.node[*0].veinsmobility.accidentStart 73s
+param *.node[*0].veinsmobility.accidentDuration 50s
+
+vector 0 MyEthernet.node[0].veinsmobility posx ETV
+vector 1 MyEthernet.node[0].veinsmobility posy ETV
+0	8	1	30.09
+1	8	1	26.627917670243
+vector 2 MyEthernet.node[0].veinsmobility speed ETV
+vector 3 MyEthernet.node[0].veinsmobility acceleration ETV
+vector 4 MyEthernet.node[0].veinsmobility co2emission ETV
+0	82	2	32.147871402032
+0	83	3	35.50940255349
+1	82	2	26.639182567342
+1	83	3	26.657583766989
+2	82	2	2.0578714020317
+2	83	3	3.3615311514586
+3	83	3	1.3036597494269
+4	83	3	2.3318018476891
+0	133	4	40.534511868875
+0	158	5	46.947296614698
+1	133	4	26.685091481656
+1	158	5	26.72019540516
+2	133	4	5.0251093153842
+2	158	5	6.4127847458236
+3	133	4	1.6635781639256
+3	158	5	1.3876754304394
+4	133	4	3.3788120492087
+4	158	5	3.5883409052403
+0	208	6	55.959932665117
+0	233	7	67.406006933432
+0	234	8	81.059048863673
+1	208	6	26.769531052469
+1	233	7	26.832187469528
+1	234	8	26.906924944513
+2	208	6	9.0126360504189
+2	233	7	11.446074268315
+2	234	8	13.653041930241
+3	208	6	2.5998513045954
+3	233	7	2.433438217896
+3	234	8	2.2069676619256
+4	208	6	7.2593925959882
+4	233	7	8.5133369672326
+4	234	8	9.2654963635452
+0	308	9	95.265811668296
+0	309	10	110.58054448262
+0	359	11	125.7781630414
+1	308	9	26.984693516905
+1	309	10	27.068527175841
+1	359	11	27.211862124501
+2	308	9	14.206762804623
+2	309	10	15.314732814321
+2	359	11	15.198599805493
+3	308	9	0.55372087438256
+3	309	10	1.1079700096976
+3	359	11	-0.11613300882746
+4	308	9	3.9560657246578
+4	309	10	6.269953277819
+4	359	11	1.7421284495116
+0	384	12	140.71528296308
+1	384	12	27.39451059292
+2	384	12	14.938722101223
+3	384	12	-0.25987770427018
+4	384	12	1.2029971997202
+0	434	13	155.9785545687
+1	434	13	27.581147186617
+2	434	13	15.264908768722
+3	434	13	0.32618666749913
+4	434	13	3.3749594903175
+
