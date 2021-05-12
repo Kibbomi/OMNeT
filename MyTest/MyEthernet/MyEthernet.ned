@@ -34,7 +34,7 @@ import ned.DatarateChannel;
 
 network MyEthernet extends Scenario
 {
-    @display("bgb=582,449");
+    @display("bgb=2500,2500");
     types:
         channel C extends DatarateChannel
         {
@@ -42,9 +42,7 @@ network MyEthernet extends Scenario
             datarate = 100Mbps;
         }
     submodules:
-        rsu[3]: RSU_cluster {
-            @display("p=100,100");
-        }
+        rsu[3]: RSU_cluster;
 
         hostA: EdgeServer {
             @display("p=39,341");
@@ -83,14 +81,14 @@ network MyEthernet extends Scenario
     connections:
         rsu[0].ethg <--> C <--> switch1.ethg[0];
         hostA.ethg <--> C <--> switch1.ethg[1];
-        switch1.ethg[2]<--> C <--> switch2.ethg[0];
-		hostB.ethg <--> C <--> switch2.ethg[1];
-		switch2.ethg[2] <--> C <--> switch3.ethg[0];
-		rsu[1].ethg <--> C <--> switch3.ethg[1];
-		switch4.ethg[1] <--> C <--> switch3.ethg[2];
-		rsu[2].ethg <--> C <--> switch4.ethg[0];
-		hostC.ethg <--> C <--> switch4.ethg[2];
-		
+        switch1.ethg[2] <--> C <--> switch2.ethg[0];
+        hostB.ethg <--> C <--> switch2.ethg[1];
+        switch2.ethg[2] <--> C <--> switch3.ethg[0];
+        rsu[1].ethg <--> C <--> switch3.ethg[1];
+        switch4.ethg[1] <--> C <--> switch3.ethg[2];
+        rsu[2].ethg <--> C <--> switch4.ethg[0];
+        hostC.ethg <--> C <--> switch4.ethg[2];
+
 
         //rsu[0].ethg <--> C <--> etherSwitch.ethg[0];
         //rsu[1].ethg <--> C <--> etherSwitch.ethg[3];
