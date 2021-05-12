@@ -52,36 +52,47 @@ void VehicleApp::onBSM(DemoSafetyMessage* bsm)
     //자동완성에는 보이지 않음..
     EV<<"Sender's Mac address : "<< bsm->getSenderMacAddr()<<'\n';
 
-    //check condition
-    if(curConnectingRSU.rssi < BeaconRSSIValue){
+    if(bsm->getSenderMacAddr() == curConnectingRSU.RSU_ID)
+    {
+        curConnectingRSU.rssi = BeaconRSSIValue;
+        EV<<this->getParentModule()->getFullName()<<"just Updated its RSSI value\n";
+    }
+    else
+    {
+        if(curConnectingRSU.rssi < BeaconRSSIValue)
+        {
+            //if it is not first time,
+            if(curConnectingRSU.RSU_ID != -1){
+                //send disconnect message to RSU connecting to this car.
 
-        //just updating current rssi value
-        if(bsm->getSenderMacAddr() == curConnectingRSU.RSU_ID){
-            curConnectingRSU.rssi = BeaconRSSIValue;
-            EV<<this->getParentModule()->getFullName()<<"just Updated its RSSI value\n";
-            return;
+                CARDisconnectionReq* msg = new CARDisconnectionReq();
+                msg->setCarAddr(this->mac->getMACAddress());
+                msg->setName("CARDisconnectionReq");
+
+                BaseFrame1609_4* wsm = new BaseFrame1609_4();
+                wsm->setName("CARDisconnectionReq");
+                wsm->encapsulate(msg);
+                populateWSM(wsm,curConnectingRSU.RSU_ID);
+                send(wsm,lowerLayerOut);
         }
-
-        if(curConnectingRSU.RSU_ID!=-1){
-        //new connection begin!
-
-            //send CarConnectionReq
-        //send disconnect message to current RSU
-
-            //message end.
-        }
-        //SYN + ACK end
 
         curConnectingRSU.rssi = BeaconRSSIValue;
         curConnectingRSU.RSU_ID = bsm->getSenderMacAddr();
 
+        CARConnectionReq* msg = new CARConnectionReq();
+        msg->setCarAddr(this->mac->getMACAddress());
+        msg->setName("CARConnectionReq");
+
+        BaseFrame1609_4* wsm = new BaseFrame1609_4();
+        wsm->setName("CARConnectionReq");
+        wsm->encapsulate(msg);
+        populateWSM(wsm, curConnectingRSU.RSU_ID);
+        send(wsm,lowerLayerOut);
+
         EV<<this->getParentModule()->getFullName()<<"Updated its CurConnectingRSU\n";
+        }
+        //if not, nothing to do.
     }
-    //else, nothing to do.
-    //disconnect or keep current connection
-
-
-    //EV<<"Beacon Message comes from : ";
 }
 
 void VehicleApp::onWSM(BaseFrame1609_4* wsm)
@@ -119,6 +130,10 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
     else if(strcmp(pac->getName(), "CARConnectionResp") == 0){
         CARConnectionResp* msg = dynamic_cast<CARConnectionResp*>(pac);
         EV<<this->getParentModule()->getFullName()<<" received Connection ACK packet\n";
+    }
+    else if(strcmp(pac->getName(), "CARDisconnectionResp") == 0){
+        CARDisconnectionResp* msg = dynamic_cast<CARDisconnectionResp*>(pac);
+        EV<<this->getParentModule()->getFullName()<<" received Disconnection ACK packet\n";
     }
     else if(strcmp(pac->getName(), "CarCOResp") == 0){
 
@@ -192,9 +207,9 @@ void VehicleApp::handlePositionUpdate(cObject* obj)
     // member variables such as currentPosition and currentSpeed are updated in the parent class
 
     //여기서 거리가 멀어짐에 따라 RSU와 연결을 맺고 안 맺고
-    //EV<<"Speed of Car1 : " << mobility->getSpeed()<<'\n';
-    //Coord cur = mobility->getPositionAt(simTime());
-    //EV<<"location of Car1 : (" <<cur.y<<","<<cur.x<<")\n";
+    EV<<"Speed of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getSpeed()<<'\n';
+    EV<<"location of Car1 : (" <<curPosition.y<<","<<curPosition.x<<")\n";
+
 
     //compare all of knowing RSUs
     //for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter){

@@ -38,7 +38,6 @@
 #include "veins/modules/messages/DemoSafetyMessage_m.h"
 #include "veins/modules/application/traci/RSUCluster/RSUClusterApp.h"
 
-
 using namespace omnetpp;
 
 namespace veins {

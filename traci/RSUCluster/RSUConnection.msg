@@ -30,6 +30,7 @@ class noncobject Coord;
 //for Beacon Message
 class LAddress::L2Type extends void;
 
+//not used.
 packet RSUAdvertisement extends BaseFrame1609_4 
 {
     //SYN
@@ -42,12 +43,14 @@ packet RSUAdvertisement extends BaseFrame1609_4
     simtime_t	advertisementTime;
 }
 
+
+
+
 //Beacon message of RSU is SYN message.
 
 packet CARConnectionReq extends BaseFrame1609_4
 {
     //SYN + ACK
-    string CarName;
     LAddress::L2Type CarAddr;	//car ID..
 }
 

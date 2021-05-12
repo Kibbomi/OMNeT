@@ -44,8 +44,6 @@ void RSUClusterApp::initialize(int stage)
     MyDemoBaseApplLayer::initialize(stage);
 
     if(stage == 0){
-        //EV<<"RSU call this->getParentModule()->getFullName()!! : " <<this->getParentModule()->getFullName()<<'\n';   //appl
-
         //소프트웨어적으로 게이트를 찾는것. 물리적 연결은 ned에서 함.
         ethIn_ID=findGate("ethIn");
         ethOut_ID=findGate("ethOut");
@@ -58,7 +56,7 @@ void RSUClusterApp::initialize(int stage)
         llcSocket.open(-1, localSap);
 
         myOptimalES.f = 0;
-        EV<<"RSU is initialized!!!!!"<<std::endl;
+
     }
     else if (stage == 1)
     {
@@ -68,7 +66,6 @@ void RSUClusterApp::initialize(int stage)
         //ERS 주석풀면 바로 시작.
         EV<<"RSU call BeginERS!!\n";
         BeginERS(1, 10);
-
 
 
         this->beaconInterval+=uniform(0.1,0.5);
@@ -154,11 +151,11 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
         CARConnectionReq* msg = dynamic_cast<CARConnectionReq*>(pac);
         inet::Format_Car item;
-        item.CarName = msg->getCarName();
         item.CarId = msg->getCarAddr();
 
-        if(Cars.count(item.CarName) == 0)
-            Cars.insert(std::make_pair(item.CarName,item));
+        if(Cars.count(item.CarId) == 0)
+            Cars.insert(item.CarId);
+
 
         CARConnectionResp* resp = new CARConnectionResp();
         resp->setName("CARConnectionResp");
@@ -170,7 +167,36 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         wsm->setName("CARConnectionResp");
         populateWSM(wsm,item.CarId);
         send(wsm,lowerLayerOut);
+
+        EV<<this->getParentModule()->getFullName()<<"Add a car\n";
+        for(auto iter = Cars.begin(); iter!=Cars.end(); ++iter)
+            EV<<"Now connected Cars : "<<*iter<<'\n';
     }
+    else if(strcmp(pac->getName(),"CARDisconnectionReq")==0)
+        {
+            EV<<this->getParentModule()->getFullName()<<"received CARDisconnectionReq Message!\n";
+
+            CARDisconnectionReq* req = dynamic_cast<CARDisconnectionReq*>(pac);
+
+            if(Cars.count(req->getCarAddr()) == 1)
+                Cars.erase(req->getCarAddr());
+
+
+            CARDisconnectionResp* resp = new CARDisconnectionResp();
+            resp->setName("CARDisconnectionResp");
+            resp->setRSUAddr(this->mac->getMACAddress());
+
+            BaseFrame1609_4* wsm = new BaseFrame1609_4();
+            wsm->encapsulate(resp);
+            wsm->setName("CARDisconnectionResp");
+            populateWSM(wsm,req->getCarAddr());
+            send(wsm,lowerLayerOut);
+
+            EV<<this->getParentModule()->getFullName()<<"Delete the Car\n";
+            for(auto iter = Cars.begin(); iter!=Cars.end(); ++iter)
+                EV<<"Now connected Cars : "<<*iter<<'\n';
+
+        }
     //밑에는 보고 지울 예정 한번 보기.
     if(pac->getKind()==Msg_MsgOffloading){
 

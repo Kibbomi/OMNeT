@@ -39,8 +39,9 @@
 namespace veins {
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:34</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:35</tt> by nedtool.
  * <pre>
+ * //not used.
  * packet RSUAdvertisement extends BaseFrame1609_4
  * {
  *     //SYN
@@ -52,6 +53,9 @@ namespace veins {
  *     //Time
  *     simtime_t advertisementTime;
  * }
+ * 
+ * 
+ * 
  * 
  * //Beacon message of RSU is SYN message.
  * </pre>
@@ -99,12 +103,11 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const RSUAdvertisement& obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, RSUAdvertisement& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:48</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:52</tt> by nedtool.
  * <pre>
  * packet CARConnectionReq extends BaseFrame1609_4
  * {
  *     //SYN + ACK
- *     string CarName;
  *     LAddress::L2Type CarAddr;	//car ID..
  * }
  * </pre>
@@ -112,7 +115,6 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, RSUAdvertisement& obj) {o
 class VEINS_API CARConnectionReq : public ::veins::BaseFrame1609_4
 {
   protected:
-    ::omnetpp::opp_string CarName;
     LAddress::L2Type CarAddr;
 
   private:
@@ -132,8 +134,6 @@ class VEINS_API CARConnectionReq : public ::veins::BaseFrame1609_4
     virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
 
     // field getter/setter methods
-    virtual const char * getCarName() const;
-    virtual void setCarName(const char * CarName);
     virtual LAddress::L2Type& getCarAddr();
     virtual const LAddress::L2Type& getCarAddr() const {return const_cast<CARConnectionReq*>(this)->getCarAddr();}
     virtual void setCarAddr(const LAddress::L2Type& CarAddr);
@@ -143,7 +143,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARConnectionReq& obj
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARConnectionReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:55</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:58</tt> by nedtool.
  * <pre>
  * packet CARConnectionResp extends BaseFrame1609_4
  * {
@@ -187,7 +187,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARConnectionResp& ob
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARConnectionResp& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:62</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:65</tt> by nedtool.
  * <pre>
  * packet CARDisconnectionReq extends BaseFrame1609_4
  * {
@@ -231,7 +231,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARDisconnectionReq& 
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARDisconnectionReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:69</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:72</tt> by nedtool.
  * <pre>
  * packet CARDisconnectionResp extends BaseFrame1609_4
  * {
@@ -275,7 +275,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARDisconnectionResp&
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARDisconnectionResp& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:76</tt> by nedtool.
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/RSUConnection.msg:79</tt> by nedtool.
  * <pre>
  * packet RSUBeacon extends BaseFrame1609_4
  * {

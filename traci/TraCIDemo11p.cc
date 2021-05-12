@@ -91,6 +91,13 @@ void TraCIDemo11p::handlePositionUpdate(cObject* obj)
 {
     DemoBaseApplLayer::handlePositionUpdate(obj);
 
+    //Ãß°¡
+    if(strcmp("node[0]",this->getParentModule()->getFullName()) == 0)
+    {
+        EV<<"node[0] : ("<<curPosition.y<<", "<<curPosition.x<<")\n";
+    }
+    //
+
     // stopped for for at least 10s?
     if (mobility->getSpeed() < 1) {
         if (simTime() - lastDroveAt >= 10 && sentMessage == false) {
