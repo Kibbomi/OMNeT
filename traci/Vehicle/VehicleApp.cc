@@ -29,7 +29,7 @@ void VehicleApp::initialize(int stage)
         //trigger
         //주석 풀면 됨.. 오프로딩 이벤트 시작.
         cMessage* self_msg = new cMessage("",Self_COReq);
-        scheduleAt(simTime() + 2, self_msg);
+        scheduleAt(simTime() + 4, self_msg);
     }
 }
 
@@ -165,7 +165,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         Coord curLocation = mobility->getPositionAt(simTime());
         msg->setX(curLocation.x);
         msg->setY(curLocation.y);
-        //msg->setDirection(curLocation.)
+        msg->setRad(mobility->getHeading().getRad());
         msg->setSpeed(mobility->getSpeed());
         msg->setCarName(this->getParentModule()->getFullName());
 
@@ -173,7 +173,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //custom value
         msg->setConstraint(2.0);
-        msg->setRequiredCycle(7);  //7G cycle
+        msg->setRequiredCycle(17);  //15G cycle
         msg->setTaskCode(100);  //byte;
 
         msg->setReqTime(simTime());
@@ -191,7 +191,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //for next send
         cMessage* selfMsg =new cMessage("",Self_COReq);
-        scheduleAt(simTime() + uniform(2.01, 3.2),selfMsg);
+        scheduleAt(simTime() + uniform(5.01, 5.2),selfMsg);
     }
     else
     {
@@ -207,8 +207,9 @@ void VehicleApp::handlePositionUpdate(cObject* obj)
     // member variables such as currentPosition and currentSpeed are updated in the parent class
 
     //여기서 거리가 멀어짐에 따라 RSU와 연결을 맺고 안 맺고
-    EV<<"Speed of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getSpeed()<<'\n';
-    EV<<"location of Car1 : (" <<curPosition.y<<","<<curPosition.x<<")\n";
+    //EV<<"Speed of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getSpeed()<<'\n';
+   // EV<<"Heading of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getHeading()<<'\n';
+    //EV<<"location of Car1 : (" <<curPosition.y<<","<<curPosition.x<<")\n";
 
 
     //compare all of knowing RSUs

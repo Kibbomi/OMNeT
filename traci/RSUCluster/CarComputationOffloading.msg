@@ -33,7 +33,7 @@ packet CarCOReq extends BaseFrame1609_4
     //Car information
     double x;
     double y;
-    int direction;
+    double rad;	//direction
     double speed;
     string carName;
     LAddress::L2Type CarAddr;

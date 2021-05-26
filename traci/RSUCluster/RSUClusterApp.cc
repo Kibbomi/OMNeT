@@ -64,8 +64,8 @@ void RSUClusterApp::initialize(int stage)
 
         //사전에  ES를 적어도 1개 찾아놓을 것.
         //ERS 주석풀면 바로 시작.
-        EV<<"RSU call BeginERS!!\n";
-        BeginERS(1, 10);
+        //EV<<"RSU call BeginERS!!\n";
+        BeginERS(TTL_init, TTL_threshold);
 
 
         this->beaconInterval+=uniform(0.1,0.5);
@@ -112,6 +112,51 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         outPayload->setCarAddr(msg->getCarAddr());
         outPayload->setReqTime(msg->getReqTime());
 
+        //이동성 반영한 RSU
+        //오른쪽이면,
+        if(-1 < msg->getRad() && msg->getRad() < 1)
+        {
+            double expectX = msg->getX() + msg->getSpeed() * msg->getRequiredCycle()/myOptimalES.f;
+            double expectY = msg->getY();
+
+            //자기 자신
+            double dist = (expectX - curPosition.x)*(expectX - curPosition.x) + (expectY - curPosition.y)*(expectY - curPosition.y);
+            inet::MacAddress RSUAddr;
+
+            for(auto iter = RSUs_right.begin(); iter!=RSUs_right.end(); ++iter)
+            {
+                double candi_dist = (iter->second.x - expectX)*(iter->second.x - expectX) + (iter->second.y - expectY)*(iter->second.y - expectY);
+
+                if(dist > candi_dist)
+                {
+                    dist = candi_dist;
+                    RSUAddr = iter->second.addr;
+                }
+            }
+            outPayload->setToSendRSU(RSUAddr);
+        }
+        //왼쪽이면,
+        else
+        {
+            double expectX = msg->getX() - msg->getSpeed() * msg->getRequiredCycle()/myOptimalES.f;
+            double expectY = msg->getY();
+
+            double dist = (expectX - curPosition.x)*(expectX - curPosition.x) + (expectY - curPosition.y)*(expectY - curPosition.y);
+            inet::MacAddress RSUAddr;
+
+            for(auto iter = RSUs_left.begin(); iter!=RSUs_left.end(); ++iter)
+            {
+                double candi_dist = (iter->second.x - expectX)*(iter->second.x - expectX) + (iter->second.y - expectY)*(iter->second.y - expectY);
+
+                if(dist > candi_dist)
+                {
+                    dist = candi_dist;
+                    RSUAddr = iter->second.addr;
+                }
+            }
+            outPayload->setToSendRSU(RSUAddr);
+        }
+
         outPacket->insertAtBack(outPayload);
 
         outPacket->addTag<inet::MacAddressReq>()->setDestAddress(myOptimalES.addr);
@@ -123,26 +168,6 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         llcSocket.send(outPacket);
 
         EV<<this->getParentModule()->getFullName()<<" send CO req to EN\n";
-
-
-
-
-        //이거는 나중에 Ethernet으로 받으면 보내면 됨. 지금은 잠깐 테스트용
-        /*CarCOResp* resp = new CarCOResp();
-
-        resp->setName("CarCOResp");
-
-        resp->setCOResult(9999);
-        resp->setTaskID(msg->getTaskID());
-
-        BaseFrame1609_4* wsm = new BaseFrame1609_4();
-        wsm->encapsulate(resp);
-        wsm->setName("CarCOResp");
-        //populateWSM(wsm);
-        populateWSM(wsm,msg->getCarAddr());
-        send(wsm,lowerLayerOut);*/
-
-
 
     }
     else if(strcmp(pac->getName(),"CARConnectionReq")==0)
@@ -410,8 +435,8 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
         //RSU information
         outPayload->setChunkLength(inet::units::values::B(21));
-        outPayload->setY(0);    //설정하기 RSU에 맞게
-        outPayload->setX(0);
+        outPayload->setY(this->curPosition.y);    //설정하기 RSU에 맞게
+        outPayload->setX(this->curPosition.x);
         outPayload->setCoverage(10);
         outPayload->setInfo(inet::OnlyRSU);
 
@@ -467,12 +492,11 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
     }
     else if(strcmp(msg->getName(),"ERSResp") == 0)
     {
-        //schedule되어있다면 삭제할 것. 충돌 등으로 폐기되는 것 이외로, TTL범위 이내에 ES가 없어서 안 오는 것으로 가정.
-        //cancelAndDelete하면 우선, 1개 새로운것을 찾으면 멈추도록 하는 것임.
-        if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled()){
-            cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
-            self_ptr_ERSReq = nullptr;
-        }
+        if(RSUs_left.size () != 0 && RSUs_right.size() != 0)
+            if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled() ){
+                cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
+                self_ptr_ERSReq = nullptr;
+            }
 
         const auto& resp = msg->peekAtFront<inet::ERSResp>();
 
@@ -522,6 +546,37 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             //check and insert to map
             std::string key_string = item.addr.str();
 
+
+            if(this->curPosition.x > item.x)
+            {
+                //left RSU
+                if(RSUs_left.count(key_string) == 0){
+                    RSUs_left.insert(std::make_pair(key_string,item));
+
+                    EV<< this->getParentModule()->getFullName()<<" updates its map table(left) \n";
+                    EV<< "RSUs_left Table\n";
+                    for(auto iter = RSUs_left.begin(); iter!=RSUs_left.end(); ++iter)
+                        EV<<"MAC : "<<(*iter).first<<'\n';
+                }
+                else
+                    EV<<"RSU : This RSU already exist\n";
+            }
+            else
+            {
+                //right RSU
+                if(RSUs_right.count(key_string) == 0){
+                    RSUs_right.insert(std::make_pair(key_string,item));
+
+                    EV<< this->getParentModule()->getFullName()<<" updates its map table(right) \n";
+                    EV<< "RSUs_right Table\n";
+                    for(auto iter = RSUs_right.begin(); iter!=RSUs_right.end(); ++iter)
+                        EV<<"MAC : "<<(*iter).first<<'\n';
+                }
+                else
+                    EV<<"RSU : This RSU already exist\n";
+            }
+
+            //backup
             if(RSUs.count(key_string) == 0){
                 RSUs.insert(std::make_pair(key_string,item));
 
@@ -554,12 +609,15 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             EV<<"MAC : "<<(*iter).second.addr<<'\n';
             EV<<"f : "<<(*iter).second.f<<'\n';
         }
+        FindOptimalES();
     }
     else if(strcmp(msg->getName(),"ENCOResp") == 0)
     {
         const auto& resp = msg->peekAtFront<inet::ENCOResp>();
         if (resp == nullptr)
             throw cRuntimeError("data type error: not an ENCOResp arrived in packet %s", msg->str().c_str());
+
+        //자신과 연결된 차량이 없다면, 진행방향의 RSU에게 전송해야함.
 
         CarCOResp* msg = new CarCOResp("CarCOResp");
         msg->setTaskID(resp->getTaskID());
@@ -583,6 +641,16 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         inet::MacAddress srcAddress = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
 
         ESs[srcAddress.str()].isAvailable = isAvailable;
+
+        EV<<"Availability Change\n";
+        EV<<srcAddress.str()<<'\n';
+        EV<<ESs[srcAddress.str()].isAvailable<<'\n';
+
+        EV<<"My optimal\n";
+        EV<<myOptimalES.addr<<'\n';
+        EV<<myOptimalES.f<<'\n';
+
+        //True->false, false->True모두니까 그냥 다 해야함.
         FindOptimalES();
     }
 }
@@ -602,6 +670,9 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     TTL_init = init;
     TTL_threshold = threshold;
 
+    if(TTL_threshold <= TTL_init)
+        return;
+
     //Ethernet Message Type
     inet::Packet *datapacket = new inet::Packet("ERSReq",inet::IEEE802CTRL_DATA);
 
@@ -610,6 +681,7 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     data->setChunkLength(inet::units::values::B(64));  //unsigned int, unsigned char
     data->setTTL(init);
     data->setFindTarget(inet::RSU_ES);
+    //data->setFindTarget(findWhat);
 
     datapacket->insertAtBack(data);
 
@@ -634,12 +706,11 @@ void RSUClusterApp::BeginERS(int init, int threshold){
 
 void RSUClusterApp::FindOptimalES(){
     EV<<"RSU call FindOptimalES\n";
+    //myOptimal 갱신이 필요한 것.
     inet::Format_EdgeServer OptimalES;
     OptimalES.f = 0;    //기본생성자가 실행이 안 됨.   명시적 초기화.
 
     for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
-        EV<<"(*iter).second.isAvailable " << (*iter).second.isAvailable<<'\n';
-        EV<<"(*iter).second.f " << (*iter).second.f<<'\n';
         if((*iter).second.isAvailable == true && OptimalES.f < (*iter).second.f)
         {
             OptimalES.addr=(*iter).second.addr;
@@ -648,6 +719,18 @@ void RSUClusterApp::FindOptimalES(){
         }
     }
 
+    for(auto iter = OptimalESs.begin(); iter!=OptimalESs.end(); ++iter)
+    {
+        if(iter->second.isAvailable && OptimalES.f < iter->second.f)
+        {
+
+            OptimalES.addr=(*iter).second.addr;
+            OptimalES.f = (*iter).second.f;
+            OptimalES.capacity = (*iter).second.capacity;
+        }
+    }
+
+
     if(OptimalES.f == 0){
         //there is not any ES
         //so, begin ERS.
@@ -655,8 +738,14 @@ void RSUClusterApp::FindOptimalES(){
             BeginERS(TTL_init + TTL_increasement, TTL_threshold);
         else
             EV_INFO << "RSUClusterApp : TTL value exceeds the TTL_threshold value. \n";
+
+        //새로 갱신해야함.
+        //ERSresp측에서 findOptimalES를 실행해야할수도.
     }
-    else if(myOptimalES.f < OptimalES.f){
+    else {
+        if(myOptimalES.addr == OptimalES.addr)
+            return;
+
         myOptimalES = OptimalES;
 
         for(auto iter=RSUsMaster.begin(); iter!= RSUsMaster.end(); ++iter){
@@ -682,10 +771,14 @@ void RSUClusterApp::FindOptimalES(){
         }
 
     }
-    else {
+   /* else {
         EV<<"there no reason to send Optimal packet\n";
         //nothing..
-    }
+    }*/
+
+    EV<<"Current Optimal ES is : \n";
+    EV<<"addr : "<<myOptimalES.addr<<'\n';
+    EV<<"f :" <<myOptimalES.f<<'\n';
 
     return;
 }

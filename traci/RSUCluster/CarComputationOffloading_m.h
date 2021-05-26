@@ -45,7 +45,7 @@ namespace veins {
  *     //Car information
  *     double x;
  *     double y;
- *     int direction;
+ *     double rad;	//direction
  *     double speed;
  *     string carName;
  *     LAddress::L2Type CarAddr;
@@ -67,7 +67,7 @@ class VEINS_API CarCOReq : public ::veins::BaseFrame1609_4
   protected:
     double x;
     double y;
-    int direction;
+    double rad;
     double speed;
     ::omnetpp::opp_string carName;
     LAddress::L2Type CarAddr;
@@ -98,8 +98,8 @@ class VEINS_API CarCOReq : public ::veins::BaseFrame1609_4
     virtual void setX(double x);
     virtual double getY() const;
     virtual void setY(double y);
-    virtual int getDirection() const;
-    virtual void setDirection(int direction);
+    virtual double getRad() const;
+    virtual void setRad(double rad);
     virtual double getSpeed() const;
     virtual void setSpeed(double speed);
     virtual const char * getCarName() const;

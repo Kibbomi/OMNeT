@@ -184,7 +184,7 @@ CarCOReq::CarCOReq(const char *name, short kind) : ::veins::BaseFrame1609_4(name
 {
     this->x = 0;
     this->y = 0;
-    this->direction = 0;
+    this->rad = 0;
     this->speed = 0;
     this->taskID = 0;
     this->constraint = 0;
@@ -214,7 +214,7 @@ void CarCOReq::copy(const CarCOReq& other)
 {
     this->x = other.x;
     this->y = other.y;
-    this->direction = other.direction;
+    this->rad = other.rad;
     this->speed = other.speed;
     this->carName = other.carName;
     this->CarAddr = other.CarAddr;
@@ -230,7 +230,7 @@ void CarCOReq::parsimPack(omnetpp::cCommBuffer *b) const
     ::veins::BaseFrame1609_4::parsimPack(b);
     doParsimPacking(b,this->x);
     doParsimPacking(b,this->y);
-    doParsimPacking(b,this->direction);
+    doParsimPacking(b,this->rad);
     doParsimPacking(b,this->speed);
     doParsimPacking(b,this->carName);
     doParsimPacking(b,this->CarAddr);
@@ -246,7 +246,7 @@ void CarCOReq::parsimUnpack(omnetpp::cCommBuffer *b)
     ::veins::BaseFrame1609_4::parsimUnpack(b);
     doParsimUnpacking(b,this->x);
     doParsimUnpacking(b,this->y);
-    doParsimUnpacking(b,this->direction);
+    doParsimUnpacking(b,this->rad);
     doParsimUnpacking(b,this->speed);
     doParsimUnpacking(b,this->carName);
     doParsimUnpacking(b,this->CarAddr);
@@ -277,14 +277,14 @@ void CarCOReq::setY(double y)
     this->y = y;
 }
 
-int CarCOReq::getDirection() const
+double CarCOReq::getRad() const
 {
-    return this->direction;
+    return this->rad;
 }
 
-void CarCOReq::setDirection(int direction)
+void CarCOReq::setRad(double rad)
 {
-    this->direction = direction;
+    this->rad = rad;
 }
 
 double CarCOReq::getSpeed() const
@@ -470,7 +470,7 @@ const char *CarCOReqDescriptor::getFieldName(int field) const
     static const char *fieldNames[] = {
         "x",
         "y",
-        "direction",
+        "rad",
         "speed",
         "carName",
         "CarAddr",
@@ -489,7 +489,7 @@ int CarCOReqDescriptor::findField(const char *fieldName) const
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='x' && strcmp(fieldName, "x")==0) return base+0;
     if (fieldName[0]=='y' && strcmp(fieldName, "y")==0) return base+1;
-    if (fieldName[0]=='d' && strcmp(fieldName, "direction")==0) return base+2;
+    if (fieldName[0]=='r' && strcmp(fieldName, "rad")==0) return base+2;
     if (fieldName[0]=='s' && strcmp(fieldName, "speed")==0) return base+3;
     if (fieldName[0]=='c' && strcmp(fieldName, "carName")==0) return base+4;
     if (fieldName[0]=='C' && strcmp(fieldName, "CarAddr")==0) return base+5;
@@ -512,7 +512,7 @@ const char *CarCOReqDescriptor::getFieldTypeString(int field) const
     static const char *fieldTypeStrings[] = {
         "double",
         "double",
-        "int",
+        "double",
         "double",
         "string",
         "LAddress::L2Type",
@@ -591,7 +591,7 @@ std::string CarCOReqDescriptor::getFieldValueAsString(void *object, int field, i
     switch (field) {
         case 0: return double2string(pp->getX());
         case 1: return double2string(pp->getY());
-        case 2: return long2string(pp->getDirection());
+        case 2: return double2string(pp->getRad());
         case 3: return double2string(pp->getSpeed());
         case 4: return oppstring2string(pp->getCarName());
         case 5: {std::stringstream out; out << pp->getCarAddr(); return out.str();}
@@ -616,7 +616,7 @@ bool CarCOReqDescriptor::setFieldValueAsString(void *object, int field, int i, c
     switch (field) {
         case 0: pp->setX(string2double(value)); return true;
         case 1: pp->setY(string2double(value)); return true;
-        case 2: pp->setDirection(string2long(value)); return true;
+        case 2: pp->setRad(string2double(value)); return true;
         case 3: pp->setSpeed(string2double(value)); return true;
         case 4: pp->setCarName((value)); return true;
         case 6: pp->setTaskID(string2long(value)); return true;
