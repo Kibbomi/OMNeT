@@ -237,6 +237,7 @@ void ENCOReq::copy(const ENCOReq& other)
     this->requiredCycle = other.requiredCycle;
     this->taskCode = other.taskCode;
     this->CarAddr = other.CarAddr;
+    this->toSendRSU = other.toSendRSU;
     this->reqTime = other.reqTime;
 }
 
@@ -248,6 +249,7 @@ void ENCOReq::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->requiredCycle);
     doParsimPacking(b,this->taskCode);
     doParsimPacking(b,this->CarAddr);
+    doParsimPacking(b,this->toSendRSU);
     doParsimPacking(b,this->reqTime);
 }
 
@@ -259,6 +261,7 @@ void ENCOReq::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->requiredCycle);
     doParsimUnpacking(b,this->taskCode);
     doParsimUnpacking(b,this->CarAddr);
+    doParsimUnpacking(b,this->toSendRSU);
     doParsimUnpacking(b,this->reqTime);
 }
 
@@ -317,6 +320,17 @@ void ENCOReq::setCarAddr(long CarAddr)
     this->CarAddr = CarAddr;
 }
 
+const MacAddress& ENCOReq::getToSendRSU() const
+{
+    return this->toSendRSU;
+}
+
+void ENCOReq::setToSendRSU(const MacAddress& toSendRSU)
+{
+    handleChange();
+    this->toSendRSU = toSendRSU;
+}
+
 omnetpp::simtime_t ENCOReq::getReqTime() const
 {
     return this->reqTime;
@@ -338,6 +352,7 @@ class ENCOReqDescriptor : public omnetpp::cClassDescriptor
         FIELD_requiredCycle,
         FIELD_taskCode,
         FIELD_CarAddr,
+        FIELD_toSendRSU,
         FIELD_reqTime,
     };
   public:
@@ -401,7 +416,7 @@ const char *ENCOReqDescriptor::getProperty(const char *propertyname) const
 int ENCOReqDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 6+basedesc->getFieldCount() : 6;
+    return basedesc ? 7+basedesc->getFieldCount() : 7;
 }
 
 unsigned int ENCOReqDescriptor::getFieldTypeFlags(int field) const
@@ -418,9 +433,10 @@ unsigned int ENCOReqDescriptor::getFieldTypeFlags(int field) const
         FD_ISEDITABLE,    // FIELD_requiredCycle
         FD_ISEDITABLE,    // FIELD_taskCode
         FD_ISEDITABLE,    // FIELD_CarAddr
+        0,    // FIELD_toSendRSU
         0,    // FIELD_reqTime
     };
-    return (field >= 0 && field < 6) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 7) ? fieldTypeFlags[field] : 0;
 }
 
 const char *ENCOReqDescriptor::getFieldName(int field) const
@@ -437,9 +453,10 @@ const char *ENCOReqDescriptor::getFieldName(int field) const
         "requiredCycle",
         "taskCode",
         "CarAddr",
+        "toSendRSU",
         "reqTime",
     };
-    return (field >= 0 && field < 6) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 7) ? fieldNames[field] : nullptr;
 }
 
 int ENCOReqDescriptor::findField(const char *fieldName) const
@@ -451,7 +468,8 @@ int ENCOReqDescriptor::findField(const char *fieldName) const
     if (fieldName[0] == 'r' && strcmp(fieldName, "requiredCycle") == 0) return base+2;
     if (fieldName[0] == 't' && strcmp(fieldName, "taskCode") == 0) return base+3;
     if (fieldName[0] == 'C' && strcmp(fieldName, "CarAddr") == 0) return base+4;
-    if (fieldName[0] == 'r' && strcmp(fieldName, "reqTime") == 0) return base+5;
+    if (fieldName[0] == 't' && strcmp(fieldName, "toSendRSU") == 0) return base+5;
+    if (fieldName[0] == 'r' && strcmp(fieldName, "reqTime") == 0) return base+6;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -469,9 +487,10 @@ const char *ENCOReqDescriptor::getFieldTypeString(int field) const
         "int",    // FIELD_requiredCycle
         "int",    // FIELD_taskCode
         "long",    // FIELD_CarAddr
+        "inet::MacAddress",    // FIELD_toSendRSU
         "omnetpp::simtime_t",    // FIELD_reqTime
     };
-    return (field >= 0 && field < 6) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 7) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **ENCOReqDescriptor::getFieldPropertyNames(int field) const
@@ -543,6 +562,7 @@ std::string ENCOReqDescriptor::getFieldValueAsString(void *object, int field, in
         case FIELD_requiredCycle: return long2string(pp->getRequiredCycle());
         case FIELD_taskCode: return long2string(pp->getTaskCode());
         case FIELD_CarAddr: return long2string(pp->getCarAddr());
+        case FIELD_toSendRSU: return pp->getToSendRSU().str();
         case FIELD_reqTime: return simtime2string(pp->getReqTime());
         default: return "";
     }
@@ -590,6 +610,7 @@ void *ENCOReqDescriptor::getFieldStructValuePointer(void *object, int field, int
     }
     ENCOReq *pp = (ENCOReq *)object; (void)pp;
     switch (field) {
+        case FIELD_toSendRSU: return toVoidPtr(&pp->getToSendRSU()); break;
         default: return nullptr;
     }
 }

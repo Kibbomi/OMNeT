@@ -57,6 +57,7 @@ namespace inet {
  *     int taskCode;	//필요 없을 것 같음.Code는..	이미 시간에 반영..
  * 
  *     long CarAddr;	//MacAddress임.
+ *     MacAddress toSendRSU;
  *     simtime_t reqTime;
  * }
  * </pre>
@@ -69,6 +70,7 @@ class INET_API ENCOReq : public ::inet::FieldsChunk
     int requiredCycle = 0;
     int taskCode = 0;
     long CarAddr = 0;
+    MacAddress toSendRSU;
     omnetpp::simtime_t reqTime = SIMTIME_ZERO;
 
   private:
@@ -98,6 +100,9 @@ class INET_API ENCOReq : public ::inet::FieldsChunk
     virtual void setTaskCode(int taskCode);
     virtual long getCarAddr() const;
     virtual void setCarAddr(long CarAddr);
+    virtual const MacAddress& getToSendRSU() const;
+    virtual MacAddress& getToSendRSUForUpdate() { handleChange();return const_cast<MacAddress&>(const_cast<ENCOReq*>(this)->getToSendRSU());}
+    virtual void setToSendRSU(const MacAddress& toSendRSU);
     virtual omnetpp::simtime_t getReqTime() const;
     virtual void setReqTime(omnetpp::simtime_t reqTime);
 };
@@ -106,7 +111,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ENCOReq& obj) {obj.pa
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:36</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:37</tt> by nedtool.
  * <pre>
  * class ENCOResp extends FieldsChunk
  * {
@@ -152,7 +157,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const ENCOResp& obj) {obj.p
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOResp& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:43</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:44</tt> by nedtool.
  * <pre>
  * class OptimalESInfo extends FieldsChunk
  * {
@@ -200,7 +205,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const OptimalESInfo& obj) {
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, OptimalESInfo& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:50</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:51</tt> by nedtool.
  * <pre>
  * class AvailabilityInfo extends FieldsChunk
  * {

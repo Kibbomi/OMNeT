@@ -29,6 +29,7 @@ class ENCOReq extends FieldsChunk
    int taskCode;	//필요 없을 것 같음.Code는..	이미 시간에 반영..
    
    long CarAddr;	//MacAddress임.
+   MacAddress toSendRSU;
    simtime_t reqTime;
 }
 

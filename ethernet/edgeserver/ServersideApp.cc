@@ -48,7 +48,7 @@ void ServersideApp::initialize(int stage)
         llcSocket.setOutputGate(gate("out"));
         llcSocket.setCallback(this);
 
-        f = (int)ceil(uniform(1,5));
+        f = (int)ceil(uniform(1,3));
         capacity = 10;
         isAvailable = true;
         //capacity / f is limit.
@@ -234,7 +234,14 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
 
         emit(packetReceivedSignal, msg);
 
-        MacAddress srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
+        MacAddress srcAddr;
+        if(req->getToSendRSU()== MacAddress::UNSPECIFIED_ADDRESS)
+            srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
+        else
+            srcAddr = req->getToSendRSU();
+
+        EV<<"Expected RSU : "<<srcAddr.str()<<'\n';
+
         int srcSap = msg->getTag<Ieee802SapInd>()->getSsap();
 
         //Save Car EN information.
