@@ -143,7 +143,19 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
         EV<<"Car1 received "<<msg->getTaskID() <<" CO Resp\n";
         finishedTask[msg->getTaskID()]=true;
     }
+    else if(strcmp(pac->getName(), "RSUCOLevel") == 0){
+        RSUCOLevel* msg = dynamic_cast<RSUCOLevel*>(pac);
+        EV<<this->getParentModule()->getFullName()<<" received RSUCOLevel packet\n";
 
+        if(msg->getRSUAddr() == curConnectingRSU.RSU_ID)
+        {
+            curConnectingRSU.COLevel = msg->getCOLevel();
+        }
+        else
+        {
+            EV<<"Discard RSUCOLevel Packet.\n";
+        }
+    }
     return;
 }
 
@@ -159,6 +171,16 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
     // it is important to call the DemoBaseApplLayer function for BSM and WSM transmission
 
     if(msg->getKind() == Self_COReq ){
+
+        if(curConnectingRSU.COLevel == false)
+        {
+            cMessage* selfMsg =new cMessage("",Self_COReq);
+            scheduleAt(simTime() + uniform(5.01, 5.2),selfMsg);
+
+            EV<<this->getParentModule()->getFullName()<<" can't send CO Msg, current connected RSU is not available!\n";
+            return ;
+        }
+
 
         CarCOReq* msg = new CarCOReq();
 

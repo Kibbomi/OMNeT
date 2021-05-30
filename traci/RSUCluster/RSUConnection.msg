@@ -58,7 +58,7 @@ packet CARConnectionResp extends BaseFrame1609_4
 {
     //ACK
     LAddress::L2Type RSUAddr;
-    bool success;
+    bool COLevel;
 }
 
 packet CARDisconnectionReq extends BaseFrame1609_4

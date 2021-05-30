@@ -149,7 +149,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CARConnectionReq& obj) {o
  * {
  *     //ACK
  *     LAddress::L2Type RSUAddr;
- *     bool success;
+ *     bool COLevel;
  * }
  * </pre>
  */
@@ -157,7 +157,7 @@ class VEINS_API CARConnectionResp : public ::veins::BaseFrame1609_4
 {
   protected:
     LAddress::L2Type RSUAddr;
-    bool success;
+    bool COLevel;
 
   private:
     void copy(const CARConnectionResp& other);
@@ -179,8 +179,8 @@ class VEINS_API CARConnectionResp : public ::veins::BaseFrame1609_4
     virtual LAddress::L2Type& getRSUAddr();
     virtual const LAddress::L2Type& getRSUAddr() const {return const_cast<CARConnectionResp*>(this)->getRSUAddr();}
     virtual void setRSUAddr(const LAddress::L2Type& RSUAddr);
-    virtual bool getSuccess() const;
-    virtual void setSuccess(bool success);
+    virtual bool getCOLevel() const;
+    virtual void setCOLevel(bool COLevel);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const CARConnectionResp& obj) {obj.parsimPack(b);}

@@ -957,5 +957,305 @@ void *CarCORespDescriptor::getFieldStructValuePointer(void *object, int field, i
     }
 }
 
+Register_Class(RSUCOLevel)
+
+RSUCOLevel::RSUCOLevel(const char *name, short kind) : ::veins::BaseFrame1609_4(name,kind)
+{
+    this->COLevel = false;
+}
+
+RSUCOLevel::RSUCOLevel(const RSUCOLevel& other) : ::veins::BaseFrame1609_4(other)
+{
+    copy(other);
+}
+
+RSUCOLevel::~RSUCOLevel()
+{
+}
+
+RSUCOLevel& RSUCOLevel::operator=(const RSUCOLevel& other)
+{
+    if (this==&other) return *this;
+    ::veins::BaseFrame1609_4::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void RSUCOLevel::copy(const RSUCOLevel& other)
+{
+    this->RSUAddr = other.RSUAddr;
+    this->COLevel = other.COLevel;
+}
+
+void RSUCOLevel::parsimPack(omnetpp::cCommBuffer *b) const
+{
+    ::veins::BaseFrame1609_4::parsimPack(b);
+    doParsimPacking(b,this->RSUAddr);
+    doParsimPacking(b,this->COLevel);
+}
+
+void RSUCOLevel::parsimUnpack(omnetpp::cCommBuffer *b)
+{
+    ::veins::BaseFrame1609_4::parsimUnpack(b);
+    doParsimUnpacking(b,this->RSUAddr);
+    doParsimUnpacking(b,this->COLevel);
+}
+
+LAddress::L2Type& RSUCOLevel::getRSUAddr()
+{
+    return this->RSUAddr;
+}
+
+void RSUCOLevel::setRSUAddr(const LAddress::L2Type& RSUAddr)
+{
+    this->RSUAddr = RSUAddr;
+}
+
+bool RSUCOLevel::getCOLevel() const
+{
+    return this->COLevel;
+}
+
+void RSUCOLevel::setCOLevel(bool COLevel)
+{
+    this->COLevel = COLevel;
+}
+
+class RSUCOLevelDescriptor : public omnetpp::cClassDescriptor
+{
+  private:
+    mutable const char **propertynames;
+  public:
+    RSUCOLevelDescriptor();
+    virtual ~RSUCOLevelDescriptor();
+
+    virtual bool doesSupport(omnetpp::cObject *obj) const override;
+    virtual const char **getPropertyNames() const override;
+    virtual const char *getProperty(const char *propertyname) const override;
+    virtual int getFieldCount() const override;
+    virtual const char *getFieldName(int field) const override;
+    virtual int findField(const char *fieldName) const override;
+    virtual unsigned int getFieldTypeFlags(int field) const override;
+    virtual const char *getFieldTypeString(int field) const override;
+    virtual const char **getFieldPropertyNames(int field) const override;
+    virtual const char *getFieldProperty(int field, const char *propertyname) const override;
+    virtual int getFieldArraySize(void *object, int field) const override;
+
+    virtual const char *getFieldDynamicTypeString(void *object, int field, int i) const override;
+    virtual std::string getFieldValueAsString(void *object, int field, int i) const override;
+    virtual bool setFieldValueAsString(void *object, int field, int i, const char *value) const override;
+
+    virtual const char *getFieldStructName(int field) const override;
+    virtual void *getFieldStructValuePointer(void *object, int field, int i) const override;
+};
+
+Register_ClassDescriptor(RSUCOLevelDescriptor)
+
+RSUCOLevelDescriptor::RSUCOLevelDescriptor() : omnetpp::cClassDescriptor("veins::RSUCOLevel", "veins::BaseFrame1609_4")
+{
+    propertynames = nullptr;
+}
+
+RSUCOLevelDescriptor::~RSUCOLevelDescriptor()
+{
+    delete[] propertynames;
+}
+
+bool RSUCOLevelDescriptor::doesSupport(omnetpp::cObject *obj) const
+{
+    return dynamic_cast<RSUCOLevel *>(obj)!=nullptr;
+}
+
+const char **RSUCOLevelDescriptor::getPropertyNames() const
+{
+    if (!propertynames) {
+        static const char *names[] = {  nullptr };
+        omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+        const char **basenames = basedesc ? basedesc->getPropertyNames() : nullptr;
+        propertynames = mergeLists(basenames, names);
+    }
+    return propertynames;
+}
+
+const char *RSUCOLevelDescriptor::getProperty(const char *propertyname) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? basedesc->getProperty(propertyname) : nullptr;
+}
+
+int RSUCOLevelDescriptor::getFieldCount() const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
+}
+
+unsigned int RSUCOLevelDescriptor::getFieldTypeFlags(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldTypeFlags(field);
+        field -= basedesc->getFieldCount();
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISCOMPOUND,
+        FD_ISEDITABLE,
+    };
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
+}
+
+const char *RSUCOLevelDescriptor::getFieldName(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldName(field);
+        field -= basedesc->getFieldCount();
+    }
+    static const char *fieldNames[] = {
+        "RSUAddr",
+        "COLevel",
+    };
+    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
+}
+
+int RSUCOLevelDescriptor::findField(const char *fieldName) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    int base = basedesc ? basedesc->getFieldCount() : 0;
+    if (fieldName[0]=='R' && strcmp(fieldName, "RSUAddr")==0) return base+0;
+    if (fieldName[0]=='C' && strcmp(fieldName, "COLevel")==0) return base+1;
+    return basedesc ? basedesc->findField(fieldName) : -1;
+}
+
+const char *RSUCOLevelDescriptor::getFieldTypeString(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldTypeString(field);
+        field -= basedesc->getFieldCount();
+    }
+    static const char *fieldTypeStrings[] = {
+        "LAddress::L2Type",
+        "bool",
+    };
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
+}
+
+const char **RSUCOLevelDescriptor::getFieldPropertyNames(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldPropertyNames(field);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+const char *RSUCOLevelDescriptor::getFieldProperty(int field, const char *propertyname) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldProperty(field, propertyname);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+int RSUCOLevelDescriptor::getFieldArraySize(void *object, int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldArraySize(object, field);
+        field -= basedesc->getFieldCount();
+    }
+    RSUCOLevel *pp = (RSUCOLevel *)object; (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+const char *RSUCOLevelDescriptor::getFieldDynamicTypeString(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldDynamicTypeString(object,field,i);
+        field -= basedesc->getFieldCount();
+    }
+    RSUCOLevel *pp = (RSUCOLevel *)object; (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+std::string RSUCOLevelDescriptor::getFieldValueAsString(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldValueAsString(object,field,i);
+        field -= basedesc->getFieldCount();
+    }
+    RSUCOLevel *pp = (RSUCOLevel *)object; (void)pp;
+    switch (field) {
+        case 0: {std::stringstream out; out << pp->getRSUAddr(); return out.str();}
+        case 1: return bool2string(pp->getCOLevel());
+        default: return "";
+    }
+}
+
+bool RSUCOLevelDescriptor::setFieldValueAsString(void *object, int field, int i, const char *value) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->setFieldValueAsString(object,field,i,value);
+        field -= basedesc->getFieldCount();
+    }
+    RSUCOLevel *pp = (RSUCOLevel *)object; (void)pp;
+    switch (field) {
+        case 1: pp->setCOLevel(string2bool(value)); return true;
+        default: return false;
+    }
+}
+
+const char *RSUCOLevelDescriptor::getFieldStructName(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldStructName(field);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        case 0: return omnetpp::opp_typename(typeid(LAddress::L2Type));
+        default: return nullptr;
+    };
+}
+
+void *RSUCOLevelDescriptor::getFieldStructValuePointer(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldStructValuePointer(object, field, i);
+        field -= basedesc->getFieldCount();
+    }
+    RSUCOLevel *pp = (RSUCOLevel *)object; (void)pp;
+    switch (field) {
+        case 0: return (void *)(&pp->getRSUAddr()); break;
+        default: return nullptr;
+    }
+}
+
 } // namespace veins
 

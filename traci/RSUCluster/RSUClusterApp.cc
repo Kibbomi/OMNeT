@@ -185,7 +185,11 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         CARConnectionResp* resp = new CARConnectionResp();
         resp->setName("CARConnectionResp");
         resp->setRSUAddr(this->mac->getMACAddress());
-        resp->setSuccess(true);
+
+        if(myOptimalES.f == 0)
+            resp->setCOLevel(true);
+        else
+            resp->setCOLevel(false);
 
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->encapsulate(resp);
@@ -609,7 +613,22 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             EV<<"MAC : "<<(*iter).second.addr<<'\n';
             EV<<"f : "<<(*iter).second.f<<'\n';
         }
+
+        double beforeF = myOptimalES.f;
+
         FindOptimalES();
+
+        //찾았는데 현재 기준 Optimal이 없네..?
+        //현재 연결중인 Vehicle에게 나 CO못해.. 라고 알리기
+        //단, 상태가 변경될 때만.
+
+        //FALSE -> TRUE
+        if(beforeF == 0 && myOptimalES.f != 0)
+            SendRSUCOLevel(true);
+        //TRUE -> FALSE
+        if(beforeF != 0 && myOptimalES.f == 0)
+            SendRSUCOLevel(false);
+
     }
     else if(strcmp(msg->getName(),"ENCOResp") == 0)
     {
@@ -650,8 +669,16 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         EV<<myOptimalES.addr<<'\n';
         EV<<myOptimalES.f<<'\n';
 
-        //True->false, false->True모두니까 그냥 다 해야함.
+        double beforeF = myOptimalES.f;
+
         FindOptimalES();
+
+        //FALSE -> TRUE
+        if(beforeF == 0 && myOptimalES.f != 0)
+            SendRSUCOLevel(true);
+        //TRUE -> FALSE
+        if(beforeF != 0 && myOptimalES.f == 0)
+            SendRSUCOLevel(false);
     }
 }
 
@@ -670,7 +697,7 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     TTL_init = init;
     TTL_threshold = threshold;
 
-    if(TTL_threshold <= TTL_init)
+    if(TTL_threshold < TTL_init)
         return;
 
     //Ethernet Message Type
@@ -739,6 +766,9 @@ void RSUClusterApp::FindOptimalES(){
         else
             EV_INFO << "RSUClusterApp : TTL value exceeds the TTL_threshold value. \n";
 
+        //myOptimalES.f == 0 인 것으로 가능여부를 판단.
+        myOptimalES = OptimalES;
+
         //새로 갱신해야함.
         //ERSresp측에서 findOptimalES를 실행해야할수도.
     }
@@ -780,5 +810,23 @@ void RSUClusterApp::FindOptimalES(){
     EV<<"addr : "<<myOptimalES.addr<<'\n';
     EV<<"f :" <<myOptimalES.f<<'\n';
 
+    return;
+}
+
+void RSUClusterApp::SendRSUCOLevel(bool level)
+{
+    //switch된 것은 호출 시 구분해서 값을 넘겨 줄 것.
+    for(long CarAddr : Cars){
+        RSUCOLevel* msg = new RSUCOLevel();
+        msg->setName("RSUCOLevel");
+        msg->setRSUAddr(this->mac->getMACAddress());
+        msg->setCOLevel(level);
+
+        BaseFrame1609_4* wsm = new BaseFrame1609_4();
+        wsm->encapsulate(msg);
+        wsm->setName("RSUCOLevel");
+        populateWSM(wsm,CarAddr);
+        send(wsm,lowerLayerOut);
+    }
     return;
 }

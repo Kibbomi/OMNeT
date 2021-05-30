@@ -821,7 +821,7 @@ Register_Class(CARConnectionResp)
 
 CARConnectionResp::CARConnectionResp(const char *name, short kind) : ::veins::BaseFrame1609_4(name,kind)
 {
-    this->success = false;
+    this->COLevel = false;
 }
 
 CARConnectionResp::CARConnectionResp(const CARConnectionResp& other) : ::veins::BaseFrame1609_4(other)
@@ -844,21 +844,21 @@ CARConnectionResp& CARConnectionResp::operator=(const CARConnectionResp& other)
 void CARConnectionResp::copy(const CARConnectionResp& other)
 {
     this->RSUAddr = other.RSUAddr;
-    this->success = other.success;
+    this->COLevel = other.COLevel;
 }
 
 void CARConnectionResp::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::veins::BaseFrame1609_4::parsimPack(b);
     doParsimPacking(b,this->RSUAddr);
-    doParsimPacking(b,this->success);
+    doParsimPacking(b,this->COLevel);
 }
 
 void CARConnectionResp::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::veins::BaseFrame1609_4::parsimUnpack(b);
     doParsimUnpacking(b,this->RSUAddr);
-    doParsimUnpacking(b,this->success);
+    doParsimUnpacking(b,this->COLevel);
 }
 
 LAddress::L2Type& CARConnectionResp::getRSUAddr()
@@ -871,14 +871,14 @@ void CARConnectionResp::setRSUAddr(const LAddress::L2Type& RSUAddr)
     this->RSUAddr = RSUAddr;
 }
 
-bool CARConnectionResp::getSuccess() const
+bool CARConnectionResp::getCOLevel() const
 {
-    return this->success;
+    return this->COLevel;
 }
 
-void CARConnectionResp::setSuccess(bool success)
+void CARConnectionResp::setCOLevel(bool COLevel)
 {
-    this->success = success;
+    this->COLevel = COLevel;
 }
 
 class CARConnectionRespDescriptor : public omnetpp::cClassDescriptor
@@ -974,7 +974,7 @@ const char *CARConnectionRespDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "RSUAddr",
-        "success",
+        "COLevel",
     };
     return (field>=0 && field<2) ? fieldNames[field] : nullptr;
 }
@@ -984,7 +984,7 @@ int CARConnectionRespDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='R' && strcmp(fieldName, "RSUAddr")==0) return base+0;
-    if (fieldName[0]=='s' && strcmp(fieldName, "success")==0) return base+1;
+    if (fieldName[0]=='C' && strcmp(fieldName, "COLevel")==0) return base+1;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -1068,7 +1068,7 @@ std::string CARConnectionRespDescriptor::getFieldValueAsString(void *object, int
     CARConnectionResp *pp = (CARConnectionResp *)object; (void)pp;
     switch (field) {
         case 0: {std::stringstream out; out << pp->getRSUAddr(); return out.str();}
-        case 1: return bool2string(pp->getSuccess());
+        case 1: return bool2string(pp->getCOLevel());
         default: return "";
     }
 }
@@ -1083,7 +1083,7 @@ bool CARConnectionRespDescriptor::setFieldValueAsString(void *object, int field,
     }
     CARConnectionResp *pp = (CARConnectionResp *)object; (void)pp;
     switch (field) {
-        case 1: pp->setSuccess(string2bool(value)); return true;
+        case 1: pp->setCOLevel(string2bool(value)); return true;
         default: return false;
     }
 }

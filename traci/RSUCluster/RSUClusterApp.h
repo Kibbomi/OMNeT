@@ -127,6 +127,9 @@ public:
     //for get Optimal RSU..
     void FindOptimalES();
 
+    //send RSUCOLevel
+    void SendRSUCOLevel(bool level);    //true : OK, false : NO
+
 protected:
     void onWSM(BaseFrame1609_4* wsm) override;
     void onWSA(DemoServiceAdvertisment* wsa) override;

@@ -54,3 +54,9 @@ packet CarCOResp extends BaseFrame1609_4
     int taskID;
     int COResult;
 }
+
+packet RSUCOLevel extends BaseFrame1609_4
+{
+    LAddress::L2Type RSUAddr;
+    bool COLevel;
+}

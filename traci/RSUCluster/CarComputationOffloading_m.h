@@ -164,6 +164,49 @@ class VEINS_API CarCOResp : public ::veins::BaseFrame1609_4
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const CarCOResp& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CarCOResp& obj) {obj.parsimUnpack(b);}
 
+/**
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/CarComputationOffloading.msg:59</tt> by nedtool.
+ * <pre>
+ * packet RSUCOLevel extends BaseFrame1609_4
+ * {
+ *     LAddress::L2Type RSUAddr;
+ *     bool COLevel;
+ * }
+ * </pre>
+ */
+class VEINS_API RSUCOLevel : public ::veins::BaseFrame1609_4
+{
+  protected:
+    LAddress::L2Type RSUAddr;
+    bool COLevel;
+
+  private:
+    void copy(const RSUCOLevel& other);
+
+  protected:
+    // protected and unimplemented operator==(), to prevent accidental usage
+    bool operator==(const RSUCOLevel&);
+
+  public:
+    RSUCOLevel(const char *name=nullptr, short kind=0);
+    RSUCOLevel(const RSUCOLevel& other);
+    virtual ~RSUCOLevel();
+    RSUCOLevel& operator=(const RSUCOLevel& other);
+    virtual RSUCOLevel *dup() const override {return new RSUCOLevel(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    // field getter/setter methods
+    virtual LAddress::L2Type& getRSUAddr();
+    virtual const LAddress::L2Type& getRSUAddr() const {return const_cast<RSUCOLevel*>(this)->getRSUAddr();}
+    virtual void setRSUAddr(const LAddress::L2Type& RSUAddr);
+    virtual bool getCOLevel() const;
+    virtual void setCOLevel(bool COLevel);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const RSUCOLevel& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, RSUCOLevel& obj) {obj.parsimUnpack(b);}
+
 } // namespace veins
 
 #endif // ifndef __VEINS_CARCOMPUTATIONOFFLOADING_M_H
