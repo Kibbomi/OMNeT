@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- generated on 05/14/21 13:53:57 by Eclipse SUMO netedit Version 1.8.0
+<!-- generated on 06/01/21 19:32:12 by Eclipse SUMO netedit Version 1.8.0
 <configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
 
     <output>
-        <output-file value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\MyEthernet\MyEnvironment.net.xml"/>
+        <output-file value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\MyEthernet\Testing2.net.xml"/>
     </output>
 
     <processing>
@@ -16,7 +16,7 @@
     </junctions>
 
     <netedit>
-        <route-files value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\MyEthernet\Myenvironment.rou.xml"/>
+        <route-files value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\MyEthernet\Testing2.rou.xml"/>
     </netedit>
 
     <report>
@@ -27,6 +27,8 @@
 -->
 
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
-    <route edges="gneE0 gneE1 gneE2 gneE3 gneE4 gneE5 gneE6" color="yellow" id="route_0"/>
+    <route edges="gneE0" color="yellow" id="route_0"/>
     <vehicle id="vehicle_0" depart="0.00" route="route_0"/>
+    <vehicle id="vehicle_1" depart="0.00" route="route_0"/>
+    <vehicle id="vehicle_2" depart="0.00" route="route_0"/>
 </routes>
