@@ -150,6 +150,7 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
         if(msg->getRSUAddr() == curConnectingRSU.RSU_ID)
         {
             curConnectingRSU.COLevel = msg->getCOLevel();
+            EV<<this->getParentModule()->getFullName()<<" change the COLevel to "<<msg->getCOLevel()<<'\n';
         }
         else
         {
@@ -175,7 +176,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         if(curConnectingRSU.COLevel == false)
         {
             cMessage* selfMsg =new cMessage("",Self_COReq);
-            scheduleAt(simTime() + uniform(5.01, 5.2),selfMsg);
+            scheduleAt(simTime() + uniform(2.01, 2.2),selfMsg);
 
             EV<<this->getParentModule()->getFullName()<<" can't send CO Msg, current connected RSU is not available!\n";
             return ;
@@ -213,7 +214,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //for next send
         cMessage* selfMsg =new cMessage("",Self_COReq);
-        scheduleAt(simTime() + uniform(5.01, 5.2),selfMsg);
+        scheduleAt(simTime() + uniform(1.51, 2.0),selfMsg);
     }
     else
     {

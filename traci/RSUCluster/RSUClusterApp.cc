@@ -97,6 +97,12 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
     if(strcmp(pac->getName(),"CarCOReq") == 0){
 
+        if(myOptimalES.isAvailable == false){
+            EV<<this->getParentModule()->getFullName()<<" is not available!\n";
+            return ;
+        }
+
+
         EV<<this->getParentModule()->getFullName()<<"received CarCOReq Message!\n";
         CarCOReq* msg = dynamic_cast<CarCOReq*>(pac);
 
@@ -200,6 +206,15 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         EV<<this->getParentModule()->getFullName()<<"Add a car\n";
         for(auto iter = Cars.begin(); iter!=Cars.end(); ++iter)
             EV<<"Now connected Cars : "<<*iter<<'\n';
+
+
+        //send RSU Level
+        if(myOptimalES.f != 0)
+            SendRSUCOLevel(true);
+        else
+            SendRSUCOLevel(false);
+
+
     }
     else if(strcmp(pac->getName(),"CARDisconnectionReq")==0)
         {
@@ -614,7 +629,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             EV<<"f : "<<(*iter).second.f<<'\n';
         }
 
-        double beforeF = myOptimalES.f;
+        unsigned int beforeF = myOptimalES.f;   //자료형 변경할 것.
 
         FindOptimalES();
 
@@ -623,11 +638,15 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         //단, 상태가 변경될 때만.
 
         //FALSE -> TRUE
-        if(beforeF == 0 && myOptimalES.f != 0)
+        if(beforeF == 0 && myOptimalES.f != 0){
+            EV<<this->getParentModule()->getFullName()<<" send COLEVEL :"<<true<<'\n';
             SendRSUCOLevel(true);
+        }
         //TRUE -> FALSE
-        if(beforeF != 0 && myOptimalES.f == 0)
+        if(beforeF != 0 && myOptimalES.f == 0){
+            EV<<this->getParentModule()->getFullName()<<" send COLEVEL :"<<false<<'\n';
             SendRSUCOLevel(false);
+        }
 
     }
     else if(strcmp(msg->getName(),"ENCOResp") == 0)
@@ -655,30 +674,29 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         if (resp == nullptr)
             throw cRuntimeError("data type error: not an AvailabilityInfo arrived in packet %s", msg->str().c_str());
 
-        bool isAvailable = resp->isAvailable();
-
         inet::MacAddress srcAddress = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
 
-        ESs[srcAddress.str()].isAvailable = isAvailable;
+        ESs[srcAddress.str()].isAvailable = resp->isAvailable();
 
         EV<<"Availability Change\n";
-        EV<<srcAddress.str()<<'\n';
-        EV<<ESs[srcAddress.str()].isAvailable<<'\n';
-
         EV<<"My optimal\n";
         EV<<myOptimalES.addr<<'\n';
         EV<<myOptimalES.f<<'\n';
 
-        double beforeF = myOptimalES.f;
+        unsigned int beforeF = myOptimalES.f;   //자료형 변경할 것.
 
         FindOptimalES();
 
         //FALSE -> TRUE
-        if(beforeF == 0 && myOptimalES.f != 0)
+        if(beforeF == 0 && myOptimalES.f != 0){
+            EV<<this->getParentModule()->getFullName()<<" send COLEVEL :"<<true<<'\n';
             SendRSUCOLevel(true);
+        }
         //TRUE -> FALSE
-        if(beforeF != 0 && myOptimalES.f == 0)
+        if(beforeF != 0 && myOptimalES.f == 0){
+            EV<<this->getParentModule()->getFullName()<<" send COLEVEL :"<<false<<'\n';
             SendRSUCOLevel(false);
+        }
     }
 }
 
@@ -732,10 +750,11 @@ void RSUClusterApp::BeginERS(int init, int threshold){
 }
 
 void RSUClusterApp::FindOptimalES(){
-    EV<<"RSU call FindOptimalES\n";
+    EV<<this->getParentModule()->getFullName()<<" call FindOptimalES\n";
     //myOptimal 갱신이 필요한 것.
     inet::Format_EdgeServer OptimalES;
     OptimalES.f = 0;    //기본생성자가 실행이 안 됨.   명시적 초기화.
+    OptimalES.isAvailable = false;
 
     for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
         if((*iter).second.isAvailable == true && OptimalES.f < (*iter).second.f)
@@ -743,6 +762,7 @@ void RSUClusterApp::FindOptimalES(){
             OptimalES.addr=(*iter).second.addr;
             OptimalES.f = (*iter).second.f;
             OptimalES.capacity = (*iter).second.capacity;
+            OptimalES.isAvailable = true;
         }
     }
 
@@ -754,6 +774,7 @@ void RSUClusterApp::FindOptimalES(){
             OptimalES.addr=(*iter).second.addr;
             OptimalES.f = (*iter).second.f;
             OptimalES.capacity = (*iter).second.capacity;
+            OptimalES.isAvailable = true;
         }
     }
 
@@ -816,17 +837,19 @@ void RSUClusterApp::FindOptimalES(){
 void RSUClusterApp::SendRSUCOLevel(bool level)
 {
     //switch된 것은 호출 시 구분해서 값을 넘겨 줄 것.
-    for(long CarAddr : Cars){
-        RSUCOLevel* msg = new RSUCOLevel();
-        msg->setName("RSUCOLevel");
-        msg->setRSUAddr(this->mac->getMACAddress());
-        msg->setCOLevel(level);
+    //for(long CarAddr : Cars){
+    RSUCOLevel* msg = new RSUCOLevel();
+    msg->setName("RSUCOLevel");
+    msg->setRSUAddr(this->mac->getMACAddress());
+    msg->setCOLevel(level);
 
-        BaseFrame1609_4* wsm = new BaseFrame1609_4();
-        wsm->encapsulate(msg);
-        wsm->setName("RSUCOLevel");
-        populateWSM(wsm,CarAddr);
-        send(wsm,lowerLayerOut);
-    }
+    BaseFrame1609_4* wsm = new BaseFrame1609_4();
+    wsm->encapsulate(msg);
+    wsm->setName("RSUCOLevel");
+    //populateWSM(wsm,CarAddr);
+    populateWSM(wsm);   //broadcasting.. vehicle will discard this packet.
+    //send(wsm,lowerLayerOut);
+    sendDelayed(wsm->dup(), uniform(0.01, 0.02),lowerLayerOut);
+    //}
     return;
 }
