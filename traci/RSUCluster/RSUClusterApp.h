@@ -79,7 +79,7 @@ public:
     int TTL_threshold = 5;
     int TTL_increasement = 1;   //2
     int TTL_init = 1;
-    double ERS_WaitTime = 0.5;  //0.5s
+    double ERS_WaitTime = 0.2;  //0.5s
 
     //RSU Info
     int coverage = 250; //250m (Range, radius)
@@ -93,7 +93,7 @@ public:
     std::map<std::string,inet::Format_RSUCluster> RSUsMaster;   //정보를 보내야 하는 곳
     std::map<std::string,inet::Format_EdgeServer> ESs;  //내가 알고 있는 ES
     std::set<long> Cars;
-    std::map<std::string,inet::Format_EdgeServer> OptimalESs;  //Key : optimal RSU Value : optimal ES of each RSU in cluster..
+    std::map<std::string,inet::Format_EdgeServer> OptimalESs;  //Key : optimal RSU Addr : optimal ES of each RSU in cluster..  //RSU cluster에게 받은 Optimal ES들.. 후보임.
     inet::Format_EdgeServer myOptimalES;
 
     //Handle self Message pointer..

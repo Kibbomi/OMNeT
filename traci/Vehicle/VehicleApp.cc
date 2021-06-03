@@ -179,6 +179,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
             scheduleAt(simTime() + uniform(2.01, 2.2),selfMsg);
 
             EV<<this->getParentModule()->getFullName()<<" can't send CO Msg, current connected RSU is not available!\n";
+            EV<<this->getParentModule()->getFullName()<<" is connected with "<<curConnectingRSU.RSU_ID<<'\n';
             return ;
         }
 

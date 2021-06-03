@@ -756,6 +756,7 @@ void RSUClusterApp::FindOptimalES(){
     OptimalES.f = 0;    //기본생성자가 실행이 안 됨.   명시적 초기화.
     OptimalES.isAvailable = false;
 
+    //내가 찾은 것들.
     for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
         if((*iter).second.isAvailable == true && OptimalES.f < (*iter).second.f)
         {
@@ -766,6 +767,9 @@ void RSUClusterApp::FindOptimalES(){
         }
     }
 
+    //cluster로부터 받는 것들.
+    // Cluster의 Optimal을 전송하면 결국 네트워크 전체를 공유하는 것과 동일해짐.
+    /*
     for(auto iter = OptimalESs.begin(); iter!=OptimalESs.end(); ++iter)
     {
         if(iter->second.isAvailable && OptimalES.f < iter->second.f)
@@ -777,7 +781,7 @@ void RSUClusterApp::FindOptimalES(){
             OptimalES.isAvailable = true;
         }
     }
-
+     */
 
     if(OptimalES.f == 0){
         //there is not any ES
@@ -794,6 +798,7 @@ void RSUClusterApp::FindOptimalES(){
         //ERSresp측에서 findOptimalES를 실행해야할수도.
     }
     else {
+        //최적 정보가 수정된 경우에만 Master에게 전송.
         if(myOptimalES.addr == OptimalES.addr)
             return;
 
