@@ -28,8 +28,8 @@ void VehicleApp::initialize(int stage)
 
         //trigger
         //주석 풀면 됨.. 오프로딩 이벤트 시작.
-        cMessage* self_msg = new cMessage("",Self_COReq);
-        scheduleAt(simTime() + 4, self_msg);
+        //cMessage* self_msg = new cMessage("",Self_COReq);
+        //scheduleAt(simTime() + 4, self_msg);
     }
 }
 
@@ -52,6 +52,7 @@ void VehicleApp::onBSM(DemoSafetyMessage* bsm)
     //자동완성에는 보이지 않음..
     EV<<"Sender's Mac address : "<< bsm->getSenderMacAddr()<<'\n';
 
+    //beacon주기가 꽤나 촘촘해야함..
     if(bsm->getSenderMacAddr() == curConnectingRSU.RSU_ID)
     {
         curConnectingRSU.rssi = BeaconRSSIValue;
@@ -230,15 +231,8 @@ void VehicleApp::handlePositionUpdate(cObject* obj)
     // the vehicle has moved. Code that reacts to new positions goes here.
     // member variables such as currentPosition and currentSpeed are updated in the parent class
 
-    //여기서 거리가 멀어짐에 따라 RSU와 연결을 맺고 안 맺고
-    //EV<<"Speed of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getSpeed()<<'\n';
-   // EV<<"Heading of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getHeading()<<'\n';
-    //EV<<"location of Car1 : (" <<curPosition.y<<","<<curPosition.x<<")\n";
-
-
-    //compare all of knowing RSUs
-    //for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter){
-
-    //}
+    EV<<"Speed of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getSpeed()<<'\n';
+    EV<<"Heading of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getHeading()<<'\n';
+    EV<<"location of " <<this->getParentModule()->getFullName()<<" : (" <<curPosition.y<<","<<curPosition.x<<")\n";
 
 }

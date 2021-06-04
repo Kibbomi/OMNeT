@@ -68,7 +68,11 @@ void RSUClusterApp::initialize(int stage)
         BeginERS(TTL_init, TTL_threshold);
 
 
-        this->beaconInterval+=uniform(0.1,0.5);
+        //50ms ~ 65ms
+        this->beaconInterval+=uniform(1,2);
+        //this->beaconInterval+=uniform(0.05,0.065);
+
+
         //periodical Advertisement..
         //주석 풀면 됨. 광고 이벤트 시작.
 
@@ -118,11 +122,11 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         outPayload->setCarAddr(msg->getCarAddr());
         outPayload->setReqTime(msg->getReqTime());
 
-        //이동성 반영한 RSU
-        //오른쪽이면,
+        //이동성 반영한 CO
+        //오른쪽이면, rad = 0,
         if(-1 < msg->getRad() && msg->getRad() < 1)
         {
-            double expectX = msg->getX() + msg->getSpeed() * msg->getRequiredCycle()/myOptimalES.f;
+            double expectX = msg->getX() + msg->getSpeed() * (double)msg->getRequiredCycle()/(double)myOptimalES.f;
             double expectY = msg->getY();
 
             //자기 자신
@@ -209,6 +213,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
 
         //send RSU Level
+        //위에서 하긴 했지만..
         if(myOptimalES.f != 0)
             SendRSUCOLevel(true);
         else
@@ -511,12 +516,6 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
     }
     else if(strcmp(msg->getName(),"ERSResp") == 0)
     {
-        if(RSUs_left.size () != 0 && RSUs_right.size() != 0)
-            if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled() ){
-                cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
-                self_ptr_ERSReq = nullptr;
-            }
-
         const auto& resp = msg->peekAtFront<inet::ERSResp>();
 
         if (resp == nullptr)
@@ -578,7 +577,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                         EV<<"MAC : "<<(*iter).first<<'\n';
                 }
                 else
-                    EV<<"RSU : This RSU already exist\n";
+                    EV<<"RSU_left : This RSU already exist\n";
             }
             else
             {
@@ -592,7 +591,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                         EV<<"MAC : "<<(*iter).first<<'\n';
                 }
                 else
-                    EV<<"RSU : This RSU already exist\n";
+                    EV<<"RSU_right : This RSU already exist\n";
             }
 
             //backup
@@ -607,6 +606,15 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             else
                 EV<<"RSU : This RSU already exist\n";
         }
+
+        //delete next ERS
+        if(RSUs_left.size () != 0 && RSUs_right.size() != 0 && myOptimalES.f != 0)
+            if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled() ){
+                cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
+                self_ptr_ERSReq = nullptr;
+                EV<< this->getParentModule()->getFullName()<<" call cancelAndDelete ERS Packet \n";
+            }
+
     }
     else if(strcmp(msg->getName(),"OptimalESInfo") == 0)
     {
@@ -618,7 +626,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
         OptimalES.addr = resp->getESMacAddr();
         OptimalES.f = resp->getF();
-
+        OptimalES.isAvailable = true;   //msg에 없음.
         inet::MacAddress srcAddress = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
 
         OptimalESs[srcAddress.str()] = OptimalES;
@@ -639,12 +647,12 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
         //FALSE -> TRUE
         if(beforeF == 0 && myOptimalES.f != 0){
-            EV<<this->getParentModule()->getFullName()<<" send COLEVEL :"<<true<<'\n';
+            EV<<this->getParentModule()->getFullName()<<" send CO LEVEL :"<<true<<'\n';
             SendRSUCOLevel(true);
         }
         //TRUE -> FALSE
         if(beforeF != 0 && myOptimalES.f == 0){
-            EV<<this->getParentModule()->getFullName()<<" send COLEVEL :"<<false<<'\n';
+            EV<<this->getParentModule()->getFullName()<<" send CO LEVEL :"<<false<<'\n';
             SendRSUCOLevel(false);
         }
 
@@ -718,6 +726,8 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     if(TTL_threshold < TTL_init)
         return;
 
+    EV<<this->getParentModule()->getFullName()<<" send a ERS Req!, TTL is "<<init<<'\n';
+
     //Ethernet Message Type
     inet::Packet *datapacket = new inet::Packet("ERSReq",inet::IEEE802CTRL_DATA);
 
@@ -732,7 +742,7 @@ void RSUClusterApp::BeginERS(int init, int threshold){
 
 
     datapacket->addTag<inet::MacAddressReq>()->setDestAddress(inet::MacAddress::BROADCAST_ADDRESS);
-    EV<<"RSU send the ERS Request!\n";
+
     auto ieee802SapReq = datapacket->addTag<inet::Ieee802SapReq>();
     //ieee802SapReq->setSsap(0xf0);
     ieee802SapReq->setSsap(localSap);
@@ -742,9 +752,10 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     llcSocket.send(datapacket);
     EV<<"RSU send the ERS Request to Link!!\n";
 
-    //if ERSResp message don't come back, it will be run.
+
     self_ptr_ERSReq = new cMessage("",Self_ERSReq);
     scheduleAt(simTime() + uniform(0.01, 0.2) + ERS_WaitTime, self_ptr_ERSReq);
+
 
     return;
 }
@@ -755,33 +766,37 @@ void RSUClusterApp::FindOptimalES(){
     inet::Format_EdgeServer OptimalES;
     OptimalES.f = 0;    //기본생성자가 실행이 안 됨.   명시적 초기화.
     OptimalES.isAvailable = false;
+    bool isMyES = false;
 
     //내가 찾은 것들.
     for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
-        if((*iter).second.isAvailable == true && OptimalES.f < (*iter).second.f)
+        if((*iter).second.isAvailable && OptimalES.f < (*iter).second.f)
         {
             OptimalES.addr=(*iter).second.addr;
             OptimalES.f = (*iter).second.f;
             OptimalES.capacity = (*iter).second.capacity;
             OptimalES.isAvailable = true;
+            EV<<this->getParentModule()->getFullName()<<"My ES"<<(*iter).second.f<<'\n';
+            isMyES=true;
+
         }
     }
 
     //cluster로부터 받는 것들.
-    // Cluster의 Optimal을 전송하면 결국 네트워크 전체를 공유하는 것과 동일해짐.
-    /*
     for(auto iter = OptimalESs.begin(); iter!=OptimalESs.end(); ++iter)
     {
         if(iter->second.isAvailable && OptimalES.f < iter->second.f)
         {
-
             OptimalES.addr=(*iter).second.addr;
             OptimalES.f = (*iter).second.f;
             OptimalES.capacity = (*iter).second.capacity;
             OptimalES.isAvailable = true;
+            EV<<this->getParentModule()->getFullName()<<"Cluster's ES"<<(*iter).second.f<<'\n';
+            isMyES=false;
         }
     }
-     */
+
+    EV<<this->getParentModule()->getFullName()<<"FindOptimal, OptimalES.f = "<<OptimalES.f<<'\n';
 
     if(OptimalES.f == 0){
         //there is not any ES
@@ -799,10 +814,18 @@ void RSUClusterApp::FindOptimalES(){
     }
     else {
         //최적 정보가 수정된 경우에만 Master에게 전송.
-        if(myOptimalES.addr == OptimalES.addr)
+        if(myOptimalES.addr == OptimalES.addr){
+            EV<<this->getParentModule()->getFullName()<<" OptimalES.addr is same myOptimalES.addr \n";
             return;
+        }
 
         myOptimalES = OptimalES;
+
+        // Cluster의 Optimal을 전송하면 결국 네트워크 전체를 공유하는 것과 동일해짐.
+        if(!isMyES){
+            EV<<this->getParentModule()->getFullName()<<"myOptimalES is not ESs .. Cluster's ES\n";
+            return ;
+        }
 
         for(auto iter=RSUsMaster.begin(); iter!= RSUsMaster.end(); ++iter){
             //send to master RSUs
