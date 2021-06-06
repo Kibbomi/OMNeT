@@ -94,7 +94,7 @@ public:
     std::map<std::string,inet::Format_EdgeServer> ESs;  //내가 알고 있는 ES
     std::set<long> Cars;
     std::map<std::string,inet::Format_EdgeServer> OptimalESs;  //Key : optimal RSU Addr : optimal ES of each RSU in cluster..  //RSU cluster에게 받은 Optimal ES들.. 후보임.
-    inet::Format_EdgeServer myOptimalES;
+    inet::Format_EdgeServer myOptimalES;    //Pointer로 구현하면 참 좋을 것 같은데..
 
     //Handle self Message pointer..
     cMessage* self_ptr_ERSReq = nullptr;

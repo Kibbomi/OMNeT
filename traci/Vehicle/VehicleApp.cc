@@ -28,8 +28,8 @@ void VehicleApp::initialize(int stage)
 
         //trigger
         //주석 풀면 됨.. 오프로딩 이벤트 시작.
-        //cMessage* self_msg = new cMessage("",Self_COReq);
-        //scheduleAt(simTime() + 4, self_msg);
+        cMessage* self_msg = new cMessage("",Self_COReq);
+        scheduleAt(simTime() + 4, self_msg);
     }
 }
 
@@ -37,6 +37,13 @@ void VehicleApp::finish()
 {
     DemoBaseApplLayer::finish();
     // statistics recording goes here
+    int num = 0;
+    for(bool item : finishedTask)
+        if(item)
+            ++num;
+
+    EV<<this->getParentModule()->getFullName()<< "The number of finished task are " <<num<<'\n';
+    return ;
 }
 
 void VehicleApp::onBSM(DemoSafetyMessage* bsm)
@@ -231,8 +238,8 @@ void VehicleApp::handlePositionUpdate(cObject* obj)
     // the vehicle has moved. Code that reacts to new positions goes here.
     // member variables such as currentPosition and currentSpeed are updated in the parent class
 
-    EV<<"Speed of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getSpeed()<<'\n';
-    EV<<"Heading of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getHeading()<<'\n';
-    EV<<"location of " <<this->getParentModule()->getFullName()<<" : (" <<curPosition.y<<","<<curPosition.x<<")\n";
-
+    //EV<<"Speed of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getSpeed()<<'\n';
+    //EV<<"Heading of "<<this->getParentModule()->getFullName()<<" : "<< mobility->getHeading()<<'\n';
+    //EV<<"location of " <<this->getParentModule()->getFullName()<<" : (" <<curPosition.y<<","<<curPosition.x<<")\n";
 }
+

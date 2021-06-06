@@ -57,6 +57,7 @@ void RSUClusterApp::initialize(int stage)
 
         myOptimalES.f = 0;
 
+
     }
     else if (stage == 1)
     {
@@ -69,7 +70,7 @@ void RSUClusterApp::initialize(int stage)
 
 
         //50ms ~ 65ms
-        this->beaconInterval+=uniform(1,2);
+        this->beaconInterval+=uniform(1,1.5);
         //this->beaconInterval+=uniform(0.05,0.065);
 
 
@@ -177,7 +178,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         omnetpp::cComponent::emit(inet::packetSentSignal,outPacket);
         llcSocket.send(outPacket);
 
-        EV<<this->getParentModule()->getFullName()<<" send CO req to EN\n";
+        EV<<this->getParentModule()->getFullName()<<" send CO req to "<<myOptimalES.addr.str()<<'\n';
 
     }
     else if(strcmp(pac->getName(),"CARConnectionReq")==0)
@@ -545,8 +546,21 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                 }
 
                 //updated.. so find out new optimal ES
+                unsigned int beforeF = myOptimalES.f;   //자료형 변경할 것.
+
+                //availability change 되었다면, COLEVEL보내기
                 FindOptimalES();
-                //find myOptimalES.
+
+                //FALSE -> TRUE
+                if(beforeF == 0 && myOptimalES.f != 0){
+                    EV<<this->getParentModule()->getFullName()<<" send CO LEVEL :"<<true<<'\n';
+                    SendRSUCOLevel(true);
+                }
+                //TRUE -> FALSE
+                if(beforeF != 0 && myOptimalES.f == 0){
+                    EV<<this->getParentModule()->getFullName()<<" send CO LEVEL :"<<false<<'\n';
+                    SendRSUCOLevel(false);
+                }
             }
             else
                 EV<<"RSU : This Edge server already exist\n";
@@ -626,10 +640,15 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
         OptimalES.addr = resp->getESMacAddr();
         OptimalES.f = resp->getF();
-        OptimalES.isAvailable = true;   //msg에 없음.
+        if(OptimalES.f != 0)
+            OptimalES.isAvailable = true;   //msg에 없음.
+        else
+            OptimalES.isAvailable = false;
+
         inet::MacAddress srcAddress = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
 
         OptimalESs[srcAddress.str()] = OptimalES;
+
 
         EV<<this->getParentModule()->getFullName()<<" update my OptimalES table\n";
         for(auto iter = OptimalESs.begin(); iter != OptimalESs.end(); ++iter){
@@ -684,13 +703,50 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
         inet::MacAddress srcAddress = msg->getTag<inet::MacAddressInd>()->getSrcAddress();
 
-        ESs[srcAddress.str()].isAvailable = resp->isAvailable();
+        EV<<"AvailabilityInfo Msg from :"<<srcAddress.str()<<'\n';
+        EV<<"Availability is "<<resp->isAvailable()<<'\n';
+
+        if(ESs.count(srcAddress.str()) == 1){
+            ESs[srcAddress.str()].isAvailable = resp->isAvailable();
+
+            if(resp->isAvailable() == false && srcAddress == myOptimalES.addr){
+                for(auto iter = RSUsMaster.begin(); iter != RSUsMaster.end(); ++iter)
+                {
+                    inet::Packet  *datapacket = new inet::Packet("OptimalESInfo",inet::IEEE802CTRL_DATA);
+
+                    const auto& data = inet::makeShared<inet::OptimalESInfo>();
+                    data->setChunkLength(inet::units::values::B(64));  //수정?
+                    data->setESMacAddr(srcAddress);
+                    data->setF(0);  //is not available
+
+                    datapacket->insertAtBack(data);
+
+                    datapacket->addTag<inet::MacAddressReq>()->setDestAddress((*iter).second.addr);
+                    auto ieee802SapReq = datapacket->addTag<inet::Ieee802SapReq>();
+                    ieee802SapReq->setSsap(localSap);
+                    ieee802SapReq->setDsap(remoteSap);
+
+                    omnetpp::cComponent::emit(inet::packetSentSignal,datapacket);
+                    llcSocket.send(datapacket);
+                }
+            }
+
+        }
+
+        //해당 RSU로부터 듣는 것이 원칙
+        for(auto iter = OptimalESs.begin(); iter != OptimalESs.end(); ++iter){
+            if(iter->second.addr == srcAddress)
+            {
+                iter->second.isAvailable = resp->isAvailable();
+                EV<<"OptimalEss changed too\n";
+            }
+        }
 
         EV<<"Availability Change\n";
-        EV<<"My optimal\n";
+        EV<<"My optimal was\n";
         EV<<myOptimalES.addr<<'\n';
         EV<<myOptimalES.f<<'\n';
-
+        EV<<myOptimalES.isAvailable<<'\n';
         unsigned int beforeF = myOptimalES.f;   //자료형 변경할 것.
 
         FindOptimalES();
@@ -770,13 +826,19 @@ void RSUClusterApp::FindOptimalES(){
 
     //내가 찾은 것들.
     for(auto iter = ESs.begin(); iter!=ESs.end(); ++iter){
+        //test
+        EV<<"Iter->first "<<iter->first<<'\n';
+        EV<<"iter->second.addr "<<iter->second.addr<<'\n';
+        EV<<"iter->second.f "<<iter->second.f<<'\n';
+        EV<<"iter->second.isAvailable "<<iter->second.isAvailable<<'\n';
+
         if((*iter).second.isAvailable && OptimalES.f < (*iter).second.f)
         {
             OptimalES.addr=(*iter).second.addr;
             OptimalES.f = (*iter).second.f;
             OptimalES.capacity = (*iter).second.capacity;
-            OptimalES.isAvailable = true;
-            EV<<this->getParentModule()->getFullName()<<"My ES"<<(*iter).second.f<<'\n';
+            OptimalES.isAvailable = iter->second.isAvailable;
+            EV<<this->getParentModule()->getFullName()<<"My ES "<<(*iter).second.f<<'\n';
             isMyES=true;
 
         }
@@ -785,18 +847,24 @@ void RSUClusterApp::FindOptimalES(){
     //cluster로부터 받는 것들.
     for(auto iter = OptimalESs.begin(); iter!=OptimalESs.end(); ++iter)
     {
+        EV<<"Iter->first "<<iter->first<<'\n';
+        EV<<"iter->second.addr "<<iter->second.addr<<'\n';
+        EV<<"iter->second.f "<<iter->second.f<<'\n';
+        EV<<"iter->second.isAvailable "<<iter->second.isAvailable<<'\n';
+
         if(iter->second.isAvailable && OptimalES.f < iter->second.f)
         {
             OptimalES.addr=(*iter).second.addr;
             OptimalES.f = (*iter).second.f;
             OptimalES.capacity = (*iter).second.capacity;
-            OptimalES.isAvailable = true;
-            EV<<this->getParentModule()->getFullName()<<"Cluster's ES"<<(*iter).second.f<<'\n';
+            OptimalES.isAvailable = iter->second.isAvailable;
+            EV<<this->getParentModule()->getFullName()<<"Cluster's ES "<<(*iter).second.f<<'\n';
             isMyES=false;
         }
     }
-
+    EV<<this->getParentModule()->getFullName()<<"FindOptimal, OptimalES.addr = "<<OptimalES.addr<<'\n';
     EV<<this->getParentModule()->getFullName()<<"FindOptimal, OptimalES.f = "<<OptimalES.f<<'\n';
+    EV<<this->getParentModule()->getFullName()<<"FindOptimal, OptimalES.f = "<<OptimalES.isAvailable<<'\n';
 
     if(OptimalES.f == 0){
         //there is not any ES
