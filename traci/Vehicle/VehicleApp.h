@@ -46,10 +46,16 @@ class VEINS_API VehicleApp : public DemoBaseApplLayer {
 public:
 
     inet::RSU_INFO curConnectingRSU;
+    inet::RSU_INFO ConnectedRSU;
+
     std::map<std::string,inet::RSU_Advertisement> RSUs; // not overflow,,, int.. -> long long   //삭제 예정 beacon으로 구현했음.
 
 
     std::vector<bool> finishedTask; //이름 isfinished_Task로 바꾸기
+
+    //연결 관련
+    cMessage* self_ptr_Connect = nullptr;
+    cMessage* self_ptr_Disconnect = nullptr;
 
     void initialize(int stage) override;
     void finish() override;

@@ -89,10 +89,13 @@ public:
     std::map<std::string,inet::Format_RSUCluster> RSUs; //정보를 받는 곳  //Back up   //테스트 후 삭제 해야함.
     std::map<std::string,inet::Format_RSUCluster> RSUs_left; //정보를 받는 곳
     std::map<std::string,inet::Format_RSUCluster> RSUs_right; //정보를 받는 곳
+    inet::Format_RSUCluster* closestRSU_right = nullptr;    //차량이 없을 때 전달을 하기 위함.
+    inet::Format_RSUCluster* closestRSU_left = nullptr;     //차량이 없을 때 전달을 하기 위함.
 
     std::map<std::string,inet::Format_RSUCluster> RSUsMaster;   //정보를 보내야 하는 곳
     std::map<std::string,inet::Format_EdgeServer> ESs;  //내가 알고 있는 ES
     std::set<long> Cars;
+    std::set<long> passedCars;
     std::map<std::string,inet::Format_EdgeServer> OptimalESs;  //Key : optimal RSU Addr : optimal ES of each RSU in cluster..  //RSU cluster에게 받은 Optimal ES들.. 후보임.
     inet::Format_EdgeServer myOptimalES;    //Pointer로 구현하면 참 좋을 것 같은데..
 

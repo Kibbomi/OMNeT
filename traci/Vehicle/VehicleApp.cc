@@ -69,9 +69,13 @@ void VehicleApp::onBSM(DemoSafetyMessage* bsm)
     {
         if(curConnectingRSU.rssi < BeaconRSSIValue)
         {
+
             //if it is not first time,
             if(curConnectingRSU.RSU_ID != -1){
                 //send disconnect message to RSU connecting to this car.
+
+                //for retransmit
+                ConnectedRSU = curConnectingRSU;
 
                 CARDisconnectionReq* msg = new CARDisconnectionReq();
                 msg->setCarAddr(this->mac->getMACAddress());
@@ -82,22 +86,29 @@ void VehicleApp::onBSM(DemoSafetyMessage* bsm)
                 wsm->encapsulate(msg);
                 populateWSM(wsm,curConnectingRSU.RSU_ID);
                 send(wsm,lowerLayerOut);
-        }
 
-        curConnectingRSU.rssi = BeaconRSSIValue;
-        curConnectingRSU.RSU_ID = bsm->getSenderMacAddr();
+                self_ptr_Disconnect = new cMessage("",Self_Disconnect);
+                scheduleAt(simTime() + 0.02, self_ptr_Disconnect);
+            }
 
-        CARConnectionReq* msg = new CARConnectionReq();
-        msg->setCarAddr(this->mac->getMACAddress());
-        msg->setName("CARConnectionReq");
+            curConnectingRSU.rssi = BeaconRSSIValue;
+            curConnectingRSU.RSU_ID = bsm->getSenderMacAddr();
 
-        BaseFrame1609_4* wsm = new BaseFrame1609_4();
-        wsm->setName("CARConnectionReq");
-        wsm->encapsulate(msg);
-        populateWSM(wsm, curConnectingRSU.RSU_ID);
-        send(wsm,lowerLayerOut);
+            CARConnectionReq* msg = new CARConnectionReq();
+            msg->setCarAddr(this->mac->getMACAddress());
+            msg->setName("CARConnectionReq");
 
-        EV<<this->getParentModule()->getFullName()<<"Updated its CurConnectingRSU\n";
+            BaseFrame1609_4* wsm = new BaseFrame1609_4();
+            wsm->setName("CARConnectionReq");
+            wsm->encapsulate(msg);
+            populateWSM(wsm, curConnectingRSU.RSU_ID);
+            send(wsm,lowerLayerOut);
+
+            self_ptr_Connect = new cMessage("",Self_Connect);
+            scheduleAt(simTime() + 0.02, self_ptr_Connect);
+
+            EV<<this->getParentModule()->getFullName()<<"Updated its CurConnectingRSU\n";
+
         }
         //if not, nothing to do.
     }
@@ -138,10 +149,22 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
     else if(strcmp(pac->getName(), "CARConnectionResp") == 0){
         CARConnectionResp* msg = dynamic_cast<CARConnectionResp*>(pac);
         EV<<this->getParentModule()->getFullName()<<" received Connection ACK packet\n";
+
+        if(self_ptr_Connect != nullptr && self_ptr_Connect->isScheduled()){
+            cancelAndDelete(self_ptr_Connect);
+        }
     }
     else if(strcmp(pac->getName(), "CARDisconnectionResp") == 0){
+        //조금 동기가 안 맞을 수도 있음.
         CARDisconnectionResp* msg = dynamic_cast<CARDisconnectionResp*>(pac);
         EV<<this->getParentModule()->getFullName()<<" received Disconnection ACK packet\n";
+
+        if(self_ptr_Disconnect != nullptr && self_ptr_Disconnect->isScheduled()){
+            cancelAndDelete(self_ptr_Disconnect);
+
+            //connected RSU 초기화..?
+        }
+
     }
     else if(strcmp(pac->getName(), "CarCOResp") == 0){
 
@@ -224,6 +247,38 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         //for next send
         cMessage* selfMsg =new cMessage("",Self_COReq);
         scheduleAt(simTime() + uniform(1.51, 2.0),selfMsg);
+    }
+    else if(msg->getKind() == Self_Connect)
+    {
+        CARConnectionReq* msg = new CARConnectionReq();
+        msg->setCarAddr(this->mac->getMACAddress());
+        msg->setName("CARConnectionReq");
+
+        BaseFrame1609_4* wsm = new BaseFrame1609_4();
+        wsm->setName("CARConnectionReq");
+        wsm->encapsulate(msg);
+        populateWSM(wsm, curConnectingRSU.RSU_ID);
+        send(wsm,lowerLayerOut);
+
+        self_ptr_Connect = new cMessage("",Self_Connect);
+        scheduleAt(simTime() + 0.02, self_ptr_Connect);
+        EV<<this->getParentModule()->getFullName()<< "retransmit Connection Msg to "<< curConnectingRSU.RSU_ID <<'\n';
+    }
+    else if(msg->getKind() == Self_Disconnect)
+    {
+        CARDisconnectionReq* msg = new CARDisconnectionReq();
+        msg->setCarAddr(this->mac->getMACAddress());
+        msg->setName("CARDisconnectionReq");
+
+        BaseFrame1609_4* wsm = new BaseFrame1609_4();
+        wsm->setName("CARDisconnectionReq");
+        wsm->encapsulate(msg);
+        populateWSM(wsm,ConnectedRSU.RSU_ID);
+        send(wsm,lowerLayerOut);
+
+        self_ptr_Disconnect = new cMessage("",Self_Disconnect);
+        scheduleAt(simTime() + 0.02, self_ptr_Disconnect);
+        EV<<this->getParentModule()->getFullName()<< "retransmit DisConnection Msg to "<< curConnectingRSU.RSU_ID <<'\n';
     }
     else
     {

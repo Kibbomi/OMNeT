@@ -13,7 +13,9 @@ enum SelfMessageType{
     Self_ERSReq = 200,
     Self_ERSResp,
     Self_RSUAdvertisement,
-    Self_COReq
+    Self_COReq,
+    Self_Connect,
+    Self_Disconnect
 };
 
 

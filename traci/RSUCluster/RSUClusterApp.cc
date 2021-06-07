@@ -70,14 +70,13 @@ void RSUClusterApp::initialize(int stage)
 
 
         //50ms ~ 65ms
-        this->beaconInterval+=uniform(1,1.5);
-        //this->beaconInterval+=uniform(0.05,0.065);
+        //this->beaconInterval+=uniform(1,1.5);
+        this->beaconInterval+=uniform(0.05,0.065);
 
 
         //periodical Advertisement..
-        //주석 풀면 됨. 광고 이벤트 시작.
-
-       // cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
+        //주석 풀면 됨. 광고 이벤트 시작. (삭제 예정)
+        //cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
         //scheduleAt(simTime() + uniform(1.01, 1.2),selfMsg);
 
     }
@@ -189,8 +188,11 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         inet::Format_Car item;
         item.CarId = msg->getCarAddr();
 
-        if(Cars.count(item.CarId) == 0)
+        if(Cars.count(item.CarId) == 0){
             Cars.insert(item.CarId);
+            if(passedCars.count(item.CarId) == 1)
+                passedCars.erase(item.CarId);
+        }
 
 
         CARConnectionResp* resp = new CARConnectionResp();
@@ -228,8 +230,15 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
             CARDisconnectionReq* req = dynamic_cast<CARDisconnectionReq*>(pac);
 
-            if(Cars.count(req->getCarAddr()) == 1)
+            if(Cars.count(req->getCarAddr()) == 1){
+                EV<<this->getParentModule()->getFullName()<<" disconnected car : "<<req->getCarAddr()<<'\n';
                 Cars.erase(req->getCarAddr());
+                //self msg로 삭제 요청할 것.
+                passedCars.insert(req->getCarAddr());
+
+                //cMessage* selfMsg = new cMessage("passMsg",req->getCarAddr());
+                //scheduleAt(simTime() + 7, selfMsg);
+            }
 
 
             CARDisconnectionResp* resp = new CARDisconnectionResp();
@@ -374,7 +383,20 @@ void RSUClusterApp::handleSelfMsg(cMessage* msg)
             EV_INFO << "RSUClusterApp : TTL value exceeds the TTL_threshold value. \n";
 
     }
-    else if(msg->getKind() == Self_RSUAdvertisement)
+    else if(strcmp(msg->getName(),"passMsg") == 0)
+    {
+        EV<<this->getParentModule()->getFullName()<<" erase passed car : " <<msg->getKind()<<'\n';
+
+        for(auto item : passedCars)
+            EV<< item<<'\n';
+
+        passedCars.erase(msg->getKind());
+
+        EV<<this->getParentModule()->getFullName()<<" --------erased-------"<<"\n\n";
+        for(auto item : passedCars)
+            EV<< item<<'\n';
+    }
+    /*else if(msg->getKind() == Self_RSUAdvertisement)
     {
         RSUAdvertisement* msg = new RSUAdvertisement();
         msg->setRSUName(this->getParentModule()->getFullName());
@@ -394,7 +416,7 @@ void RSUClusterApp::handleSelfMsg(cMessage* msg)
         cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
         //scheduleAt(simTime() + uniform(0.01, 0.2),selfMsg);
         scheduleAt(simTime() + uniform(1, 1.2),selfMsg);
-    }
+    }*/
     else
     {
         //이 함수에 else에 Error를 뱉기 때문에 이 부분이 마지막에 와야 됨.
@@ -589,6 +611,25 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                     EV<< "RSUs_left Table\n";
                     for(auto iter = RSUs_left.begin(); iter!=RSUs_left.end(); ++iter)
                         EV<<"MAC : "<<(*iter).first<<'\n';
+
+                    //find out closest RSU to me
+                    if(closestRSU_left == nullptr){
+                        closestRSU_left = &RSUs_left[key_string];
+                        EV<< this->getParentModule()->getFullName()<<" closestRSU(left) is updated!(nullptr)"<<closestRSU_left->addr.str()<<'\n';
+                    }
+                    else
+                    {
+                        int curdist = (this->curPosition.x - closestRSU_left->x)*(this->curPosition.x - closestRSU_left->x) +(this->curPosition.y - closestRSU_left->y)*(this->curPosition.y - closestRSU_left->y);
+
+                        for(auto iter = RSUs_left.begin(); iter != RSUs_left.end(); ++iter){
+                            int rsudist = (this->curPosition.x - iter->second.x)*(this->curPosition.x - iter->second.x) +(this->curPosition.y - iter->second.y)*(this->curPosition.y - iter->second.y);
+                            if(curdist > rsudist){
+                                closestRSU_left = &(iter->second);
+                                curdist = rsudist;
+                            }
+                        }
+                        EV<< this->getParentModule()->getFullName()<<" closestRSU(left) is updated!"<<closestRSU_left->addr.str()<<'\n';
+                    }
                 }
                 else
                     EV<<"RSU_left : This RSU already exist\n";
@@ -603,6 +644,26 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                     EV<< "RSUs_right Table\n";
                     for(auto iter = RSUs_right.begin(); iter!=RSUs_right.end(); ++iter)
                         EV<<"MAC : "<<(*iter).first<<'\n';
+
+                    //find out closest RSU to me
+                    if(closestRSU_right == nullptr){
+                        closestRSU_right = &RSUs_right[key_string];
+                        EV<< this->getParentModule()->getFullName()<<" closestRSU(right) is updated!(nullptr)"<<closestRSU_right->addr.str()<<'\n';
+                    }
+                    else
+                    {
+                        int curdist = (this->curPosition.x - closestRSU_right->x)*(this->curPosition.x - closestRSU_right->x) +(this->curPosition.y - closestRSU_right->y)*(this->curPosition.y - closestRSU_right->y);
+
+                        for(auto &rsu_ : RSUs_right)
+                        for(auto iter = RSUs_right.begin(); iter != RSUs_right.end(); ++iter){
+                            int rsudist = (this->curPosition.x - iter->second.x)*(this->curPosition.x - iter->second.x) +(this->curPosition.y - iter->second.y)*(this->curPosition.y - iter->second.y);
+                            if(curdist > rsudist){
+                                closestRSU_right = &(iter->second);
+                                curdist = rsudist;
+                            }
+                        }
+                        EV<< this->getParentModule()->getFullName()<<" closestRSU(right) is updated!"<<closestRSU_right->addr.str()<<'\n';
+                    }
                 }
                 else
                     EV<<"RSU_right : This RSU already exist\n";
@@ -682,18 +743,67 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         if (resp == nullptr)
             throw cRuntimeError("data type error: not an ENCOResp arrived in packet %s", msg->str().c_str());
 
-        //자신과 연결된 차량이 없다면, 진행방향의 RSU에게 전송해야함.
+        //자신의 범위에 존재한다면,
+        if(Cars.count(resp->getCarAddr()) == 1){
+            //positive case.
+            CarCOResp* msg = new CarCOResp("CarCOResp");
+            msg->setTaskID(resp->getTaskID());
+            msg->setCOResult(resp->getCOResult());
 
-        CarCOResp* msg = new CarCOResp("CarCOResp");
-        msg->setTaskID(resp->getTaskID());
-        msg->setCOResult(resp->getCOResult());
+            BaseFrame1609_4* wsm = new BaseFrame1609_4();
+            wsm->encapsulate(msg);
+            wsm->setName("CarCOResp");
+            populateWSM(wsm, resp->getCarAddr());
+            send(wsm,lowerLayerOut);
+            EV<<this->getParentModule()->getFullName()<<" send ENCOResp Message to "<< resp->getCarAddr()<<'\n';
+        }
+        else
+        {
+            //negative case,
+            EV<<this->getParentModule()->getFullName()<<" not connected with car ADDR: "<< resp->getCarAddr()<<'\n';
+            EV<<this->getParentModule()->getFullName()<<" find out RSU\n";
 
-        BaseFrame1609_4* wsm = new BaseFrame1609_4();
-        wsm->encapsulate(msg);
-        wsm->setName("CarCOResp");   //겉으로 보이는
-        populateWSM(wsm, resp->getCarAddr());
-        send(wsm,lowerLayerOut);
-        EV<<this->getParentModule()->getFullName()<<" send ENCOResp Message to "<< resp->getCarAddr()<<'\n';
+
+            inet::Packet* outPacket = new inet::Packet("ENCOResp",inet::IEEE802CTRL_DATA);
+            const auto& outPayload = inet::makeShared<inet::ENCOResp>();
+
+            outPayload->setChunkLength(inet::units::values::B(64));
+            outPayload->setTaskID(resp->getTaskID());
+            outPayload->setCarAddr(resp->getCarAddr());
+            outPayload->setCOResult(resp->getTaskID());
+
+            outPacket->insertAtBack(outPayload);
+
+            if(passedCars.count(resp->getCarAddr()) == 1){
+                //진행방향 RSU
+
+                if(closestRSU_right!= nullptr)
+                    outPacket->addTag<inet::MacAddressReq>()->setDestAddress(closestRSU_right->addr);
+                else
+                {
+                    delete outPacket;
+                    EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (right)\n";
+                }
+
+            }
+            else
+            {
+                //아직 오지 않음.
+                if(closestRSU_left!= nullptr)
+                    outPacket->addTag<inet::MacAddressReq>()->setDestAddress(closestRSU_left->addr);
+                else
+                {
+                    delete outPacket;
+                    EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (left)\n";
+                }
+            }
+            auto ieee802SapReq = outPacket->addTag<inet::Ieee802SapReq>();
+            ieee802SapReq->setSsap(localSap);
+            ieee802SapReq->setDsap(remoteSap);
+
+            omnetpp::cComponent::emit(inet::packetSentSignal,outPacket);
+            llcSocket.send(outPacket);
+        }
     }
     else if(strcmp(msg->getName(),"AvailabilityInfo") == 0)
     {
