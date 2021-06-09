@@ -164,6 +164,7 @@ inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOResp& obj) {obj.parsi
  *     MacAddress ESMacAddr;
  *     MacAddress RSUMacAddr;
  *     int f;
+ *     bool isAvailable;	//f 가 0이면 false 아니면 true로 간접적으로 표현 가능할 듯.
  * }
  * </pre>
  */
@@ -173,6 +174,7 @@ class INET_API OptimalESInfo : public ::inet::FieldsChunk
     MacAddress ESMacAddr;
     MacAddress RSUMacAddr;
     int f = 0;
+    bool isAvailable_ = false;
 
   private:
     void copy(const OptimalESInfo& other);
@@ -199,13 +201,15 @@ class INET_API OptimalESInfo : public ::inet::FieldsChunk
     virtual void setRSUMacAddr(const MacAddress& RSUMacAddr);
     virtual int getF() const;
     virtual void setF(int f);
+    virtual bool isAvailable() const;
+    virtual void setIsAvailable(bool isAvailable);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const OptimalESInfo& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, OptimalESInfo& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:51</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:52</tt> by nedtool.
  * <pre>
  * class AvailabilityInfo extends FieldsChunk
  * {

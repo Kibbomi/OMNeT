@@ -48,7 +48,10 @@ void ServersideApp::initialize(int stage)
         llcSocket.setOutputGate(gate("out"));
         llcSocket.setCallback(this);
 
-        f = (int)ceil(uniform(1,3));
+        f = par("ClockFrequency");
+
+        EV<<this->getParentModule()->getFullName()<<": Clock Frequency is "<<f<<'\n';
+
         capacity = 10;
         isAvailable = true;
         //capacity / f is limit.
@@ -135,14 +138,16 @@ void ServersideApp::handleSelfMessage(cMessage* msg)
 
             //if(Tasks.size() < capacity/f * 0.6){
 
-            if(Tasks.size() == 0 ){ //test
+            if(!isAvailable && Tasks.size() == 3 ){ //test
+
+                isAvailable = true;
                 for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter)
                 {
                     Packet *outPacket = new Packet("AvailabilityInfo",IEEE802CTRL_DATA);
                     const auto& outPayload = makeShared<AvailabilityInfo>();
 
                     outPayload->setChunkLength(B(64));
-                    outPayload->setIsAvailable(true);
+                    outPayload->setIsAvailable(isAvailable);
                     outPacket->insertAtBack(outPayload);
 
                     outPacket->addTagIfAbsent<MacAddressReq>()->setDestAddress((*iter).second.addr);
@@ -264,7 +269,7 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
 
             Tasks[CarKey] = curTask;
 
-            double processingTime = (double)req->getRequiredCycle()/(double)f;
+            double processingTime = (double)req->getRequiredCycle()/f;
 
             cMessage* self_msg = new cMessage(CarKey.c_str(),Self_COEN);
             scheduleAt(simTime() + processingTime, self_msg);    //1¿∫ s¿”.
@@ -273,17 +278,19 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
 
             //availability check
 
-            //over the capacity
             //if( (capacity / f)*0.6 < Tasks.size())
-            if(Tasks.size() == 1)   //for Test!!
+            if(isAvailable && Tasks.size() == 4)   //for Test!!
             {
+                isAvailable=false;
+
                 for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter)
                 {
                     Packet *outPacket = new Packet("AvailabilityInfo",IEEE802CTRL_DATA);
                     const auto& outPayload = makeShared<AvailabilityInfo>();
 
                     outPayload->setChunkLength(B(64));
-                    outPayload->setIsAvailable(false);
+                    outPayload->setIsAvailable(isAvailable);
+
                     outPacket->insertAtBack(outPayload);
 
                     outPacket->addTagIfAbsent<MacAddressReq>()->setDestAddress((*iter).second.addr);
@@ -293,8 +300,12 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
 
                     emit(packetSentSignal,outPacket);
                     llcSocket.send(outPacket);
-                    EV<<this->getParentModule()->getFullName()<<" is not available. Send a availableInfo message\n";
                 }
+                EV<<this->getParentModule()->getFullName()<<" is not available. Send a availableInfo message\n";
+            }
+            else if(Tasks.size() > 1){
+                //for debug
+                EV<<this->getParentModule()->getFullName() <<" is over the capacity.\n";
             }
         }
 

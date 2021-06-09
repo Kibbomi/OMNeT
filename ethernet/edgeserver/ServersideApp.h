@@ -78,7 +78,7 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     std::map<std::string,Format_Task> Tasks;    //string, Key is carID+taskID;
     //Offloading
     //This value can be changed by ini information, so that each server can have different value
-    unsigned int f;
+    double f;
     unsigned int capacity;
     bool isAvailable;
 

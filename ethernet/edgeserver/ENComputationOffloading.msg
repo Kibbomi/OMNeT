@@ -45,6 +45,7 @@ class OptimalESInfo extends FieldsChunk
     MacAddress ESMacAddr;
     MacAddress RSUMacAddr;
     int f;
+    bool isAvailable;	//f 가 0이면 false 아니면 true로 간접적으로 표현 가능할 듯.
 }
 
 class AvailabilityInfo extends FieldsChunk

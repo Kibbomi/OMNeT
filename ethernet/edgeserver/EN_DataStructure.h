@@ -27,7 +27,7 @@ class Format_EdgeServer{
 
     public:
         inet::MacAddress addr;
-        unsigned int f;
+        double f;
         unsigned int capacity;  //availability
         bool isAvailable;
         //availability 삭제 후 True로 관리하면 될듯.
@@ -61,6 +61,7 @@ class RSU_INFO{
     public:
         double rssi;
         long RSU_ID;
+        bool COLevel;
 };
 
 }

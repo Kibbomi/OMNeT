@@ -968,6 +968,7 @@ void OptimalESInfo::copy(const OptimalESInfo& other)
     this->ESMacAddr = other.ESMacAddr;
     this->RSUMacAddr = other.RSUMacAddr;
     this->f = other.f;
+    this->isAvailable_ = other.isAvailable_;
 }
 
 void OptimalESInfo::parsimPack(omnetpp::cCommBuffer *b) const
@@ -976,6 +977,7 @@ void OptimalESInfo::parsimPack(omnetpp::cCommBuffer *b) const
     doParsimPacking(b,this->ESMacAddr);
     doParsimPacking(b,this->RSUMacAddr);
     doParsimPacking(b,this->f);
+    doParsimPacking(b,this->isAvailable_);
 }
 
 void OptimalESInfo::parsimUnpack(omnetpp::cCommBuffer *b)
@@ -984,6 +986,7 @@ void OptimalESInfo::parsimUnpack(omnetpp::cCommBuffer *b)
     doParsimUnpacking(b,this->ESMacAddr);
     doParsimUnpacking(b,this->RSUMacAddr);
     doParsimUnpacking(b,this->f);
+    doParsimUnpacking(b,this->isAvailable_);
 }
 
 const MacAddress& OptimalESInfo::getESMacAddr() const
@@ -1019,6 +1022,17 @@ void OptimalESInfo::setF(int f)
     this->f = f;
 }
 
+bool OptimalESInfo::isAvailable() const
+{
+    return this->isAvailable_;
+}
+
+void OptimalESInfo::setIsAvailable(bool isAvailable)
+{
+    handleChange();
+    this->isAvailable_ = isAvailable;
+}
+
 class OptimalESInfoDescriptor : public omnetpp::cClassDescriptor
 {
   private:
@@ -1027,6 +1041,7 @@ class OptimalESInfoDescriptor : public omnetpp::cClassDescriptor
         FIELD_ESMacAddr,
         FIELD_RSUMacAddr,
         FIELD_f,
+        FIELD_isAvailable,
     };
   public:
     OptimalESInfoDescriptor();
@@ -1089,7 +1104,7 @@ const char *OptimalESInfoDescriptor::getProperty(const char *propertyname) const
 int OptimalESInfoDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 3+basedesc->getFieldCount() : 3;
+    return basedesc ? 4+basedesc->getFieldCount() : 4;
 }
 
 unsigned int OptimalESInfoDescriptor::getFieldTypeFlags(int field) const
@@ -1104,8 +1119,9 @@ unsigned int OptimalESInfoDescriptor::getFieldTypeFlags(int field) const
         0,    // FIELD_ESMacAddr
         0,    // FIELD_RSUMacAddr
         FD_ISEDITABLE,    // FIELD_f
+        FD_ISEDITABLE,    // FIELD_isAvailable
     };
-    return (field >= 0 && field < 3) ? fieldTypeFlags[field] : 0;
+    return (field >= 0 && field < 4) ? fieldTypeFlags[field] : 0;
 }
 
 const char *OptimalESInfoDescriptor::getFieldName(int field) const
@@ -1120,8 +1136,9 @@ const char *OptimalESInfoDescriptor::getFieldName(int field) const
         "ESMacAddr",
         "RSUMacAddr",
         "f",
+        "isAvailable",
     };
-    return (field >= 0 && field < 3) ? fieldNames[field] : nullptr;
+    return (field >= 0 && field < 4) ? fieldNames[field] : nullptr;
 }
 
 int OptimalESInfoDescriptor::findField(const char *fieldName) const
@@ -1131,6 +1148,7 @@ int OptimalESInfoDescriptor::findField(const char *fieldName) const
     if (fieldName[0] == 'E' && strcmp(fieldName, "ESMacAddr") == 0) return base+0;
     if (fieldName[0] == 'R' && strcmp(fieldName, "RSUMacAddr") == 0) return base+1;
     if (fieldName[0] == 'f' && strcmp(fieldName, "f") == 0) return base+2;
+    if (fieldName[0] == 'i' && strcmp(fieldName, "isAvailable") == 0) return base+3;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -1146,8 +1164,9 @@ const char *OptimalESInfoDescriptor::getFieldTypeString(int field) const
         "inet::MacAddress",    // FIELD_ESMacAddr
         "inet::MacAddress",    // FIELD_RSUMacAddr
         "int",    // FIELD_f
+        "bool",    // FIELD_isAvailable
     };
-    return (field >= 0 && field < 3) ? fieldTypeStrings[field] : nullptr;
+    return (field >= 0 && field < 4) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **OptimalESInfoDescriptor::getFieldPropertyNames(int field) const
@@ -1217,6 +1236,7 @@ std::string OptimalESInfoDescriptor::getFieldValueAsString(void *object, int fie
         case FIELD_ESMacAddr: return pp->getESMacAddr().str();
         case FIELD_RSUMacAddr: return pp->getRSUMacAddr().str();
         case FIELD_f: return long2string(pp->getF());
+        case FIELD_isAvailable: return bool2string(pp->isAvailable());
         default: return "";
     }
 }
@@ -1232,6 +1252,7 @@ bool OptimalESInfoDescriptor::setFieldValueAsString(void *object, int field, int
     OptimalESInfo *pp = (OptimalESInfo *)object; (void)pp;
     switch (field) {
         case FIELD_f: pp->setF(string2long(value)); return true;
+        case FIELD_isAvailable: pp->setIsAvailable(string2bool(value)); return true;
         default: return false;
     }
 }
