@@ -34,7 +34,7 @@ import ned.DatarateChannel;
 
 network TestNetwork extends Scenario
 {
-    @display("bgb=2500,2500");
+    @display("bgb=2600,2500");
     types:
         channel C extends DatarateChannel
         {

@@ -2,7 +2,7 @@
 # OMNeT++/OMNEST Makefile for Solution
 #
 # This file was generated with the command:
-#  opp_makemake -f --deep -O out -I.
+#  opp_makemake -f --deep -O out -KINET_PROJ=C:/Users/bum71/SIM/inet4 -KVEINS_PROJ=C:/Users/bum71/SIM/veins-5.1/veins-veins-5.1 -DINET_IMPORT -DVEINS_IMPORT -I. -I$$\(INET_PROJ\)/src -I$$\(INET_PROJ\)/src -I$$\(VEINS_PROJ\)/src -Isrc -L$$\(INET_PROJ\)/src -L$$\(VEINS_PROJ\)/src -lINET$$\(D\) -lveins$$\(D\)
 #
 
 # Name of target to be created (-o option)
@@ -16,13 +16,13 @@ USERIF_LIBS = $(ALL_ENV_LIBS) # that is, $(TKENV_LIBS) $(QTENV_LIBS) $(CMDENV_LI
 #USERIF_LIBS = $(QTENV_LIBS)
 
 # C++ include paths (with -I)
-INCLUDE_PATH = -I.
+INCLUDE_PATH = -I. -I$(INET_PROJ)/src -I$(INET_PROJ)/src -I$(VEINS_PROJ)/src -Isrc
 
 # Additional object and library files to link with
 EXTRA_OBJS =
 
 # Additional libraries (-L, -l options)
-LIBS =
+LIBS = $(LDFLAG_LIBPATH)$(INET_PROJ)/src $(LDFLAG_LIBPATH)$(VEINS_PROJ)/src  -lINET$(D) -lveins$(D)
 
 # Output directory
 PROJECT_OUTPUT_DIR = out
@@ -37,6 +37,10 @@ MSGFILES =
 
 # SM files
 SMFILES =
+
+# Other makefile variables (-K)
+INET_PROJ=C:/Users/bum71/SIM/inet4
+VEINS_PROJ=C:/Users/bum71/SIM/veins-5.1/veins-veins-5.1
 
 #------------------------------------------------------------------------------
 
@@ -60,8 +64,11 @@ include $(CONFIGFILE)
 
 # Simulation kernel and user interface libraries
 OMNETPP_LIBS = $(OPPMAIN_LIB) $(USERIF_LIBS) $(KERNEL_LIBS) $(SYS_LIBS)
+ifneq ($(TOOLCHAIN_NAME),clangc2)
+LIBS += -Wl,-rpath,$(abspath $(INET_PROJ)/src) -Wl,-rpath,$(abspath $(VEINS_PROJ)/src)
+endif
 
-COPTS = $(CFLAGS) $(IMPORT_DEFINES)  $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
+COPTS = $(CFLAGS) $(IMPORT_DEFINES) -DINET_IMPORT -DVEINS_IMPORT $(INCLUDE_PATH) -I$(OMNETPP_INCL_DIR)
 MSGCOPTS = $(INCLUDE_PATH)
 SMCOPTS =
 
