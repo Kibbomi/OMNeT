@@ -99,9 +99,9 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
     cPacket* pac = frame->decapsulate();
 
     if(strcmp(pac->getName(),"CarCOReq") == 0){
-
         if(myOptimalES.isAvailable == false || myOptimalES.f == 0){
             EV<<this->getParentModule()->getFullName()<<" CO is not available!\n";
+
             return;
         }
 
@@ -124,7 +124,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         inet::Packet *outPacket = new inet::Packet("ENCOReq",inet::IEEE802CTRL_DATA);
         const auto& outPayload = inet::makeShared<inet::ENCOReq>();
 
-        outPayload->setChunkLength(inet::units::values::B(64));
+        outPayload->setChunkLength(inet::units::values::B(88));
         outPayload->setTaskID(msg->getTaskID());
         outPayload->setConstraint(msg->getConstraint());
         outPayload->setRequiredCycle(msg->getRequiredCycle());
@@ -141,7 +141,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
             //자기 자신
             double dist = (expectX - curPosition.x)*(expectX - curPosition.x) + (expectY - curPosition.y)*(expectY - curPosition.y);
-            inet::MacAddress RSUAddr;
+            inet::MacAddress RSUAddr = inet::MacAddress::UNSPECIFIED_ADDRESS;
 
             for(auto iter = RSUs_right.begin(); iter!=RSUs_right.end(); ++iter)
             {
@@ -162,7 +162,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
             double expectY = msg->getY();
 
             double dist = (expectX - curPosition.x)*(expectX - curPosition.x) + (expectY - curPosition.y)*(expectY - curPosition.y);
-            inet::MacAddress RSUAddr;
+            inet::MacAddress RSUAddr  = inet::MacAddress::UNSPECIFIED_ADDRESS;
 
             for(auto iter = RSUs_left.begin(); iter!=RSUs_left.end(); ++iter)
             {
@@ -278,63 +278,6 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
             ACKWaitptr.erase(carKey);
         }
     }
-    //밑에는 보고 지울 예정 한번 보기.
-    if(pac->getKind()==Msg_MsgOffloading){
-
-        //802.11p Message Type
-
-       /* MsgOffloading* msg = dynamic_cast<MsgOffloading*>(pac);
-
-        EV<<"wsm : "<<msg<<std::endl;
-        EV << "RSU : Received (X,Y) : ("<< msg->getX() << "," << msg->getY() << ")" << std::endl;
-
-        msg->setRet(msg->getX()*msg->getY());
-
-        BaseFrame1609_4* wsm = new BaseFrame1609_4();
-        wsm->encapsulate(msg);
-        populateWSM(wsm);
-        //802.11p data
-        sendDelayed(wsm,1,lowerLayerOut);
-        */
-
-
-        //Ethernet Message Type
-        inet::Packet *datapacket = new inet::Packet("",inet::IEEE802CTRL_DATA);
-
-        const auto& data = inet::makeShared<inet::MyOffloadingReq>();
-
-        //내가 임의로 정한 size임.
-        data->setChunkLength(inet::units::values::B(800));  //수정필수.
-        data->setConstraint(10);
-        data->setCycle(1234);
-        data->setData(6789);
-        data->addTag<inet::CreationTimeTag>()->setCreationTime(simTime());
-        EV_INFO << "RSU : Simulation Time is : "<<simTime()<<'\n';
-        //안나오는 것 일뿐... 잘 동작?
-
-        datapacket->insertAtBack(data);
-
-
-        //ttl tag
-        //datapacket->addTag<inet::CreationTTLTag>()->setTtl(3);
-        datapacket->setName("OFFLOADING_REQ");
-
-
-
-
-        datapacket->addTag<inet::MacAddressReq>()->setDestAddress(inet::MacAddress::BROADCAST_ADDRESS);
-        EV<<"RSU send the Ethernet packet !\n";
-        auto ieee802SapReq = datapacket->addTag<inet::Ieee802SapReq>();
-        ieee802SapReq->setSsap(0xf0);
-        ieee802SapReq->setDsap(0xf1);
-
-        //send(datapacket,out);
-        //omnetpp::emit(packetSentSignal, datapacket);
-        omnetpp::cComponent::emit(inet::packetSentSignal,datapacket);
-        llcSocket.send(datapacket);
-        EV<<"RSU send the Ethernet packet to Link!!\n";
-    }
-
 }
 
 //HandleMessage
@@ -508,7 +451,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         const auto& outPayload = inet::makeShared<inet::ERSResp>();
 
         //RSU information
-        outPayload->setChunkLength(inet::units::values::B(21));
+        outPayload->setChunkLength(inet::units::values::B(88));
         outPayload->setY(this->curPosition.y);    //설정하기 RSU에 맞게
         outPayload->setX(this->curPosition.x);
         outPayload->setCoverage(10);
@@ -547,7 +490,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             inet::Packet* outPacket_optimal = new inet::Packet("OptimalESInfo",inet::IEEE802CTRL_DATA);
             const auto& outPayload_optimal = inet::makeShared<inet::OptimalESInfo>();
 
-            outPayload_optimal->setChunkLength(inet::units::values::B(64));
+            outPayload_optimal->setChunkLength(inet::units::values::B(88));
             outPayload_optimal->setESMacAddr(myOptimalES.addr);
             outPayload_optimal->setF(myOptimalES.f);
 
@@ -766,6 +709,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
     }
     else if(strcmp(msg->getName(),"ENCOResp") == 0)
     {
+
         const auto& resp = msg->peekAtFront<inet::ENCOResp>();
         if (resp == nullptr)
             throw cRuntimeError("data type error: not an ENCOResp arrived in packet %s", msg->str().c_str());
@@ -773,12 +717,13 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         //자신의 범위에 존재한다면,
         if(Cars.count(resp->getCarAddr()) == 1){
             //positive case.
-            CarCOResp* msg = new CarCOResp("CarCOResp");
-            msg->setTaskID(resp->getTaskID());
-            msg->setCOResult(resp->getCOResult());
+            CarCOResp* ret = new CarCOResp();
+            ret->setTaskID(resp->getTaskID());
+            ret->setCOResult(resp->getCOResult());
+            ret->setName("CarCOResp");
 
             BaseFrame1609_4* wsm = new BaseFrame1609_4();
-            wsm->encapsulate(msg);
+            wsm->encapsulate(ret);
             wsm->setName("CarCOResp");
             populateWSM(wsm, resp->getCarAddr());
             send(wsm,lowerLayerOut);
@@ -794,7 +739,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             inet::Packet* outPacket = new inet::Packet("ENCOResp",inet::IEEE802CTRL_DATA);
             const auto& outPayload = inet::makeShared<inet::ENCOResp>();
 
-            outPayload->setChunkLength(inet::units::values::B(64));
+            outPayload->setChunkLength(inet::units::values::B(88));
             outPayload->setTaskID(resp->getTaskID());
             outPayload->setCarAddr(resp->getCarAddr());
             outPayload->setCOResult(resp->getTaskID()); //수정 해도되고 안 해도 되고..
@@ -810,6 +755,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                 {
                     delete outPacket;
                     EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (right)\n";
+                    return;
                 }
 
             }
@@ -822,6 +768,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                 {
                     delete outPacket;
                     EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (left)\n";
+                    return;
                 }
             }
             auto ieee802SapReq = outPacket->addTag<inet::Ieee802SapReq>();
@@ -833,7 +780,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         }
 
         //for ACK;
-        std::string carKey = std::to_string(resp->getCarAddr()) + std::to_string(resp->getTaskID());
+        /*std::string carKey = std::to_string(resp->getCarAddr()) + std::to_string(resp->getTaskID());
         ACKWaitptr.insert(std::make_pair(carKey, new cMessage(carKey.c_str(), Self_COResp)));
 
         inet::Format_Task item;
@@ -842,7 +789,8 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         item.COResult = 1;  //뭐든지 OK
 
         ACKWaitTasks[carKey] = item;
-        scheduleAt(simTime() + CORespACKRetransmission, ACKWaitptr[carKey]);
+        if(!ACKWaitptr[carKey]->isScheduled())
+            scheduleAt(simTime() + CORespACKRetransmission, ACKWaitptr[carKey]);*/
 
     }
     else if(strcmp(msg->getName(),"AvailabilityInfo") == 0)
@@ -865,7 +813,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
                     inet::Packet  *datapacket = new inet::Packet("OptimalESInfo",inet::IEEE802CTRL_DATA);
 
                     const auto& data = inet::makeShared<inet::OptimalESInfo>();
-                    data->setChunkLength(inet::units::values::B(64));  //수정?
+                    data->setChunkLength(inet::units::values::B(88));  //수정?
                     data->setESMacAddr(srcAddress);
                     data->setF(0);  //is not available
 
@@ -939,7 +887,7 @@ void RSUClusterApp::BeginERS(int init, int threshold){
 
     const auto& data = inet::makeShared<inet::ERSReq>();
     //data->setChunkLength(inet::units::values::B(5));  //unsigned int, unsigned char
-    data->setChunkLength(inet::units::values::B(64));  //unsigned int, unsigned char
+    data->setChunkLength(inet::units::values::B(88));  //unsigned int, unsigned char
     data->setTTL(init);
     data->setFindTarget(inet::RSU_ES);
     //data->setFindTarget(findWhat);
@@ -958,10 +906,10 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     llcSocket.send(datapacket);
     EV<<"RSU send the ERS Request to Link!!\n";
 
-
-    self_ptr_ERSReq = new cMessage("",Self_ERSReq);
-    scheduleAt(simTime() + uniform(0.01, 0.2) + ERS_WaitTime, self_ptr_ERSReq);
-
+    //if(self_ptr_ERSReq!= nullptr && !self_ptr_ERSReq->isScheduled()){
+        self_ptr_ERSReq = new cMessage("",Self_ERSReq);
+        scheduleAt(simTime() + uniform(0.01, 0.2) + ERS_WaitTime, self_ptr_ERSReq);
+    //}
 
     return;
 }
@@ -1051,7 +999,7 @@ void RSUClusterApp::FindOptimalES(){
             inet::Packet  *datapacket = new inet::Packet("OptimalESInfo",inet::IEEE802CTRL_DATA);
 
             const auto& data = inet::makeShared<inet::OptimalESInfo>();
-            data->setChunkLength(inet::units::values::B(64));  //수정?
+            data->setChunkLength(inet::units::values::B(88));  //수정?
             data->setESMacAddr(myOptimalES.addr);
             //data->setRSUMacAddr()
             data->setF(myOptimalES.f);

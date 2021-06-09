@@ -131,31 +131,7 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
     cPacket* pac = wsm->decapsulate();
     EV << "Car received packet named : "<< pac->getName()<<'\n';
 
-    if(strcmp(pac->getName(),"RSUAdvertisement") == 0)
-    {
-        RSUAdvertisement* msg = dynamic_cast<RSUAdvertisement*>(pac);
-
-        if(RSUs.count(msg->getRSUName()) == 0){
-            Coord curLocation = mobility->getPositionAt(simTime());
-            int distance = (curLocation.x - msg->getX())*(curLocation.x - msg->getX())
-                    -(curLocation.y - msg->getY())*(curLocation.y - msg->getY());
-
-            inet::RSU_Advertisement item = inet::RSU_Advertisement();
-            item.distance = distance;
-            item.advertisementTime = msg->getAdvertisementTime();
-            item.RSU_ID = msg->getSenderMacAddr();
-
-            //do not sqrt, because we just compare the values..
-            RSUs.insert(std::make_pair(msg->getRSUName(),item));
-            EV<<"Car1 connect to new RSU\n";
-        }
-        else
-        {
-            //시간이 오래 된 애들은 여기서 순회하면서 삭제.
-
-        }
-    }
-    else if(strcmp(pac->getName(), "CARConnectionResp") == 0){
+    if(strcmp(pac->getName(), "CARConnectionResp") == 0){
         CARConnectionResp* msg = dynamic_cast<CARConnectionResp*>(pac);
         EV<<this->getParentModule()->getFullName()<<" received Connection ACK packet\n";
 
@@ -181,7 +157,9 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
         CarCOResp* msg = dynamic_cast<CarCOResp*>(pac);
 
         EV<<"Car1 received "<<msg->getTaskID() <<" CO Resp\n";
-        finishedTask[msg->getTaskID()]=true;
+
+        if(msg->getTaskID() < finishedTask.size())
+            finishedTask[msg->getTaskID()]=true;
 
         //send ACK
         CarCOAck* ack = new CarCOAck();
@@ -208,6 +186,7 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
         {
             EV<<"Discard RSUCOLevel Packet.\n";
         }
+
     }
     return;
 }
@@ -236,35 +215,35 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         }
 
 
-        CarCOReq* msg = new CarCOReq();
+        CarCOReq* req = new CarCOReq();
 
         //car
         Coord curLocation = mobility->getPositionAt(simTime());
-        msg->setX(curLocation.x);
-        msg->setY(curLocation.y);
-        msg->setRad(mobility->getHeading().getRad());
-        msg->setSpeed(mobility->getSpeed());
-        msg->setCarName(this->getParentModule()->getFullName());
+        req->setX(curLocation.x);
+        req->setY(curLocation.y);
+        req->setRad(mobility->getHeading().getRad());
+        req->setSpeed(mobility->getSpeed());
+        req->setCarName(this->getParentModule()->getFullName());
 
         //task information
-        msg->setTaskID(finishedTask.size());
-        msg->setConstraint(uniform(0.15,1));    //[0.15, 1]ms
-        msg->setRequiredCycle(uniform(0.2,0.4));  //[0.2, 0.4]GHz
-        msg->setTaskCode(1);  //byte;
+        req->setTaskID(finishedTask.size());
+        req->setConstraint(uniform(0.15,1));    //[0.15, 1]ms
+        req->setRequiredCycle(uniform(0.2,0.4));  //[0.2, 0.4]GHz
+        req->setTaskCode(1);  //byte;
 
-        msg->setReqTime(simTime());
-        msg->setCarAddr(this->mac->getMACAddress());
-        msg->setName("CarCOReq");
+        req->setReqTime(simTime());
+        req->setCarAddr(this->mac->getMACAddress());
+        req->setName("CarCOReq");
         //push Task
         finishedTask.push_back(false);
 
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->setName("CarCOReq");
-        wsm->encapsulate(msg);
+        wsm->encapsulate(req);
         populateWSM(wsm,curConnectingRSU.RSU_ID);
         send(wsm,lowerLayerOut);
 
-        //for next send
+        //for next CO
         cMessage* selfMsg =new cMessage("",Self_COReq);
         scheduleAt(simTime() + uniform(1.51, 2.0),selfMsg);
     }
@@ -286,13 +265,13 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
     }
     else if(msg->getKind() == Self_Disconnect)
     {
-        CARDisconnectionReq* msg = new CARDisconnectionReq();
-        msg->setCarAddr(this->mac->getMACAddress());
-        msg->setName("CARDisconnectionReq");
+        CARDisconnectionReq* ack = new CARDisconnectionReq();
+        ack->setCarAddr(this->mac->getMACAddress());
+        ack->setName("CARDisconnectionReq");
 
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->setName("CARDisconnectionReq");
-        wsm->encapsulate(msg);
+        wsm->encapsulate(ack);
         populateWSM(wsm,ConnectedRSU.RSU_ID);
         send(wsm,lowerLayerOut);
 
