@@ -40,9 +40,9 @@ packet CarCOReq extends BaseFrame1609_4
     
     //Task information
     int taskID;
-    double constraint;
-    int requiredCycle;
-    int taskCode;
+    double constraint;		//unit s
+    double requiredCycle;	//unit Gb
+    double taskCode;		//unit Kb
     
     //Packet information
     simtime_t	reqTime;
@@ -59,4 +59,10 @@ packet RSUCOLevel extends BaseFrame1609_4
 {
     LAddress::L2Type RSUAddr;
     bool COLevel;
+}
+
+packet CarCOAck extends BaseFrame1609_4
+{
+    int taskID;
+    long CarAddr;
 }

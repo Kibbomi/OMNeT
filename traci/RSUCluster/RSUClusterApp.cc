@@ -66,7 +66,7 @@ void RSUClusterApp::initialize(int stage)
         //사전에  ES를 적어도 1개 찾아놓을 것.
         //ERS 주석풀면 바로 시작.
         //EV<<"RSU call BeginERS!!\n";
-        BeginERS(TTL_init, TTL_threshold);
+        //BeginERS(TTL_init, TTL_threshold);
 
 
         //50ms ~ 65ms
@@ -102,13 +102,17 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
     if(strcmp(pac->getName(),"CarCOReq") == 0){
 
         if(myOptimalES.isAvailable == false){
-            EV<<this->getParentModule()->getFullName()<<" is not available!\n";
-            return ;
+            EV<<this->getParentModule()->getFullName()<<" CO is not available!\n";
+            return;
         }
 
 
         EV<<this->getParentModule()->getFullName()<<"received CarCOReq Message!\n";
         CarCOReq* msg = dynamic_cast<CarCOReq*>(pac);
+
+        //check constraint
+
+
 
         //parse
         inet::Packet *outPacket = new inet::Packet("ENCOReq",inet::IEEE802CTRL_DATA);
@@ -240,7 +244,6 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
                 //scheduleAt(simTime() + 7, selfMsg);
             }
 
-
             CARDisconnectionResp* resp = new CARDisconnectionResp();
             resp->setName("CARDisconnectionResp");
             resp->setRSUAddr(this->mac->getMACAddress());
@@ -256,6 +259,19 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
                 EV<<"Now connected Cars : "<<*iter<<'\n';
 
         }
+    else if(strcmp(pac->getName(),"CarCOAck") == 0)
+    {
+        EV<<this->getParentModule()->getFullName()<<" received CO ACK message\n";
+
+        CarCOAck* msg = dynamic_cast<CarCOAck*>(pac);
+        std::string carKey = std::to_string(msg->getCarAddr()) + std::to_string(msg->getTaskID());
+
+        if(ACKWaitptr.count(carKey) == 1){
+            if(ACKWaitptr[carKey] != nullptr && ACKWaitptr[carKey]->isScheduled() )
+                cancelAndDelete(ACKWaitptr[carKey]);
+            ACKWaitptr.erase(carKey);
+        }
+    }
     //밑에는 보고 지울 예정 한번 보기.
     if(pac->getKind()==Msg_MsgOffloading){
 
@@ -396,27 +412,32 @@ void RSUClusterApp::handleSelfMsg(cMessage* msg)
         for(auto item : passedCars)
             EV<< item<<'\n';
     }
-    /*else if(msg->getKind() == Self_RSUAdvertisement)
-    {
-        RSUAdvertisement* msg = new RSUAdvertisement();
-        msg->setRSUName(this->getParentModule()->getFullName());
-        msg->setName("RSUAdvertisement");   //속 메시지
-        msg->setAdvertisementTime(simTime());
-        msg->setX(curPosition.x);
-        msg->setY(curPosition.y);
-        msg->setSenderMacAddr(this->mac->getMACAddress());
+    else if(msg->getKind() == Self_COResp){
+        long carAddr = ACKWaitTasks[msg->getName()].CarAddr;
+        int TaskID = ACKWaitTasks[msg->getName()].TaskId;
 
-        BaseFrame1609_4* wsm = new BaseFrame1609_4();
-        wsm->encapsulate(msg);
-        wsm->setName("RSUAdvertisement");   //겉으로 보이는
-        populateWSM(wsm);
-        send(wsm,lowerLayerOut);
+        if(Cars.count(carAddr) == 1){
+            //positive case.
+            CarCOResp* msg = new CarCOResp("CarCOResp");
+            msg->setTaskID(TaskID);
+            msg->setCOResult(1);    //아무거나 가능
 
-        //for next send
-        cMessage* selfMsg =new cMessage("",Self_RSUAdvertisement);
-        //scheduleAt(simTime() + uniform(0.01, 0.2),selfMsg);
-        scheduleAt(simTime() + uniform(1, 1.2),selfMsg);
-    }*/
+            BaseFrame1609_4* wsm = new BaseFrame1609_4();
+            wsm->encapsulate(msg);
+            wsm->setName("CarCOResp");
+            populateWSM(wsm, carAddr);
+            send(wsm,lowerLayerOut);
+            EV<<this->getParentModule()->getFullName()<<" send ENCOResp Message(Retransmit) to "<< carAddr<<'\n';
+        }
+        else
+        {
+            if(ACKWaitptr.count(msg->getName()) == 1){
+                if(ACKWaitptr[msg->getName()] != nullptr && ACKWaitptr[msg->getName()]->isScheduled() )
+                    cancelAndDelete(ACKWaitptr[msg->getName()]);
+                ACKWaitptr.erase(msg->getName());
+            }
+        }
+    }
     else
     {
         //이 함수에 else에 Error를 뱉기 때문에 이 부분이 마지막에 와야 됨.
@@ -770,7 +791,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             outPayload->setChunkLength(inet::units::values::B(64));
             outPayload->setTaskID(resp->getTaskID());
             outPayload->setCarAddr(resp->getCarAddr());
-            outPayload->setCOResult(resp->getTaskID());
+            outPayload->setCOResult(resp->getTaskID()); //수정 해도되고 안 해도 되고..
 
             outPacket->insertAtBack(outPayload);
 
@@ -804,6 +825,19 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             omnetpp::cComponent::emit(inet::packetSentSignal,outPacket);
             llcSocket.send(outPacket);
         }
+
+        //for ACK;
+        std::string carKey = std::to_string(resp->getCarAddr()) + std::to_string(resp->getTaskID());
+        ACKWaitptr.insert(std::make_pair(carKey, new cMessage(carKey.c_str(), Self_COResp)));
+
+        inet::Format_Task item;
+        item.CarAddr = resp->getCarAddr();
+        item.TaskId = resp->getTaskID();
+        item.COResult = 1;  //뭐든지 OK
+
+        ACKWaitTasks[carKey] = item;
+        scheduleAt(simTime() + CORespACKRetransmission, ACKWaitptr[carKey]);
+
     }
     else if(strcmp(msg->getName(),"AvailabilityInfo") == 0)
     {

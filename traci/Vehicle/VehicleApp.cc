@@ -59,6 +59,15 @@ void VehicleApp::onBSM(DemoSafetyMessage* bsm)
     //자동완성에는 보이지 않음..
     EV<<"Sender's Mac address : "<< bsm->getSenderMacAddr()<<'\n';
 
+    double dist = (curPosition.x - bsm->getSenderPos().x)*(curPosition.x - bsm->getSenderPos().x) + (curPosition.y - bsm->getSenderPos().y)*(curPosition.y - bsm->getSenderPos().y);
+    if(dist > coverage*coverage){
+        EV<< this->getParentModule()->getFullName()<<" : RSU is too far!(not in coverage)\n";
+        return ;
+    }
+
+
+    //거리 체크
+
     //beacon주기가 꽤나 촘촘해야함..
     if(bsm->getSenderMacAddr() == curConnectingRSU.RSU_ID)
     {
@@ -173,6 +182,18 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
 
         EV<<"Car1 received "<<msg->getTaskID() <<" CO Resp\n";
         finishedTask[msg->getTaskID()]=true;
+
+        //send ACK
+        CarCOAck* ack = new CarCOAck();
+        ack->setCarAddr(this->mac->getMACAddress());
+        ack->setTaskID(msg->getTaskID());
+        msg->setName("CarCOAck");
+
+        BaseFrame1609_4* wsm = new BaseFrame1609_4();
+        wsm->setName("CarCOAck");
+        wsm->encapsulate(msg);
+        populateWSM(wsm,curConnectingRSU.RSU_ID);
+        send(wsm,lowerLayerOut);
     }
     else if(strcmp(pac->getName(), "RSUCOLevel") == 0){
         RSUCOLevel* msg = dynamic_cast<RSUCOLevel*>(pac);
@@ -217,6 +238,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         CarCOReq* msg = new CarCOReq();
 
+        //car
         Coord curLocation = mobility->getPositionAt(simTime());
         msg->setX(curLocation.x);
         msg->setY(curLocation.y);
@@ -224,12 +246,11 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         msg->setSpeed(mobility->getSpeed());
         msg->setCarName(this->getParentModule()->getFullName());
 
+        //task information
         msg->setTaskID(finishedTask.size());
-
-        //custom value
-        msg->setConstraint(2.0);
-        msg->setRequiredCycle(17);  //15G cycle
-        msg->setTaskCode(100);  //byte;
+        msg->setConstraint(uniform(0.15,1));    //[0.15, 1]ms
+        msg->setRequiredCycle(uniform(0.2,0.4));  //[0.2, 0.4]GHz
+        msg->setTaskCode(1);  //byte;
 
         msg->setReqTime(simTime());
         msg->setCarAddr(this->mac->getMACAddress());
@@ -240,7 +261,6 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->setName("CarCOReq");
         wsm->encapsulate(msg);
-        //populateWSM(wsm);
         populateWSM(wsm,curConnectingRSU.RSU_ID);
         send(wsm,lowerLayerOut);
 

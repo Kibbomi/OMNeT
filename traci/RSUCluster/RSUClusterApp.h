@@ -80,7 +80,7 @@ public:
     int TTL_increasement = 1;   //2
     int TTL_init = 1;
     double ERS_WaitTime = 0.2;  //0.5s
-
+    double CORespACKRetransmission = 0.01; //10ms
     //RSU Info
     int coverage = 250; //250m (Range, radius)
 
@@ -96,6 +96,10 @@ public:
     std::map<std::string,inet::Format_EdgeServer> ESs;  //내가 알고 있는 ES
     std::set<long> Cars;
     std::set<long> passedCars;
+
+    std::map<std::string, cMessage*> ACKWaitptr;
+    std::map<std::string, inet::Format_Task> ACKWaitTasks;
+
     std::map<std::string,inet::Format_EdgeServer> OptimalESs;  //Key : optimal RSU Addr : optimal ES of each RSU in cluster..  //RSU cluster에게 받은 Optimal ES들.. 후보임.
     inet::Format_EdgeServer myOptimalES;    //Pointer로 구현하면 참 좋을 것 같은데..
 

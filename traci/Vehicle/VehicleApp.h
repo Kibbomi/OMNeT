@@ -42,6 +42,8 @@ using namespace omnetpp;
 
 namespace veins {
 
+constexpr double coverage = 500;
+
 class VEINS_API VehicleApp : public DemoBaseApplLayer {
 public:
 
@@ -56,6 +58,8 @@ public:
     //연결 관련
     cMessage* self_ptr_Connect = nullptr;
     cMessage* self_ptr_Disconnect = nullptr;
+    //CO ACK
+    cMessage* self_ptr_COAck = nullptr;
 
     void initialize(int stage) override;
     void finish() override;

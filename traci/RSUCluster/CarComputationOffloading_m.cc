@@ -337,22 +337,22 @@ void CarCOReq::setConstraint(double constraint)
     this->constraint = constraint;
 }
 
-int CarCOReq::getRequiredCycle() const
+double CarCOReq::getRequiredCycle() const
 {
     return this->requiredCycle;
 }
 
-void CarCOReq::setRequiredCycle(int requiredCycle)
+void CarCOReq::setRequiredCycle(double requiredCycle)
 {
     this->requiredCycle = requiredCycle;
 }
 
-int CarCOReq::getTaskCode() const
+double CarCOReq::getTaskCode() const
 {
     return this->taskCode;
 }
 
-void CarCOReq::setTaskCode(int taskCode)
+void CarCOReq::setTaskCode(double taskCode)
 {
     this->taskCode = taskCode;
 }
@@ -518,8 +518,8 @@ const char *CarCOReqDescriptor::getFieldTypeString(int field) const
         "LAddress::L2Type",
         "int",
         "double",
-        "int",
-        "int",
+        "double",
+        "double",
         "simtime_t",
     };
     return (field>=0 && field<11) ? fieldTypeStrings[field] : nullptr;
@@ -597,8 +597,8 @@ std::string CarCOReqDescriptor::getFieldValueAsString(void *object, int field, i
         case 5: {std::stringstream out; out << pp->getCarAddr(); return out.str();}
         case 6: return long2string(pp->getTaskID());
         case 7: return double2string(pp->getConstraint());
-        case 8: return long2string(pp->getRequiredCycle());
-        case 9: return long2string(pp->getTaskCode());
+        case 8: return double2string(pp->getRequiredCycle());
+        case 9: return double2string(pp->getTaskCode());
         case 10: return simtime2string(pp->getReqTime());
         default: return "";
     }
@@ -621,8 +621,8 @@ bool CarCOReqDescriptor::setFieldValueAsString(void *object, int field, int i, c
         case 4: pp->setCarName((value)); return true;
         case 6: pp->setTaskID(string2long(value)); return true;
         case 7: pp->setConstraint(string2double(value)); return true;
-        case 8: pp->setRequiredCycle(string2long(value)); return true;
-        case 9: pp->setTaskCode(string2long(value)); return true;
+        case 8: pp->setRequiredCycle(string2double(value)); return true;
+        case 9: pp->setTaskCode(string2double(value)); return true;
         case 10: pp->setReqTime(string2simtime(value)); return true;
         default: return false;
     }
@@ -1253,6 +1253,306 @@ void *RSUCOLevelDescriptor::getFieldStructValuePointer(void *object, int field, 
     RSUCOLevel *pp = (RSUCOLevel *)object; (void)pp;
     switch (field) {
         case 0: return (void *)(&pp->getRSUAddr()); break;
+        default: return nullptr;
+    }
+}
+
+Register_Class(CarCOAck)
+
+CarCOAck::CarCOAck(const char *name, short kind) : ::veins::BaseFrame1609_4(name,kind)
+{
+    this->taskID = 0;
+    this->CarAddr = 0;
+}
+
+CarCOAck::CarCOAck(const CarCOAck& other) : ::veins::BaseFrame1609_4(other)
+{
+    copy(other);
+}
+
+CarCOAck::~CarCOAck()
+{
+}
+
+CarCOAck& CarCOAck::operator=(const CarCOAck& other)
+{
+    if (this==&other) return *this;
+    ::veins::BaseFrame1609_4::operator=(other);
+    copy(other);
+    return *this;
+}
+
+void CarCOAck::copy(const CarCOAck& other)
+{
+    this->taskID = other.taskID;
+    this->CarAddr = other.CarAddr;
+}
+
+void CarCOAck::parsimPack(omnetpp::cCommBuffer *b) const
+{
+    ::veins::BaseFrame1609_4::parsimPack(b);
+    doParsimPacking(b,this->taskID);
+    doParsimPacking(b,this->CarAddr);
+}
+
+void CarCOAck::parsimUnpack(omnetpp::cCommBuffer *b)
+{
+    ::veins::BaseFrame1609_4::parsimUnpack(b);
+    doParsimUnpacking(b,this->taskID);
+    doParsimUnpacking(b,this->CarAddr);
+}
+
+int CarCOAck::getTaskID() const
+{
+    return this->taskID;
+}
+
+void CarCOAck::setTaskID(int taskID)
+{
+    this->taskID = taskID;
+}
+
+long CarCOAck::getCarAddr() const
+{
+    return this->CarAddr;
+}
+
+void CarCOAck::setCarAddr(long CarAddr)
+{
+    this->CarAddr = CarAddr;
+}
+
+class CarCOAckDescriptor : public omnetpp::cClassDescriptor
+{
+  private:
+    mutable const char **propertynames;
+  public:
+    CarCOAckDescriptor();
+    virtual ~CarCOAckDescriptor();
+
+    virtual bool doesSupport(omnetpp::cObject *obj) const override;
+    virtual const char **getPropertyNames() const override;
+    virtual const char *getProperty(const char *propertyname) const override;
+    virtual int getFieldCount() const override;
+    virtual const char *getFieldName(int field) const override;
+    virtual int findField(const char *fieldName) const override;
+    virtual unsigned int getFieldTypeFlags(int field) const override;
+    virtual const char *getFieldTypeString(int field) const override;
+    virtual const char **getFieldPropertyNames(int field) const override;
+    virtual const char *getFieldProperty(int field, const char *propertyname) const override;
+    virtual int getFieldArraySize(void *object, int field) const override;
+
+    virtual const char *getFieldDynamicTypeString(void *object, int field, int i) const override;
+    virtual std::string getFieldValueAsString(void *object, int field, int i) const override;
+    virtual bool setFieldValueAsString(void *object, int field, int i, const char *value) const override;
+
+    virtual const char *getFieldStructName(int field) const override;
+    virtual void *getFieldStructValuePointer(void *object, int field, int i) const override;
+};
+
+Register_ClassDescriptor(CarCOAckDescriptor)
+
+CarCOAckDescriptor::CarCOAckDescriptor() : omnetpp::cClassDescriptor("veins::CarCOAck", "veins::BaseFrame1609_4")
+{
+    propertynames = nullptr;
+}
+
+CarCOAckDescriptor::~CarCOAckDescriptor()
+{
+    delete[] propertynames;
+}
+
+bool CarCOAckDescriptor::doesSupport(omnetpp::cObject *obj) const
+{
+    return dynamic_cast<CarCOAck *>(obj)!=nullptr;
+}
+
+const char **CarCOAckDescriptor::getPropertyNames() const
+{
+    if (!propertynames) {
+        static const char *names[] = {  nullptr };
+        omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+        const char **basenames = basedesc ? basedesc->getPropertyNames() : nullptr;
+        propertynames = mergeLists(basenames, names);
+    }
+    return propertynames;
+}
+
+const char *CarCOAckDescriptor::getProperty(const char *propertyname) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? basedesc->getProperty(propertyname) : nullptr;
+}
+
+int CarCOAckDescriptor::getFieldCount() const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
+}
+
+unsigned int CarCOAckDescriptor::getFieldTypeFlags(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldTypeFlags(field);
+        field -= basedesc->getFieldCount();
+    }
+    static unsigned int fieldTypeFlags[] = {
+        FD_ISEDITABLE,
+        FD_ISEDITABLE,
+    };
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
+}
+
+const char *CarCOAckDescriptor::getFieldName(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldName(field);
+        field -= basedesc->getFieldCount();
+    }
+    static const char *fieldNames[] = {
+        "taskID",
+        "CarAddr",
+    };
+    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
+}
+
+int CarCOAckDescriptor::findField(const char *fieldName) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    int base = basedesc ? basedesc->getFieldCount() : 0;
+    if (fieldName[0]=='t' && strcmp(fieldName, "taskID")==0) return base+0;
+    if (fieldName[0]=='C' && strcmp(fieldName, "CarAddr")==0) return base+1;
+    return basedesc ? basedesc->findField(fieldName) : -1;
+}
+
+const char *CarCOAckDescriptor::getFieldTypeString(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldTypeString(field);
+        field -= basedesc->getFieldCount();
+    }
+    static const char *fieldTypeStrings[] = {
+        "int",
+        "long",
+    };
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
+}
+
+const char **CarCOAckDescriptor::getFieldPropertyNames(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldPropertyNames(field);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+const char *CarCOAckDescriptor::getFieldProperty(int field, const char *propertyname) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldProperty(field, propertyname);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+int CarCOAckDescriptor::getFieldArraySize(void *object, int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldArraySize(object, field);
+        field -= basedesc->getFieldCount();
+    }
+    CarCOAck *pp = (CarCOAck *)object; (void)pp;
+    switch (field) {
+        default: return 0;
+    }
+}
+
+const char *CarCOAckDescriptor::getFieldDynamicTypeString(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldDynamicTypeString(object,field,i);
+        field -= basedesc->getFieldCount();
+    }
+    CarCOAck *pp = (CarCOAck *)object; (void)pp;
+    switch (field) {
+        default: return nullptr;
+    }
+}
+
+std::string CarCOAckDescriptor::getFieldValueAsString(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldValueAsString(object,field,i);
+        field -= basedesc->getFieldCount();
+    }
+    CarCOAck *pp = (CarCOAck *)object; (void)pp;
+    switch (field) {
+        case 0: return long2string(pp->getTaskID());
+        case 1: return long2string(pp->getCarAddr());
+        default: return "";
+    }
+}
+
+bool CarCOAckDescriptor::setFieldValueAsString(void *object, int field, int i, const char *value) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->setFieldValueAsString(object,field,i,value);
+        field -= basedesc->getFieldCount();
+    }
+    CarCOAck *pp = (CarCOAck *)object; (void)pp;
+    switch (field) {
+        case 0: pp->setTaskID(string2long(value)); return true;
+        case 1: pp->setCarAddr(string2long(value)); return true;
+        default: return false;
+    }
+}
+
+const char *CarCOAckDescriptor::getFieldStructName(int field) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldStructName(field);
+        field -= basedesc->getFieldCount();
+    }
+    switch (field) {
+        default: return nullptr;
+    };
+}
+
+void *CarCOAckDescriptor::getFieldStructValuePointer(void *object, int field, int i) const
+{
+    omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
+    if (basedesc) {
+        if (field < basedesc->getFieldCount())
+            return basedesc->getFieldStructValuePointer(object, field, i);
+        field -= basedesc->getFieldCount();
+    }
+    CarCOAck *pp = (CarCOAck *)object; (void)pp;
+    switch (field) {
         default: return nullptr;
     }
 }

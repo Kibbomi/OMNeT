@@ -52,9 +52,9 @@ namespace veins {
  * 
  *     //Task information
  *     int taskID;
- *     double constraint;
- *     int requiredCycle;
- *     int taskCode;
+ *     double constraint;		//unit s
+ *     double requiredCycle;	//unit Gb
+ *     double taskCode;		//unit Kb
  * 
  *     //Packet information
  *     simtime_t reqTime;
@@ -73,8 +73,8 @@ class VEINS_API CarCOReq : public ::veins::BaseFrame1609_4
     LAddress::L2Type CarAddr;
     int taskID;
     double constraint;
-    int requiredCycle;
-    int taskCode;
+    double requiredCycle;
+    double taskCode;
     ::omnetpp::simtime_t reqTime;
 
   private:
@@ -111,10 +111,10 @@ class VEINS_API CarCOReq : public ::veins::BaseFrame1609_4
     virtual void setTaskID(int taskID);
     virtual double getConstraint() const;
     virtual void setConstraint(double constraint);
-    virtual int getRequiredCycle() const;
-    virtual void setRequiredCycle(int requiredCycle);
-    virtual int getTaskCode() const;
-    virtual void setTaskCode(int taskCode);
+    virtual double getRequiredCycle() const;
+    virtual void setRequiredCycle(double requiredCycle);
+    virtual double getTaskCode() const;
+    virtual void setTaskCode(double taskCode);
     virtual ::omnetpp::simtime_t getReqTime() const;
     virtual void setReqTime(::omnetpp::simtime_t reqTime);
 };
@@ -206,6 +206,48 @@ class VEINS_API RSUCOLevel : public ::veins::BaseFrame1609_4
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const RSUCOLevel& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, RSUCOLevel& obj) {obj.parsimUnpack(b);}
+
+/**
+ * Class generated from <tt>veins/modules/application/traci/RSUCluster/CarComputationOffloading.msg:65</tt> by nedtool.
+ * <pre>
+ * packet CarCOAck extends BaseFrame1609_4
+ * {
+ *     int taskID;
+ *     long CarAddr;
+ * }
+ * </pre>
+ */
+class VEINS_API CarCOAck : public ::veins::BaseFrame1609_4
+{
+  protected:
+    int taskID;
+    long CarAddr;
+
+  private:
+    void copy(const CarCOAck& other);
+
+  protected:
+    // protected and unimplemented operator==(), to prevent accidental usage
+    bool operator==(const CarCOAck&);
+
+  public:
+    CarCOAck(const char *name=nullptr, short kind=0);
+    CarCOAck(const CarCOAck& other);
+    virtual ~CarCOAck();
+    CarCOAck& operator=(const CarCOAck& other);
+    virtual CarCOAck *dup() const override {return new CarCOAck(*this);}
+    virtual void parsimPack(omnetpp::cCommBuffer *b) const override;
+    virtual void parsimUnpack(omnetpp::cCommBuffer *b) override;
+
+    // field getter/setter methods
+    virtual int getTaskID() const;
+    virtual void setTaskID(int taskID);
+    virtual long getCarAddr() const;
+    virtual void setCarAddr(long CarAddr);
+};
+
+inline void doParsimPacking(omnetpp::cCommBuffer *b, const CarCOAck& obj) {obj.parsimPack(b);}
+inline void doParsimUnpacking(omnetpp::cCommBuffer *b, CarCOAck& obj) {obj.parsimUnpack(b);}
 
 } // namespace veins
 
