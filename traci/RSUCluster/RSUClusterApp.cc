@@ -56,8 +56,7 @@ void RSUClusterApp::initialize(int stage)
         llcSocket.open(-1, localSap);
 
         myOptimalES.f = 0;
-
-
+        //myOptimalES.isAvailable = false;
     }
     else if (stage == 1)
     {
@@ -66,7 +65,7 @@ void RSUClusterApp::initialize(int stage)
         //사전에  ES를 적어도 1개 찾아놓을 것.
         //ERS 주석풀면 바로 시작.
         //EV<<"RSU call BeginERS!!\n";
-        //BeginERS(TTL_init, TTL_threshold);
+        BeginERS(TTL_init, TTL_threshold);
 
 
         //50ms ~ 65ms
@@ -101,7 +100,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
     if(strcmp(pac->getName(),"CarCOReq") == 0){
 
-        if(myOptimalES.isAvailable == false){
+        if(myOptimalES.isAvailable == false || myOptimalES.f == 0){
             EV<<this->getParentModule()->getFullName()<<" CO is not available!\n";
             return;
         }
@@ -111,7 +110,14 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         CarCOReq* msg = dynamic_cast<CarCOReq*>(pac);
 
         //check constraint
+        simtime_t constraintTime = msg->getReqTime() + msg->getConstraint();
+        simtime_t expectedTime = msg->getRequiredCycle() /myOptimalES.f;
 
+        if(constraintTime < expectedTime)
+        {
+            EV<<this->getParentModule()->getFullName()<<" expected Time is over! \n";
+            return ;
+        }
 
 
         //parse
@@ -267,7 +273,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         std::string carKey = std::to_string(msg->getCarAddr()) + std::to_string(msg->getTaskID());
 
         if(ACKWaitptr.count(carKey) == 1){
-            if(ACKWaitptr[carKey] != nullptr && ACKWaitptr[carKey]->isScheduled() )
+            if(ACKWaitptr[carKey] != nullptr && ACKWaitptr[carKey]->isScheduled())
                 cancelAndDelete(ACKWaitptr[carKey]);
             ACKWaitptr.erase(carKey);
         }
@@ -416,8 +422,8 @@ void RSUClusterApp::handleSelfMsg(cMessage* msg)
         long carAddr = ACKWaitTasks[msg->getName()].CarAddr;
         int TaskID = ACKWaitTasks[msg->getName()].TaskId;
 
+        //연결되어 있으면
         if(Cars.count(carAddr) == 1){
-            //positive case.
             CarCOResp* msg = new CarCOResp("CarCOResp");
             msg->setTaskID(TaskID);
             msg->setCOResult(1);    //아무거나 가능
@@ -1016,7 +1022,7 @@ void RSUClusterApp::FindOptimalES(){
         if(TTL_init + TTL_increasement <= TTL_threshold)
             BeginERS(TTL_init + TTL_increasement, TTL_threshold);
         else
-            EV_INFO << "RSUClusterApp : TTL value exceeds the TTL_threshold value. \n";
+            EV_INFO << this->getParentModule()->getFullName()<< " : TTL value exceeds the TTL_threshold value. \n";
 
         //myOptimalES.f == 0 인 것으로 가능여부를 판단.
         myOptimalES = OptimalES;

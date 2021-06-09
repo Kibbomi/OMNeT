@@ -79,7 +79,7 @@ public:
     int TTL_threshold = 5;
     int TTL_increasement = 1;   //2
     int TTL_init = 1;
-    double ERS_WaitTime = 0.2;  //0.5s
+    double ERS_WaitTime = 0.025;  //25ms
     double CORespACKRetransmission = 0.01; //10ms
     //RSU Info
     int coverage = 250; //250m (Range, radius)

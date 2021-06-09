@@ -187,11 +187,11 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
         CarCOAck* ack = new CarCOAck();
         ack->setCarAddr(this->mac->getMACAddress());
         ack->setTaskID(msg->getTaskID());
-        msg->setName("CarCOAck");
+        ack->setName("CarCOAck");
 
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->setName("CarCOAck");
-        wsm->encapsulate(msg);
+        wsm->encapsulate(ack);
         populateWSM(wsm,curConnectingRSU.RSU_ID);
         send(wsm,lowerLayerOut);
     }
