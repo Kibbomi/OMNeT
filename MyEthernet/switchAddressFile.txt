@@ -1,0 +1,3 @@
+# VLAN ID   MAC Address     Interface
+  0         rsu[0]           eth0
+  0         hostA           eth1

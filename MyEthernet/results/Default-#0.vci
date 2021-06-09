@@ -1,0 +1,121 @@
+file 19787 1623204532                                           
+version 2
+run Default-0-20210609-11:08:48-7632
+attr configname Default
+attr datetime 20210609-11:08:48
+attr experiment Default
+attr inifile omnetpp.ini
+attr iterationvars ""
+attr iterationvarsf ""
+attr measurement ""
+attr network TestNetwork
+attr processid 7632
+attr repetition 0
+attr replication #0
+attr resultdir results
+attr runnumber 0
+attr seedset 7632
+param *.playgroundSizeX 2500m
+param *.playgroundSizeY 2500m
+param *.playgroundSizeZ 50m
+param *.annotations.draw true
+param *.obstacles.debug false
+param *.manager.updateInterval 1s
+param *.manager.host "\"localhost\""
+param *.manager.port 9999
+param *.manager.autoShutdown true
+param *.manager.launchConfig "xmldoc(\"Testing.launchd.xml\")"
+param *.rsu[0].mobility.x 100
+param *.rsu[0].mobility.y 100
+param *.rsu[0].mobility.z 3
+param *.rsu[1].mobility.x 350
+param *.rsu[1].mobility.y 100
+param *.rsu[1].mobility.z 3
+param *.rsu[2].mobility.x 600
+param *.rsu[2].mobility.y 100
+param *.rsu[2].mobility.z 3
+param *.rsu[3].mobility.x 850
+param *.rsu[3].mobility.y 100
+param *.rsu[3].mobility.z 3
+param *.rsu[4].mobility.x 1100
+param *.rsu[4].mobility.y 100
+param *.rsu[4].mobility.z 3
+param *.rsu[*].applType "\"RSUClusterApp\""
+param *.rsu[*].appl.headerLength "80 bit"
+param *.rsu[*].appl.sendBeacons false
+param *.rsu[*].appl.dataOnSch false
+param *.rsu[*].appl.beaconInterval 0s
+param *.rsu[*].appl.beaconUserPriority 7
+param *.rsu[*].appl.dataUserPriority 5
+param *.rsu[*].nic.phy80211p.antennaOffsetZ "0 m"
+param **.switch*.relayUnit.typename "\"MacRelayUnit\""
+param *.connectionManager.sendDirect true
+param *.connectionManager.maxInterfDist 2600m
+param *.connectionManager.drawMaxIntfDist false
+param *.**.nic.mac1609_4.useServiceChannel false
+param *.**.nic.mac1609_4.txPower 40mW
+param *.**.nic.mac1609_4.bitrate 12Mbps
+param *.**.nic.phy80211p.minPowerLevel -110dBm
+param *.**.nic.phy80211p.allowTxDuringRx true
+param *.**.nic.phy80211p.useNoiseFloor true
+param *.**.nic.phy80211p.noiseFloor -98dBm
+param *.**.nic.phy80211p.decider "xmldoc(\"config.xml\")"
+param *.**.nic.phy80211p.analogueModels "xmldoc(\"config.xml\")"
+param *.**.nic.phy80211p.usePropagationDelay true
+param *.**.nic.phy80211p.antenna "xmldoc(\"antenna.xml\", \"/root/Antenna[@id='monopole']\")"
+param *.node[*].nic.phy80211p.antennaOffsetY "0 m"
+param *.node[*].nic.phy80211p.antennaOffsetZ "1.895 m"
+param *.node[*].applType "\"VehicleApp\""
+param *.node[*].appl.headerLength "80 bit"
+param *.node[*].appl.sendBeacons false
+param *.node[*].appl.dataOnSch false
+param *.node[*].appl.beaconInterval 1s
+param *.node[*].veinsmobility.x 0
+param *.node[*].veinsmobility.y 0
+param *.node[*].veinsmobility.z 0
+param *.node[*].veinsmobility.setHostSpeed false
+param *.node[*0].veinsmobility.accidentCount 0
+param *.node[*0].veinsmobility.accidentStart 73s
+param *.node[*0].veinsmobility.accidentDuration 50s
+
+vector 0 TestNetwork.node[0].veinsmobility posx ETV
+vector 1 TestNetwork.node[0].veinsmobility posy ETV
+vector 2 TestNetwork.node[1].veinsmobility posx ETV
+vector 3 TestNetwork.node[1].veinsmobility posy ETV
+vector 4 TestNetwork.node[0].veinsmobility speed ETV
+vector 5 TestNetwork.node[1].veinsmobility speed ETV
+vector 6 TestNetwork.node[0].veinsmobility acceleration ETV
+vector 7 TestNetwork.node[0].veinsmobility co2emission ETV
+vector 8 TestNetwork.node[1].veinsmobility acceleration ETV
+vector 9 TestNetwork.node[1].veinsmobility co2emission ETV
+vector 10 TestNetwork.node[2].veinsmobility posx ETV
+vector 11 TestNetwork.node[2].veinsmobility posy ETV
+vector 12 TestNetwork.node[3].veinsmobility posx ETV
+vector 13 TestNetwork.node[3].veinsmobility posy ETV
+vector 14 TestNetwork.node[2].veinsmobility speed ETV
+vector 15 TestNetwork.node[2].veinsmobility acceleration ETV
+vector 16 TestNetwork.node[2].veinsmobility co2emission ETV
+vector 17 TestNetwork.node[3].veinsmobility speed ETV
+vector 18 TestNetwork.node[3].veinsmobility acceleration ETV
+vector 19 TestNetwork.node[3].veinsmobility co2emission ETV
+16	4053 741 17 45 7 35 29 -1.1466066603991 27.593863362591 261.63371492844 3442.1943074333
+15	4794 793 17 45 7 35 29 -1.5396349152912 2.0578714020317 0.57037643103395 13.536824178275
+14	5587 774 16 45 6 35 30 36.714512450113 39.999851304595 1173.5157903792 45921.62047807
+11	6361 460 15 45 5 35 31 31.6 34.8 1008.4 32867.68
+10	6821 788 15 45 5 35 31 30.1 1203.6157903792 19062.677799057 15520251.682434
+19	7609 738 18 46 8 36 29 -1.466002652636 25.54562746341 256.2096642226 3477.3015517117
+18	8347 789 18 46 8 36 29 -1.4247689934752 1.8839627243113 -0.027964078285727 14.578465490506
+17	9136 773 17 46 7 36 30 36.425361188415 39.975627586641 1176.2797197322 46144.560814841
+13	9909 461 16 46 6 36 31 20.2 23.4 703 15997.72
+12	10370 789 16 46 6 36 31 43.620280267835 1219.9 19690.291549104 16320291.442289
+7	11159 868 13 47 3 37 35 -1.5963508765234 14.16694254478 216.07394716165 1879.4494933246
+6	12027 926 13 47 3 37 35 -0.94855977818369 0.99455552315339 1.0027686678289 8.3934277827848
+4	12953 889 12 47 2 37 36 31.886542447004 33.462950367615 1176.6273070195 38461.865408273
+1	13842 509 11 47 1 37 37 34.8 34.8 1287.6 44808.48
+0	14351 903 11 47 1 37 37 30.1 1206.7273070195 22870.059259509 18656503.647716
+9	15254 954 13 51 3 41 39 -0.65867964235233 11.228469609412 203.28604482765 1470.7890225068
+8	16208 1022 13 51 3 41 39 -1.1772990263766 0.87044992772862 0.44130317543167 10.082127780024
+5	17230 988 12 51 2 41 40 28.739477870055 29.966295903712 1175.9808541471 34578.243143426
+3	18218 565 11 51 1 41 41 20.2 20.2 828.2 16729.64
+2	18783 1002 11 51 1 41 41 43.919145852909 1219.9 25935.967261406 21352301.009176
+
