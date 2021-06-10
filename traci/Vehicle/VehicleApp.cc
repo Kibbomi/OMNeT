@@ -25,11 +25,13 @@ void VehicleApp::initialize(int stage)
         curConnectingRSU.rssi = -987654321;
         curConnectingRSU.RSU_ID = -1;
 
+        traciVehicle->setSpeed(33.3333);
+        traciVehicle->setMaxSpeed(33.3333);
 
         //trigger
         //주석 풀면 됨.. 오프로딩 이벤트 시작.
         cMessage* self_msg = new cMessage("",Self_COReq);
-        scheduleAt(simTime() + 4, self_msg);
+        scheduleAt(simTime() + 1, self_msg);
     }
 }
 
@@ -42,7 +44,10 @@ void VehicleApp::finish()
         if(item)
             ++num;
 
-    EV<<this->getParentModule()->getFullName()<< "The number of finished task are " <<num<<'\n';
+    recordScalar("finished Task",num);
+    recordScalar("Tasks", finishedTask.size());
+
+    EV<<this->getParentModule()->getFullName()<< "The number of finished task, all tasks " <<num<<"/ "<< finishedTask.size()<<'\n';
     return ;
 }
 
@@ -207,8 +212,10 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         if(curConnectingRSU.COLevel == false)
         {
             cMessage* selfMsg =new cMessage("",Self_COReq);
-            scheduleAt(simTime() + uniform(2.01, 2.2),selfMsg);
+            scheduleAt(simTime() + uniform(1.5, 1.7),selfMsg);
 
+            //push back failed task
+            finishedTask.push_back(false);
             EV<<this->getParentModule()->getFullName()<<" can't send CO Msg, current connected RSU is not available!\n";
             EV<<this->getParentModule()->getFullName()<<" is connected with "<<curConnectingRSU.RSU_ID<<'\n';
             return ;
@@ -227,8 +234,12 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //task information
         req->setTaskID(finishedTask.size());
-        req->setConstraint(uniform(0.15,1));    //[0.15, 1]ms
-        req->setRequiredCycle(uniform(0.2,0.4));  //[0.2, 0.4]GHz
+        //req->setConstraint(uniform(0.15,1));    //[0.15, 1]ms
+        //req->setRequiredCycle(uniform(0.2,0.4));  //[0.2, 0.4]GHz
+        //req->setConstraint(uniform(0.15,0.75));    //[0.15, 1]s
+        req->setConstraint(uniform(0.15,0.2));    //[0.15, 1]s
+        req->setRequiredCycle(uniform(0.5,0.8));  //[0.2, 0.4]GHz
+
         req->setTaskCode(1);  //byte;
 
         req->setReqTime(simTime());
@@ -245,7 +256,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //for next CO
         cMessage* selfMsg =new cMessage("",Self_COReq);
-        scheduleAt(simTime() + uniform(1.51, 2.0),selfMsg);
+        scheduleAt(simTime() + uniform(0.8, 1.2),selfMsg);
     }
     else if(msg->getKind() == Self_Connect)
     {

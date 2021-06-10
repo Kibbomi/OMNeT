@@ -65,7 +65,7 @@ void RSUClusterApp::initialize(int stage)
         //사전에  ES를 적어도 1개 찾아놓을 것.
         //ERS 주석풀면 바로 시작.
         //EV<<"RSU call BeginERS!!\n";
-        BeginERS(TTL_init, TTL_threshold);
+          BeginERS(TTL_init, TTL_threshold);
 
 
         //50ms ~ 65ms
@@ -731,6 +731,8 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         }
         else
         {
+            return;
+
             //negative case,
             EV<<this->getParentModule()->getFullName()<<" not connected with car ADDR: "<< resp->getCarAddr()<<'\n';
             EV<<this->getParentModule()->getFullName()<<" find out RSU\n";
@@ -780,7 +782,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         }
 
         //for ACK;
-        /*std::string carKey = std::to_string(resp->getCarAddr()) + std::to_string(resp->getTaskID());
+        std::string carKey = std::to_string(resp->getCarAddr()) + std::to_string(resp->getTaskID());
         ACKWaitptr.insert(std::make_pair(carKey, new cMessage(carKey.c_str(), Self_COResp)));
 
         inet::Format_Task item;
@@ -790,7 +792,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
         ACKWaitTasks[carKey] = item;
         if(!ACKWaitptr[carKey]->isScheduled())
-            scheduleAt(simTime() + CORespACKRetransmission, ACKWaitptr[carKey]);*/
+            scheduleAt(simTime() + CORespACKRetransmission, ACKWaitptr[carKey]);
 
     }
     else if(strcmp(msg->getName(),"AvailabilityInfo") == 0)
