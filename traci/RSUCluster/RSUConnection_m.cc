@@ -541,6 +541,7 @@ Register_Class(CARConnectionReq)
 
 CARConnectionReq::CARConnectionReq(const char *name, short kind) : ::veins::BaseFrame1609_4(name,kind)
 {
+    this->rad = 0;
 }
 
 CARConnectionReq::CARConnectionReq(const CARConnectionReq& other) : ::veins::BaseFrame1609_4(other)
@@ -563,18 +564,21 @@ CARConnectionReq& CARConnectionReq::operator=(const CARConnectionReq& other)
 void CARConnectionReq::copy(const CARConnectionReq& other)
 {
     this->CarAddr = other.CarAddr;
+    this->rad = other.rad;
 }
 
 void CARConnectionReq::parsimPack(omnetpp::cCommBuffer *b) const
 {
     ::veins::BaseFrame1609_4::parsimPack(b);
     doParsimPacking(b,this->CarAddr);
+    doParsimPacking(b,this->rad);
 }
 
 void CARConnectionReq::parsimUnpack(omnetpp::cCommBuffer *b)
 {
     ::veins::BaseFrame1609_4::parsimUnpack(b);
     doParsimUnpacking(b,this->CarAddr);
+    doParsimUnpacking(b,this->rad);
 }
 
 LAddress::L2Type& CARConnectionReq::getCarAddr()
@@ -585,6 +589,16 @@ LAddress::L2Type& CARConnectionReq::getCarAddr()
 void CARConnectionReq::setCarAddr(const LAddress::L2Type& CarAddr)
 {
     this->CarAddr = CarAddr;
+}
+
+double CARConnectionReq::getRad() const
+{
+    return this->rad;
+}
+
+void CARConnectionReq::setRad(double rad)
+{
+    this->rad = rad;
 }
 
 class CARConnectionReqDescriptor : public omnetpp::cClassDescriptor
@@ -652,7 +666,7 @@ const char *CARConnectionReqDescriptor::getProperty(const char *propertyname) co
 int CARConnectionReqDescriptor::getFieldCount() const
 {
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 1+basedesc->getFieldCount() : 1;
+    return basedesc ? 2+basedesc->getFieldCount() : 2;
 }
 
 unsigned int CARConnectionReqDescriptor::getFieldTypeFlags(int field) const
@@ -665,8 +679,9 @@ unsigned int CARConnectionReqDescriptor::getFieldTypeFlags(int field) const
     }
     static unsigned int fieldTypeFlags[] = {
         FD_ISCOMPOUND,
+        FD_ISEDITABLE,
     };
-    return (field>=0 && field<1) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<2) ? fieldTypeFlags[field] : 0;
 }
 
 const char *CARConnectionReqDescriptor::getFieldName(int field) const
@@ -679,8 +694,9 @@ const char *CARConnectionReqDescriptor::getFieldName(int field) const
     }
     static const char *fieldNames[] = {
         "CarAddr",
+        "rad",
     };
-    return (field>=0 && field<1) ? fieldNames[field] : nullptr;
+    return (field>=0 && field<2) ? fieldNames[field] : nullptr;
 }
 
 int CARConnectionReqDescriptor::findField(const char *fieldName) const
@@ -688,6 +704,7 @@ int CARConnectionReqDescriptor::findField(const char *fieldName) const
     omnetpp::cClassDescriptor *basedesc = getBaseClassDescriptor();
     int base = basedesc ? basedesc->getFieldCount() : 0;
     if (fieldName[0]=='C' && strcmp(fieldName, "CarAddr")==0) return base+0;
+    if (fieldName[0]=='r' && strcmp(fieldName, "rad")==0) return base+1;
     return basedesc ? basedesc->findField(fieldName) : -1;
 }
 
@@ -701,8 +718,9 @@ const char *CARConnectionReqDescriptor::getFieldTypeString(int field) const
     }
     static const char *fieldTypeStrings[] = {
         "LAddress::L2Type",
+        "double",
     };
-    return (field>=0 && field<1) ? fieldTypeStrings[field] : nullptr;
+    return (field>=0 && field<2) ? fieldTypeStrings[field] : nullptr;
 }
 
 const char **CARConnectionReqDescriptor::getFieldPropertyNames(int field) const
@@ -770,6 +788,7 @@ std::string CARConnectionReqDescriptor::getFieldValueAsString(void *object, int 
     CARConnectionReq *pp = (CARConnectionReq *)object; (void)pp;
     switch (field) {
         case 0: {std::stringstream out; out << pp->getCarAddr(); return out.str();}
+        case 1: return double2string(pp->getRad());
         default: return "";
     }
 }
@@ -784,6 +803,7 @@ bool CARConnectionReqDescriptor::setFieldValueAsString(void *object, int field, 
     }
     CARConnectionReq *pp = (CARConnectionReq *)object; (void)pp;
     switch (field) {
+        case 1: pp->setRad(string2double(value)); return true;
         default: return false;
     }
 }

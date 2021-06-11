@@ -24,6 +24,7 @@ void VehicleApp::initialize(int stage)
         //Current connecting RSU init.
         curConnectingRSU.rssi = -987654321;
         curConnectingRSU.RSU_ID = -1;
+        curConnectingRSU.COLevel = false;
 
         traciVehicle->setSpeed(33.3333);
         traciVehicle->setMaxSpeed(33.3333);
@@ -31,7 +32,7 @@ void VehicleApp::initialize(int stage)
         //trigger
         //주석 풀면 됨.. 오프로딩 이벤트 시작.
         cMessage* self_msg = new cMessage("",Self_COReq);
-        scheduleAt(simTime() + 1, self_msg);
+        scheduleAt(simTime() + 0.5, self_msg);
     }
 }
 
@@ -110,6 +111,7 @@ void VehicleApp::onBSM(DemoSafetyMessage* bsm)
 
             CARConnectionReq* msg = new CARConnectionReq();
             msg->setCarAddr(this->mac->getMACAddress());
+            msg->setRad(mobility->getHeading().getRad());
             msg->setName("CARConnectionReq");
 
             BaseFrame1609_4* wsm = new BaseFrame1609_4();
@@ -209,17 +211,16 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
     if(msg->getKind() == Self_COReq ){
 
-        if(curConnectingRSU.COLevel == false)
+        /*if(!Ondemand && curConnectingRSU.COLevel == false)
         {
             cMessage* selfMsg =new cMessage("",Self_COReq);
-            scheduleAt(simTime() + uniform(1.5, 1.7),selfMsg);
-
+            scheduleAt(simTime() + uniform(0.15, 0.16),selfMsg);
             //push back failed task
             finishedTask.push_back(false);
             EV<<this->getParentModule()->getFullName()<<" can't send CO Msg, current connected RSU is not available!\n";
             EV<<this->getParentModule()->getFullName()<<" is connected with "<<curConnectingRSU.RSU_ID<<'\n';
             return ;
-        }
+        }*/
 
 
         CarCOReq* req = new CarCOReq();
@@ -234,11 +235,8 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //task information
         req->setTaskID(finishedTask.size());
-        //req->setConstraint(uniform(0.15,1));    //[0.15, 1]ms
-        //req->setRequiredCycle(uniform(0.2,0.4));  //[0.2, 0.4]GHz
-        //req->setConstraint(uniform(0.15,0.75));    //[0.15, 1]s
-        req->setConstraint(uniform(0.15,0.2));    //[0.15, 1]s
-        req->setRequiredCycle(uniform(0.5,0.8));  //[0.2, 0.4]GHz
+        req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
+        req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
 
         req->setTaskCode(1);  //byte;
 
@@ -256,7 +254,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //for next CO
         cMessage* selfMsg =new cMessage("",Self_COReq);
-        scheduleAt(simTime() + uniform(0.8, 1.2),selfMsg);
+        scheduleAt(simTime() + uniform(0.15, 0.16),selfMsg);    //CO 150ms마다 발생
     }
     else if(msg->getKind() == Self_Connect)
     {
@@ -271,7 +269,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         send(wsm,lowerLayerOut);
 
         self_ptr_Connect = new cMessage("",Self_Connect);
-        scheduleAt(simTime() + 0.02, self_ptr_Connect);
+        scheduleAt(simTime() + 0.02, self_ptr_Connect); //20ms 연결 재전송
         EV<<this->getParentModule()->getFullName()<< "retransmit Connection Msg to "<< curConnectingRSU.RSU_ID <<'\n';
     }
     else if(msg->getKind() == Self_Disconnect)

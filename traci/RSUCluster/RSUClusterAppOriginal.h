@@ -56,6 +56,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <queue>
 #include "inet/applications/ethernet/ERS/ExpandingRingSearch_m.h"
 #include "inet/applications/ethernet/ERS/findTarget.h"
 #include "inet/applications/ethernet/edgeserver/ENComputationOffloading_m.h"
@@ -70,12 +71,11 @@ namespace veins {
 /**
  * RSU using 11p and Ethernet
  */
-class VEINS_API RSUClusterApp : public MyDemoBaseApplLayer, public inet::Ieee8022LlcSocket::ICallback {
+class VEINS_API RSUClusterAppOriginal : public MyDemoBaseApplLayer, public inet::Ieee8022LlcSocket::ICallback {
 //public Ãß°¡
 public:
     void initialize(int stage) override;
 
-    double queuingDelay = 0.015;    //15ms
     //for Expanding Ring Search
     int TTL_threshold = 5;
     int TTL_increasement = 1;   //2
@@ -98,8 +98,8 @@ public:
     std::set<long> Cars;
     std::set<long> passedCars;
 
-    //queuing
     std::queue<inet::ENCOReq> q;
+
 
     std::map<std::string, cMessage*> ACKWaitptr;
     std::map<std::string, inet::Format_Task> ACKWaitTasks;

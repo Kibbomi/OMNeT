@@ -52,6 +52,7 @@ packet CARConnectionReq extends BaseFrame1609_4
 {
     //SYN + ACK
     LAddress::L2Type CarAddr;	//car ID..
+    double rad;
 }
 
 packet CARConnectionResp extends BaseFrame1609_4

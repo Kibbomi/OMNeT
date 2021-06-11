@@ -16,7 +16,8 @@ enum SelfMessageType{
     Self_COReq,
     Self_Connect,
     Self_Disconnect,
-    Self_COResp
+    Self_COResp,
+    Self_queuing
 };
 
 

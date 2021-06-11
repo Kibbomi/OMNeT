@@ -65,7 +65,7 @@ void RSUClusterApp::initialize(int stage)
         //사전에  ES를 적어도 1개 찾아놓을 것.
         //ERS 주석풀면 바로 시작.
         //EV<<"RSU call BeginERS!!\n";
-          BeginERS(TTL_init, TTL_threshold);
+         BeginERS(TTL_init, TTL_threshold);
 
 
         //50ms ~ 65ms
@@ -99,15 +99,36 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
     cPacket* pac = frame->decapsulate();
 
     if(strcmp(pac->getName(),"CarCOReq") == 0){
-        if(myOptimalES.isAvailable == false || myOptimalES.f == 0){
-            EV<<this->getParentModule()->getFullName()<<" CO is not available!\n";
 
+        /*if(myOptimalES.isAvailable == false || myOptimalES.f == 0){
+            EV<<this->getParentModule()->getFullName()<<" CO is not available!\n";
             return;
-        }
+        }*/
 
 
         EV<<this->getParentModule()->getFullName()<<"received CarCOReq Message!\n";
         CarCOReq* msg = dynamic_cast<CarCOReq*>(pac);
+
+        //이거 수정
+        if(myOptimalES.isAvailable == false || myOptimalES.f == 0){
+            EV<<this->getParentModule()->getFullName()<<" CO is not available!\n";
+            inet::ENCOReq req;
+            req.setChunkLength(inet::units::values::B(88));
+            req.setTaskID(msg->getTaskID());
+            req.setConstraint(msg->getConstraint());
+            req.setRequiredCycle(msg->getRequiredCycle());
+            req.setTaskCode(msg->getTaskCode());
+            req.setCarAddr(msg->getCarAddr());
+            req.setCarRad(msg->getRad());
+            req.setToSendRSU(inet::MacAddress::UNSPECIFIED_ADDRESS);
+            q.push(req);
+
+            //queuing
+            cMessage* selfMsg = new cMessage("", Self_queuing);
+            scheduleAt(simTime() + queuingDelay, selfMsg);
+
+            return;
+        }
 
         //check constraint
         simtime_t constraintTime = msg->getReqTime() + msg->getConstraint();
@@ -130,7 +151,8 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         outPayload->setRequiredCycle(msg->getRequiredCycle());
         outPayload->setTaskCode(msg->getTaskCode());
         outPayload->setCarAddr(msg->getCarAddr());
-        outPayload->setReqTime(msg->getReqTime());
+        outPayload->setCarRad(msg->getRad());
+        outPayload->setTimeLimit(constraintTime);
 
         //이동성 반영한 CO
         //오른쪽이면, rad = 0,
@@ -200,16 +222,18 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
         if(Cars.count(item.CarId) == 0){
             Cars.insert(item.CarId);
+
             if(passedCars.count(item.CarId) == 1)
                 passedCars.erase(item.CarId);
         }
+
 
 
         CARConnectionResp* resp = new CARConnectionResp();
         resp->setName("CARConnectionResp");
         resp->setRSUAddr(this->mac->getMACAddress());
 
-        if(myOptimalES.f == 0)
+        if(myOptimalES.f != 0)
             resp->setCOLevel(true);
         else
             resp->setCOLevel(false);
@@ -348,6 +372,44 @@ void RSUClusterApp::handleSelfMsg(cMessage* msg)
             EV_INFO << "RSUClusterApp : TTL value exceeds the TTL_threshold value. \n";
 
     }
+    else if(msg->getKind() == Self_queuing)
+    {
+        if(myOptimalES.f != 0)
+        {
+            if(!q.empty()){
+                inet::Packet* outPacket = new inet::Packet("ENCOReq",inet::IEEE802CTRL_DATA);
+                const auto& outPayload = inet::makeShared<inet::ENCOReq>();
+
+                outPayload->setChunkLength(inet::units::values::B(88));
+                outPayload->setTaskID(q.front().getTaskID());
+                outPayload->setConstraint(q.front().getConstraint());
+                outPayload->setRequiredCycle(q.front().getRequiredCycle());
+                outPayload->setTaskCode(q.front().getTaskCode());
+                outPayload->setCarAddr(q.front().getCarAddr());
+                outPayload->setCarRad(q.front().getCarRad());
+                outPayload->setTimeLimit(q.front().getTimeLimit());
+
+                outPayload->setToSendRSU(inet::MacAddress::UNSPECIFIED_ADDRESS);
+                q.pop();
+
+                outPacket->insertAtBack(outPayload);
+
+                outPacket->addTagIfAbsent<inet::MacAddressReq>()->setDestAddress(myOptimalES.addr);
+
+                auto ieee802SapReq = outPacket->addTagIfAbsent<inet::Ieee802SapReq>();
+                ieee802SapReq->setSsap(localSap);
+                ieee802SapReq->setDsap(remoteSap);
+
+                emit(inet::packetSentSignal,outPacket);
+                llcSocket.send(outPacket);
+            }
+        }
+        else
+        {
+            cMessage* selfMsg = new cMessage("", Self_queuing);
+            scheduleAt(simTime() + queuingDelay, selfMsg);
+        }
+    }
     else if(strcmp(msg->getName(),"passMsg") == 0)
     {
         EV<<this->getParentModule()->getFullName()<<" erase passed car : " <<msg->getKind()<<'\n';
@@ -408,7 +470,6 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
     EV_INFO << "The name of received packet " << msg->getName() << "'\n";
 
     if(strcmp(msg->getName(), "ERSReq") == 0){
-
         const auto& req = msg->peekAtFront<inet::ERSReq>();
         if (req == nullptr)
            throw cRuntimeError("data type error: not an ERSReq arrived in packet %s", msg->str().c_str());
@@ -653,12 +714,14 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         }
 
         //delete next ERS
+
         if(RSUs_left.size () != 0 && RSUs_right.size() != 0 && myOptimalES.f != 0)
             if(self_ptr_ERSReq!= nullptr && self_ptr_ERSReq->isScheduled() ){
                 cancelAndDelete(self_ptr_ERSReq);   //cancelEvent and delete.
                 self_ptr_ERSReq = nullptr;
                 EV<< this->getParentModule()->getFullName()<<" call cancelAndDelete ERS Packet \n";
             }
+
 
     }
     else if(strcmp(msg->getName(),"OptimalESInfo") == 0)
@@ -714,6 +777,10 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         if (resp == nullptr)
             throw cRuntimeError("data type error: not an ENCOResp arrived in packet %s", msg->str().c_str());
 
+        //timeover;
+        if(resp->getTimeLimit() < simTime())
+            return;
+
         //자신의 범위에 존재한다면,
         if(Cars.count(resp->getCarAddr()) == 1){
             //positive case.
@@ -731,7 +798,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
         }
         else
         {
-            return;
+            //return;
 
             //negative case,
             EV<<this->getParentModule()->getFullName()<<" not connected with car ADDR: "<< resp->getCarAddr()<<'\n';
@@ -744,35 +811,67 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
             outPayload->setChunkLength(inet::units::values::B(88));
             outPayload->setTaskID(resp->getTaskID());
             outPayload->setCarAddr(resp->getCarAddr());
+            outPayload->setCarRad(resp->getCarRad());
             outPayload->setCOResult(resp->getTaskID()); //수정 해도되고 안 해도 되고..
 
             outPacket->insertAtBack(outPayload);
 
-            if(passedCars.count(resp->getCarAddr()) == 1){
-                //진행방향 RSU
 
-                if(closestRSU_right!= nullptr)
-                    outPacket->addTag<inet::MacAddressReq>()->setDestAddress(closestRSU_right->addr);
+            if(-1 < resp->getCarRad() && resp->getCarRad() < 1)
+            {
+                if(passedCars.count(resp->getCarAddr()) == 1)
+                {
+                    //오른쪽으로 이미 지나갔다면,
+                    if(closestRSU_right!= nullptr)
+                        outPacket->addTag<inet::MacAddressReq>()->setDestAddress(closestRSU_right->addr);
+                    else
+                    {
+                        delete outPacket;
+                        EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (right)\n";
+                        return;
+                    }
+                }
                 else
                 {
-                    delete outPacket;
-                    EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (right)\n";
-                    return;
+                    //오른쪽인데 아직 오지 않았다면,
+                    if(closestRSU_left!= nullptr)
+                        outPacket->addTag<inet::MacAddressReq>()->setDestAddress(closestRSU_left->addr);
+                    else
+                    {
+                        delete outPacket;
+                        EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (left)\n";
+                        return;
+                    }
                 }
-
             }
             else
             {
-                //아직 오지 않음.
-                if(closestRSU_left!= nullptr)
-                    outPacket->addTag<inet::MacAddressReq>()->setDestAddress(closestRSU_left->addr);
+                if(passedCars.count(resp->getCarAddr()) == 1)
+                {
+                    //왼쪽인데 지나 갔다면
+                    if(closestRSU_left!= nullptr)
+                        outPacket->addTag<inet::MacAddressReq>()->setDestAddress(closestRSU_left->addr);
+                    else
+                    {
+                        delete outPacket;
+                        EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (left)\n";
+                        return;
+                    }
+                }
                 else
                 {
-                    delete outPacket;
-                    EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (left)\n";
-                    return;
+                    //왼쪽인데 아직 안 왔다면
+                    if(closestRSU_right!= nullptr)
+                        outPacket->addTag<inet::MacAddressReq>()->setDestAddress(closestRSU_right->addr);
+                    else
+                    {
+                        delete outPacket;
+                        EV<<this->getParentModule()->getFullName()<<"doesn't have closest RSU (right)\n";
+                        return;
+                    }
                 }
             }
+
             auto ieee802SapReq = outPacket->addTag<inet::Ieee802SapReq>();
             ieee802SapReq->setSsap(localSap);
             ieee802SapReq->setDsap(remoteSap);
@@ -888,19 +987,15 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     inet::Packet *datapacket = new inet::Packet("ERSReq",inet::IEEE802CTRL_DATA);
 
     const auto& data = inet::makeShared<inet::ERSReq>();
-    //data->setChunkLength(inet::units::values::B(5));  //unsigned int, unsigned char
     data->setChunkLength(inet::units::values::B(88));  //unsigned int, unsigned char
     data->setTTL(init);
     data->setFindTarget(inet::RSU_ES);
-    //data->setFindTarget(findWhat);
 
     datapacket->insertAtBack(data);
-
 
     datapacket->addTag<inet::MacAddressReq>()->setDestAddress(inet::MacAddress::BROADCAST_ADDRESS);
 
     auto ieee802SapReq = datapacket->addTag<inet::Ieee802SapReq>();
-    //ieee802SapReq->setSsap(0xf0);
     ieee802SapReq->setSsap(localSap);
     ieee802SapReq->setDsap(remoteSap);
 
@@ -908,10 +1003,10 @@ void RSUClusterApp::BeginERS(int init, int threshold){
     llcSocket.send(datapacket);
     EV<<"RSU send the ERS Request to Link!!\n";
 
-    //if(self_ptr_ERSReq!= nullptr && !self_ptr_ERSReq->isScheduled()){
-        self_ptr_ERSReq = new cMessage("",Self_ERSReq);
-        scheduleAt(simTime() + uniform(0.01, 0.2) + ERS_WaitTime, self_ptr_ERSReq);
-    //}
+
+    self_ptr_ERSReq = new cMessage("",Self_ERSReq);
+    scheduleAt(simTime() + uniform(0.05, 0.01) + ERS_WaitTime, self_ptr_ERSReq);
+
 
     return;
 }

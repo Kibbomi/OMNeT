@@ -47,6 +47,8 @@ constexpr double coverage = 500;
 class VEINS_API VehicleApp : public DemoBaseApplLayer {
 public:
 
+    bool Ondemand = true;
+
     inet::RSU_INFO curConnectingRSU;
     inet::RSU_INFO ConnectedRSU;
 
