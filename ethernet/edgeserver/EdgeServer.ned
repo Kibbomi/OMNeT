@@ -55,10 +55,10 @@ module EdgeServer
             parameters:
                 @display("p=100,240;is=s");
         }
-        cli: ClientsideApp {
-            parameters:
-                @display("p=250,100");
-        }
+        //cli: ClientsideApp {
+          //  parameters:
+            //    @display("p=250,100");
+        //}
         srv: ServersideApp {
             parameters:
                 @display("p=450,100");
@@ -77,8 +77,8 @@ module EdgeServer
                 @display("p=350,336,row,150;q=txQueue");
         }
     connections:
-        cli.out --> dp.in++;
-        dp.out++ --> cli.in;
+       // cli.out --> dp.in++;
+       // dp.out++ --> cli.in;
         srv.out --> dp.in++;
         dp.out++ --> srv.in;
 

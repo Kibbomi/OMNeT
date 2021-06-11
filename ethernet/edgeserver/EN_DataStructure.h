@@ -39,14 +39,17 @@ class Format_Car{
     public:
         std:: string CarName;   //이거는 필요없을 것 같은데
         long CarId;
+        double rad;
 };
 
 class Format_Task{
     public:
         long CarAddr;
+        double CarRad;
         inet::MacAddress RSUAddr;//dest
         int TaskId;
         int COResult;
+        simtime_t timeLimit;
 
 };
 

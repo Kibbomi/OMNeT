@@ -53,12 +53,13 @@ namespace inet {
  *     //Task Information
  *     int taskID;
  *     double constraint;
- *     int requiredCycle;
+ *     double requiredCycle;
  *     int taskCode;	//필요 없을 것 같음.Code는..	이미 시간에 반영..
  * 
  *     long CarAddr;	//MacAddress임.
+ *     double CarRad;
  *     MacAddress toSendRSU;
- *     simtime_t reqTime;
+ *     simtime_t timeLimit;
  * }
  * </pre>
  */
@@ -67,11 +68,12 @@ class INET_API ENCOReq : public ::inet::FieldsChunk
   protected:
     int taskID = 0;
     double constraint = 0;
-    int requiredCycle = 0;
+    double requiredCycle = 0;
     int taskCode = 0;
     long CarAddr = 0;
+    double CarRad = 0;
     MacAddress toSendRSU;
-    omnetpp::simtime_t reqTime = SIMTIME_ZERO;
+    omnetpp::simtime_t timeLimit = SIMTIME_ZERO;
 
   private:
     void copy(const ENCOReq& other);
@@ -94,30 +96,34 @@ class INET_API ENCOReq : public ::inet::FieldsChunk
     virtual void setTaskID(int taskID);
     virtual double getConstraint() const;
     virtual void setConstraint(double constraint);
-    virtual int getRequiredCycle() const;
-    virtual void setRequiredCycle(int requiredCycle);
+    virtual double getRequiredCycle() const;
+    virtual void setRequiredCycle(double requiredCycle);
     virtual int getTaskCode() const;
     virtual void setTaskCode(int taskCode);
     virtual long getCarAddr() const;
     virtual void setCarAddr(long CarAddr);
+    virtual double getCarRad() const;
+    virtual void setCarRad(double CarRad);
     virtual const MacAddress& getToSendRSU() const;
     virtual MacAddress& getToSendRSUForUpdate() { handleChange();return const_cast<MacAddress&>(const_cast<ENCOReq*>(this)->getToSendRSU());}
     virtual void setToSendRSU(const MacAddress& toSendRSU);
-    virtual omnetpp::simtime_t getReqTime() const;
-    virtual void setReqTime(omnetpp::simtime_t reqTime);
+    virtual omnetpp::simtime_t getTimeLimit() const;
+    virtual void setTimeLimit(omnetpp::simtime_t timeLimit);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const ENCOReq& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOReq& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:37</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:38</tt> by nedtool.
  * <pre>
  * class ENCOResp extends FieldsChunk
  * {
  *     int taskID;
  *     int COResult;
  *     long CarAddr;
+ *     double CarRad;
+ *     simtime_t timeLimit;
  * }
  * </pre>
  */
@@ -127,6 +133,8 @@ class INET_API ENCOResp : public ::inet::FieldsChunk
     int taskID = 0;
     int COResult = 0;
     long CarAddr = 0;
+    double CarRad = 0;
+    omnetpp::simtime_t timeLimit = SIMTIME_ZERO;
 
   private:
     void copy(const ENCOResp& other);
@@ -151,13 +159,17 @@ class INET_API ENCOResp : public ::inet::FieldsChunk
     virtual void setCOResult(int COResult);
     virtual long getCarAddr() const;
     virtual void setCarAddr(long CarAddr);
+    virtual double getCarRad() const;
+    virtual void setCarRad(double CarRad);
+    virtual omnetpp::simtime_t getTimeLimit() const;
+    virtual void setTimeLimit(omnetpp::simtime_t timeLimit);
 };
 
 inline void doParsimPacking(omnetpp::cCommBuffer *b, const ENCOResp& obj) {obj.parsimPack(b);}
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, ENCOResp& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:44</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:47</tt> by nedtool.
  * <pre>
  * class OptimalESInfo extends FieldsChunk
  * {
@@ -209,7 +221,7 @@ inline void doParsimPacking(omnetpp::cCommBuffer *b, const OptimalESInfo& obj) {
 inline void doParsimUnpacking(omnetpp::cCommBuffer *b, OptimalESInfo& obj) {obj.parsimUnpack(b);}
 
 /**
- * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:52</tt> by nedtool.
+ * Class generated from <tt>inet/applications/ethernet/edgeserver/ENComputationOffloading.msg:55</tt> by nedtool.
  * <pre>
  * class AvailabilityInfo extends FieldsChunk
  * {

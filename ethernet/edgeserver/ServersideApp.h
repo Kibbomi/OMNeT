@@ -72,6 +72,8 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     long packetsSent = 0;
     long packetsReceived = 0;
 
+    //test
+    bool Ondemand = true;
 
     //Availability,,, to send message to RSUs periodically
     std::map<std::string,Format_RSUCluster> RSUs;
@@ -80,9 +82,8 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     //This value can be changed by ini information, so that each server can have different value
     double f;
     unsigned int capacity;
+    unsigned int COthreshold = 4; //if 5 -> cothreshold = 4
     bool isAvailable;
-
-    double COThreshold;
 
   protected:
     virtual void initialize(int stage) override;

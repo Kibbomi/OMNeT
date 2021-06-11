@@ -52,9 +52,11 @@ void ServersideApp::initialize(int stage)
 
         EV<<this->getParentModule()->getFullName()<<": Clock Frequency is "<<f<<'\n';
 
-        capacity = 10;
-        isAvailable = true;
-        //capacity / f is limit.
+        if(COthreshold > 0)
+            isAvailable = true;
+        else
+            isAvailable = false;
+
 
         WATCH(packetsSent);
         WATCH(packetsReceived);
@@ -117,36 +119,45 @@ void ServersideApp::handleSelfMessage(cMessage* msg)
             Packet* outPacket = new Packet("ENCOResp",IEEE802CTRL_DATA);
             const auto& outPayload = makeShared<ENCOResp>();
 
-            outPayload->setChunkLength(B(64));
+            outPayload->setChunkLength(B(88));
             outPayload->setTaskID(Tasks[CarKey].TaskId);
             outPayload->setCarAddr(Tasks[CarKey].CarAddr);
             outPayload->setCOResult(Tasks[CarKey].COResult);
-
+            outPayload->setCarRad(Tasks[CarKey].CarRad);
+            outPayload->setTimeLimit(Tasks[CarKey].timeLimit);
             outPacket->insertAtBack(outPayload);
 
             outPacket->addTag<MacAddressReq>()->setDestAddress(Tasks[CarKey].RSUAddr);
 
-            auto ieee802SapReq = outPacket->addTag<inet::Ieee802SapReq>();
+            auto ieee802SapReq = outPacket->addTag<Ieee802SapReq>();
             ieee802SapReq->setSsap(localSap);
             ieee802SapReq->setDsap(remoteSap);
 
             emit(packetSentSignal,outPacket);
             llcSocket.send(outPacket);
 
+
             //자료구조에서 삭제.
             Tasks.erase(CarKey);
 
             //if(Tasks.size() < capacity/f * 0.6){
 
-            if(!isAvailable && Tasks.size() == 3 ){ //test
+            if(!isAvailable && Tasks.size() == COthreshold-1 ){ //test
 
                 isAvailable = true;
+
+                if(Ondemand)
+                {
+                    delete msg;
+                    return;
+                }
+
                 for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter)
                 {
                     Packet *outPacket = new Packet("AvailabilityInfo",IEEE802CTRL_DATA);
                     const auto& outPayload = makeShared<AvailabilityInfo>();
 
-                    outPayload->setChunkLength(B(64));
+                    outPayload->setChunkLength(B(88));
                     outPayload->setIsAvailable(isAvailable);
                     outPacket->insertAtBack(outPayload);
 
@@ -162,6 +173,7 @@ void ServersideApp::handleSelfMessage(cMessage* msg)
             }
         }
     }
+
 }
 
 void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
@@ -215,14 +227,13 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
         const auto& outPayload = makeShared<ERSResp>();
 
         //Edge server information
-        //outPayload->setChunkLength(B(21));
-        outPayload->setChunkLength(B(64));
-        outPayload->setCapacity(capacity);
+        outPayload->setChunkLength(B(88));
+        outPayload->setCapacity(COthreshold);
         outPayload->setF(f);
         outPayload->setIsAvailableEN(isAvailable);
         outPayload->setInfo(OnlyES);
 
-        //not used
+        //not used because ES don't need to notify location
         outPayload->setY(0);
         outPayload->setX(0);
         outPayload->setCoverage(0);
@@ -233,6 +244,13 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
     }
     else if(strcmp(msg->getName(),"ENCOReq") == 0)
     {
+        //만약 조금 더 들어왔을 경우.
+        if(Tasks.size() >= COthreshold + 1){
+            delete msg;
+            return;
+        }
+
+
         const auto& req = msg->peekAtFront<ENCOReq>();
         if (req == nullptr)
             throw cRuntimeError("data type error: not an ENCOReq arrived in packet %s", msg->str().c_str());
@@ -258,19 +276,18 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
             Format_Task curTask;
 
             curTask.CarAddr = req->getCarAddr();
-            //curTask.RSUAddr
-            //도착지 RSU계산할 것.
             curTask.TaskId = req->getTaskID();
             curTask.COResult = 200;
-
-            //여기는 예상위치 구현 시 수정.
             curTask.RSUAddr = srcAddr;
-
-
-            Tasks[CarKey] = curTask;
+            curTask.CarRad = req->getCarRad();
+            curTask.timeLimit = req->getTimeLimit();
 
             double processingTime = (double)req->getRequiredCycle()/f;
 
+            if(simTime() + processingTime > curTask.timeLimit)
+                return ;
+
+            Tasks[CarKey] = curTask;
             cMessage* self_msg = new cMessage(CarKey.c_str(),Self_COEN);
             scheduleAt(simTime() + processingTime, self_msg);    //1은 s임.
             EV<<this->getParentModule()->getFullName()<<"received ENCOReq message It will reply at "<<simTime()+processingTime<<'\n';
@@ -279,16 +296,22 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
             //availability check
 
             //if( (capacity / f)*0.6 < Tasks.size())
-            if(isAvailable && Tasks.size() == 4)   //for Test!!
+            if(isAvailable && Tasks.size() == COthreshold)   //for Test!!
             {
                 isAvailable=false;
+
+                if(Ondemand)
+                {
+                    delete msg;
+                    return;
+                }
 
                 for(auto iter = RSUs.begin(); iter != RSUs.end(); ++iter)
                 {
                     Packet *outPacket = new Packet("AvailabilityInfo",IEEE802CTRL_DATA);
                     const auto& outPayload = makeShared<AvailabilityInfo>();
 
-                    outPayload->setChunkLength(B(64));
+                    outPayload->setChunkLength(B(88));
                     outPayload->setIsAvailable(isAvailable);
 
                     outPacket->insertAtBack(outPayload);
@@ -303,13 +326,27 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
                 }
                 EV<<this->getParentModule()->getFullName()<<" is not available. Send a availableInfo message\n";
             }
-            else if(Tasks.size() > 1){
-                //for debug
-                EV<<this->getParentModule()->getFullName() <<" is over the capacity.\n";
-            }
         }
+    }
+    //Original case....!!!!!!!!!!!!!!
+    else if(strcmp(msg->getName(),"AvailabilityInfo") == 0)
+    {
+        const auto& req = msg->peekAtFront<AvailabilityInfo>();
 
+        Packet *outPacket = new Packet("AvailabilityInfo",IEEE802CTRL_DATA);
+        const auto& outPayload = makeShared<AvailabilityInfo>();
 
+        outPayload->setChunkLength(B(88));
+        outPayload->setIsAvailable(isAvailable);
+        outPacket->insertAtBack(outPayload);
+
+        outPacket->addTagIfAbsent<MacAddressReq>()->setDestAddress(msg->getTag<MacAddressInd>()->getSrcAddress());
+        auto ieee802SapReq = outPacket->addTagIfAbsent<Ieee802SapReq>();
+        ieee802SapReq->setSsap(localSap);
+        ieee802SapReq->setDsap(remoteSap);
+
+        emit(packetSentSignal,outPacket);
+        llcSocket.send(outPacket);
     }
 
     delete msg;
