@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 06/09/21 14:04:18 by Eclipse SUMO netedit Version 1.8.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <output>
+        <output-file value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\Solution\TestNetwork.net.xml"/>
+    </output>
+
+    <processing>
+        <offset.disable-normalization value="true"/>
+    </processing>
+
+    <junctions>
+        <no-turnarounds value="true"/>
+    </junctions>
+
+    <netedit>
+        <route-files value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\Solution\TestNetwork20.rou.xml"/>
+    </netedit>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <route edges="gneE1" color="yellow" id="route_0"/>
+    <route edges="gneE0" color="yellow" id="route_1"/>
+    <vehicle id="vehicle_0" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_1" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_10" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_11" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_12" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_13" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_14" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_15" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_16" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_17" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_18" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_19" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_2" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_3" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_4" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_5" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_6" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_7" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_8" depart="0.00" departSpeed="33.33" route="route_1"/>
+    <vehicle id="vehicle_9" depart="0.00" departSpeed="33.33" route="route_1"/>
+</routes>
