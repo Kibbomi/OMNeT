@@ -47,6 +47,7 @@ void VehicleApp::finish()
 
     recordScalar("finished Task",num);
     recordScalar("Tasks", finishedTask.size());
+    recordScalar("COMessages", COMessages);
 
     EV<<this->getParentModule()->getFullName()<< "The number of finished task, all tasks " <<num<<"/ "<< finishedTask.size()<<'\n';
     return ;
@@ -179,6 +180,7 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
         wsm->encapsulate(ack);
         populateWSM(wsm,curConnectingRSU.RSU_ID);
         send(wsm,lowerLayerOut);
+        ++COMessages;
     }
     else if(strcmp(pac->getName(), "RSUCOLevel") == 0){
         RSUCOLevel* msg = dynamic_cast<RSUCOLevel*>(pac);
@@ -238,6 +240,10 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
         req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
 
+        //이동성 포함.
+        //req->setConstraint(uniform(1, 2));    //[1000, 2000]ms
+        //req->setRequiredCycle(uniform(4, 8));  //[4, 8]GHz
+
         req->setTaskCode(1);  //byte;
 
         req->setReqTime(simTime());
@@ -251,10 +257,11 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         wsm->encapsulate(req);
         populateWSM(wsm,curConnectingRSU.RSU_ID);
         send(wsm,lowerLayerOut);
+        ++COMessages;
 
         //for next CO
         cMessage* selfMsg =new cMessage("",Self_COReq);
-        scheduleAt(simTime() + uniform(0.15, 0.16),selfMsg);    //CO 150ms마다 발생
+        scheduleAt(simTime() + uniform(COTime, COTime + 0.01),selfMsg);    //CO 150ms마다 발생
     }
     else if(msg->getKind() == Self_Connect)
     {

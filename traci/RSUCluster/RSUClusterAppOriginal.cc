@@ -80,7 +80,13 @@ void RSUClusterAppOriginal::initialize(int stage)
 
     }
 }
+void RSUClusterAppOriginal::finish()
+{
+    MyDemoBaseApplLayer::finish();
 
+    recordScalar("COMessages", COMessages + RSUClusterMessages);
+
+}
 void RSUClusterAppOriginal::onWSA(DemoServiceAdvertisment* wsa)
 {
     // if this RSU receives a WSA for service 42, it will tune to the channel
@@ -128,6 +134,7 @@ void RSUClusterAppOriginal::onWSM(BaseFrame1609_4* frame)
 
         for(auto iter = ESs.begin(); iter != ESs.end(); ++iter)
         {
+            ++RSUClusterMessages;
             inet::Packet *outPacket = new inet::Packet("AvailabilityInfo",inet::IEEE802CTRL_DATA);
            const auto& outPayload = inet::makeShared<inet::AvailabilityInfo>();
 
@@ -408,7 +415,7 @@ void RSUClusterAppOriginal::socketDataArrived(inet::Ieee8022LlcSocket *socket, i
     }
     else if(strcmp(msg->getName(),"ENCOResp") == 0)
     {
-
+        ++COMessages;
         const auto& resp = msg->peekAtFront<inet::ENCOResp>();
         if (resp == nullptr)
             throw cRuntimeError("data type error: not an ENCOResp arrived in packet %s", msg->str().c_str());
@@ -453,6 +460,7 @@ void RSUClusterAppOriginal::socketDataArrived(inet::Ieee8022LlcSocket *socket, i
     }
     else if(strcmp(msg->getName(),"AvailabilityInfo") == 0)
     {
+        ++RSUClusterMessages;
         const auto& resp = msg->peekAtFront<inet::AvailabilityInfo>();
         if (resp == nullptr)
             throw cRuntimeError("data type error: not an AvailabilityInfo arrived in packet %s", msg->str().c_str());
@@ -489,6 +497,7 @@ void RSUClusterAppOriginal::socketDataArrived(inet::Ieee8022LlcSocket *socket, i
 
                 emit(inet::packetSentSignal,outPacket);
                 llcSocket.send(outPacket);
+                ++COMessages;
             }
         }
         if(doERS)

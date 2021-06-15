@@ -43,11 +43,15 @@ using namespace omnetpp;
 namespace veins {
 
 constexpr double coverage = 500;
+constexpr double COTime = 0.15;
+//constexpr double COTime = 1.5;
 
 class VEINS_API VehicleApp : public DemoBaseApplLayer {
 public:
 
-    bool Ondemand = true;
+    bool Ondemand = false;
+
+    unsigned int  COMessages = 0;
 
     inet::RSU_INFO curConnectingRSU;
     inet::RSU_INFO ConnectedRSU;

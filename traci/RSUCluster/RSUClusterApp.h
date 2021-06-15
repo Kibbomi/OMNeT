@@ -75,11 +75,22 @@ class VEINS_API RSUClusterApp : public MyDemoBaseApplLayer, public inet::Ieee802
 public:
     void initialize(int stage) override;
 
+    unsigned int COMessages = 0;
+    unsigned int RSUClusterMessages = 0;
+
     double queuingDelay = 0.015;    //15ms
     //for Expanding Ring Search
     int TTL_threshold = 5;
     int TTL_increasement = 1;   //2
     int TTL_init = 1;
+
+    //Optimal
+    //int TTL_threshold = 12;
+    //int TTL_increasement = 1;   //2
+    //int TTL_init = 12;
+
+
+
     double ERS_WaitTime = 0.025;  //25ms
     double CORespACKRetransmission = 0.01; //10ms
     //RSU Info
@@ -144,6 +155,7 @@ public:
 protected:
     void onWSM(BaseFrame1609_4* wsm) override;
     void onWSA(DemoServiceAdvertisment* wsa) override;
+    void finish() override;
 };
 
 } // namespace veins

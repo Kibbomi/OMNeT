@@ -76,6 +76,9 @@ class VEINS_API RSUClusterAppOriginal : public MyDemoBaseApplLayer, public inet:
 public:
     void initialize(int stage) override;
 
+    unsigned int COMessages = 0;
+    unsigned int RSUClusterMessages = 0;
+
     //for Expanding Ring Search
     int TTL_threshold = 5;
     int TTL_increasement = 1;   //2
@@ -144,6 +147,7 @@ public:
 protected:
     void onWSM(BaseFrame1609_4* wsm) override;
     void onWSA(DemoServiceAdvertisment* wsa) override;
+    void finish() override;
 };
 
 } // namespace veins

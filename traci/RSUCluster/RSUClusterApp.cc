@@ -81,6 +81,13 @@ void RSUClusterApp::initialize(int stage)
     }
 }
 
+void RSUClusterApp::finish()
+{
+    MyDemoBaseApplLayer::finish();
+
+    recordScalar("COMessages", COMessages + RSUClusterMessages);
+
+}
 void RSUClusterApp::onWSA(DemoServiceAdvertisment* wsa)
 {
     // if this RSU receives a WSA for service 42, it will tune to the channel
@@ -208,7 +215,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
 
         omnetpp::cComponent::emit(inet::packetSentSignal,outPacket);
         llcSocket.send(outPacket);
-
+        ++COMessages;
         EV<<this->getParentModule()->getFullName()<<" send CO req to "<<myOptimalES.addr.str()<<'\n';
 
     }
@@ -402,6 +409,7 @@ void RSUClusterApp::handleSelfMsg(cMessage* msg)
 
                 emit(inet::packetSentSignal,outPacket);
                 llcSocket.send(outPacket);
+                ++COMessages;
             }
         }
         else
@@ -726,6 +734,8 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
     }
     else if(strcmp(msg->getName(),"OptimalESInfo") == 0)
     {
+        ++RSUClusterMessages;
+
         const auto& resp = msg->peekAtFront<inet::OptimalESInfo>();
         if (resp == nullptr)
            throw cRuntimeError("data type error: not an OptimalESInfo arrived in packet %s", msg->str().c_str());
@@ -772,6 +782,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
     }
     else if(strcmp(msg->getName(),"ENCOResp") == 0)
     {
+        ++COMessages;
 
         const auto& resp = msg->peekAtFront<inet::ENCOResp>();
         if (resp == nullptr)
@@ -878,6 +889,7 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
 
             omnetpp::cComponent::emit(inet::packetSentSignal,outPacket);
             llcSocket.send(outPacket);
+
         }
 
         //for ACK;
@@ -896,6 +908,8 @@ void RSUClusterApp::socketDataArrived(inet::Ieee8022LlcSocket *socket, inet::Pac
     }
     else if(strcmp(msg->getName(),"AvailabilityInfo") == 0)
     {
+        ++RSUClusterMessages;
+
         const auto& resp = msg->peekAtFront<inet::AvailabilityInfo>();
         if (resp == nullptr)
             throw cRuntimeError("data type error: not an AvailabilityInfo arrived in packet %s", msg->str().c_str());
@@ -1127,6 +1141,8 @@ void RSUClusterApp::FindOptimalES(){
 
 void RSUClusterApp::SendRSUCOLevel(bool level)
 {
+    return ;
+
     //switch된 것은 호출 시 구분해서 값을 넘겨 줄 것.
     //for(long CarAddr : Cars){
     RSUCOLevel* msg = new RSUCOLevel();
