@@ -29,6 +29,23 @@ void VehicleApp::initialize(int stage)
         traciVehicle->setSpeed(33.3333);
         traciVehicle->setMaxSpeed(33.3333);
 
+        //load the test sets.
+
+        std::ifstream fp;
+        int index = 0;
+        fp.open("Testset/" + fileName + std::to_string(fileNumber) + ".txt", std::ios_base::in);
+        if(fp.is_open()){
+            taskInfo.resize(COSize);
+            while(!fp.eof()){
+                fp>>taskInfo[index].first >>taskInfo[index].second;
+                ++index;
+            }
+
+            fp.close();
+            //EV<<"TaskInfo : "<<taskInfo[0].first << " "<<taskInfo[0].second<<'\n';
+        }
+
+
         //trigger
         //주석 풀면 됨.. 오프로딩 이벤트 시작.
         cMessage* self_msg = new cMessage("",Self_COReq);
@@ -224,6 +241,8 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
             return ;
         }*/
 
+        if(finishedTask.size() >= COSize)
+            return ;
 
         CarCOReq* req = new CarCOReq();
 
@@ -237,8 +256,11 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //task information
         req->setTaskID(finishedTask.size());
-        req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
-        req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
+        req->setConstraint(taskInfo[finishedTask.size()].first);    //[150, 230]ms
+        req->setRequiredCycle(taskInfo[finishedTask.size()].second);  //[0.6, 0.8]GHz
+
+        //req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
+        //req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
 
         //이동성 포함.
         //req->setConstraint(uniform(1, 2));    //[1000, 2000]ms
@@ -262,6 +284,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         //for next CO
         cMessage* selfMsg =new cMessage("",Self_COReq);
         scheduleAt(simTime() + uniform(COTime, COTime + 0.01),selfMsg);    //CO 150ms마다 발생
+        //scheduleAt(simTime() + COTime, selfMsg);    //CO 150ms마다 발생
     }
     else if(msg->getKind() == Self_Connect)
     {

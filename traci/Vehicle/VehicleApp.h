@@ -20,6 +20,8 @@
 
 #include "veins/modules/application/traci/RSUCluster/SelfMessageType.h"
 
+//for file
+#include <fstream>
 
 //to manage connecting RSU
 #include <string>
@@ -44,12 +46,15 @@ namespace veins {
 
 constexpr double coverage = 500;
 constexpr double COTime = 0.15;
+constexpr double COSize = 481;
+std::string fileName = "File_set";  //test file name
+int fileNumber =1;
+
 //constexpr double COTime = 1.5;
+
 
 class VEINS_API VehicleApp : public DemoBaseApplLayer {
 public:
-
-    bool Ondemand = false;
 
     unsigned int  COMessages = 0;
 
@@ -58,7 +63,7 @@ public:
 
     std::map<std::string,inet::RSU_Advertisement> RSUs; // not overflow,,, int.. -> long long   //삭제 예정 beacon으로 구현했음.
 
-
+    std::vector<std::pair<double, double>> taskInfo;    //constraint, required cycle
     std::vector<bool> finishedTask; //이름 isfinished_Task로 바꾸기
 
     //연결 관련
