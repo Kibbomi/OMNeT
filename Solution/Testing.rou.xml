@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 06/10/21 19:23:51 by Eclipse SUMO netedit Version 1.8.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\Solution\Testing.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\Solution\Testing.net.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-internal-links value="true"/>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <netedit>
+        <route-files value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\Solution\Testing.rou.xml"/>
+    </netedit>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/routes_file.xsd">
+    <route edges="gneE0" color="yellow" id="route_0"/>
+    <route edges="gneE1" color="yellow" id="route_1"/>
+    <vehicle id="vehicle_0" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_1" depart="0.00" departSpeed="33.33" route="route_0"/>
+    <vehicle id="vehicle_2" depart="0.00" route="route_1"/>
+    <vehicle id="vehicle_3" depart="0.00" route="route_1"/>
+</routes>
