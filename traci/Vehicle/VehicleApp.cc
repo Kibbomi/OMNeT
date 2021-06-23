@@ -31,7 +31,7 @@ void VehicleApp::initialize(int stage)
 
         //load the test sets.
 
-        std::ifstream fp;
+       /* std::ifstream fp;
         int index = 0;
         fp.open("Testset/" + fileName + std::to_string(fileNumber) + ".txt", std::ios_base::in);
         if(fp.is_open()){
@@ -43,7 +43,7 @@ void VehicleApp::initialize(int stage)
 
             fp.close();
             //EV<<"TaskInfo : "<<taskInfo[0].first << " "<<taskInfo[0].second<<'\n';
-        }
+        }*/
 
 
         //trigger
@@ -230,17 +230,6 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
     if(msg->getKind() == Self_COReq ){
 
-        /*if(!Ondemand && curConnectingRSU.COLevel == false)
-        {
-            cMessage* selfMsg =new cMessage("",Self_COReq);
-            scheduleAt(simTime() + uniform(0.15, 0.16),selfMsg);
-            //push back failed task
-            finishedTask.push_back(false);
-            EV<<this->getParentModule()->getFullName()<<" can't send CO Msg, current connected RSU is not available!\n";
-            EV<<this->getParentModule()->getFullName()<<" is connected with "<<curConnectingRSU.RSU_ID<<'\n';
-            return ;
-        }*/
-
         if(finishedTask.size() >= COSize)
             return ;
 
@@ -256,15 +245,15 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //task information
         req->setTaskID(finishedTask.size());
-        req->setConstraint(taskInfo[finishedTask.size()].first);    //[150, 230]ms
-        req->setRequiredCycle(taskInfo[finishedTask.size()].second);  //[0.6, 0.8]GHz
+        //req->setConstraint(taskInfo[finishedTask.size()].first);    //[150, 230]ms
+        //req->setRequiredCycle(taskInfo[finishedTask.size()].second);  //[0.6, 0.8]GHz
 
         //req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
         //req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
 
         //이동성 포함.
-        //req->setConstraint(uniform(1, 2));    //[1000, 2000]ms
-        //req->setRequiredCycle(uniform(4, 8));  //[4, 8]GHz
+        req->setConstraint(uniform(lowLatency, highLatency));
+        req->setRequiredCycle(uniform(lowCycle, highCycle));  //[4, 8]GHz
 
         req->setTaskCode(1);  //byte;
 

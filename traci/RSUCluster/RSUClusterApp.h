@@ -84,13 +84,6 @@ public:
     int TTL_increasement = 1;   //2
     int TTL_init = 1;
 
-    //Optimal
-    //int TTL_threshold = 12;
-    //int TTL_increasement = 1;   //2
-    //int TTL_init = 12;
-
-
-
     double ERS_WaitTime = 0.025;  //25ms
     double CORespACKRetransmission = 0.01; //10ms
     //RSU Info

@@ -45,11 +45,25 @@ using namespace omnetpp;
 namespace veins {
 
 constexpr double coverage = 500;
-constexpr double COTime = 0.15;
+//constexpr double COTime = 0.15;
 constexpr double COSize = 481;
+
+//mobility
+//Test begin
+constexpr double COTime = 1.669;
+constexpr double lowCycle = 6.7;
+constexpr double highCycle = 7.3;
+constexpr double lowLatency = 1.750;
+constexpr double highLatency = 1.800;
+//Test end
+
+
+//file
 std::string fileName = "File_set";  //test file name
 int fileNumber =1;
 
+
+//mobility
 //constexpr double COTime = 1.5;
 
 
