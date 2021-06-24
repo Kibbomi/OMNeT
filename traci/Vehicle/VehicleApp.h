@@ -45,16 +45,16 @@ using namespace omnetpp;
 namespace veins {
 
 constexpr double coverage = 500;
-//constexpr double COTime = 0.15;
+constexpr double COTime = 0.15;
 constexpr double COSize = 481;
 
 //mobility
 //Test begin
-constexpr double COTime = 1.669;
-constexpr double lowCycle = 6.7;
-constexpr double highCycle = 7.3;
-constexpr double lowLatency = 1.750;
-constexpr double highLatency = 1.800;
+//constexpr double COTime = 1.669;
+//constexpr double lowCycle = 6.7;
+//constexpr double highCycle = 7.3;
+//constexpr double lowLatency = 1.750;
+//constexpr double highLatency = 1.800;
 //Test end
 
 
@@ -77,8 +77,9 @@ public:
 
     std::map<std::string,inet::RSU_Advertisement> RSUs; // not overflow,,, int.. -> long long   //삭제 예정 beacon으로 구현했음.
 
-    std::vector<std::pair<double, double>> taskInfo;    //constraint, required cycle
+    std::vector<std::pair<double, double>> taskInfo;    //constraint, required cycle    //data from file...
     std::vector<bool> finishedTask; //이름 isfinished_Task로 바꾸기
+    std::vector<simtime_t> generatedTime;
 
     //연결 관련
     cMessage* self_ptr_Connect = nullptr;

@@ -58,12 +58,25 @@ void VehicleApp::finish()
     DemoBaseApplLayer::finish();
     // statistics recording goes here
     int num = 0;
-    for(bool item : finishedTask)
+    simtime_t avgResponseTime = 0;
+
+    /*for(bool item : finishedTask)
         if(item)
             ++num;
+     */
+
+    for(int i=0; i<finishedTask.size(); ++i){
+        if(finishedTask[i]){
+            ++num;
+            avgResponseTime += generatedTime[i];
+        }
+    }
+    avgResponseTime /= num;
+
 
     recordScalar("finished Task",num);
     recordScalar("Tasks", finishedTask.size());
+    recordScalar("avgResponseTime", avgResponseTime);
     recordScalar("COMessages", COMessages);
 
     EV<<this->getParentModule()->getFullName()<< "The number of finished task, all tasks " <<num<<"/ "<< finishedTask.size()<<'\n';
@@ -183,8 +196,13 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
 
         EV<<"Car1 received "<<msg->getTaskID() <<" CO Resp\n";
 
-        if(msg->getTaskID() < finishedTask.size())
-            finishedTask[msg->getTaskID()]=true;
+        if(msg->getTaskID() < finishedTask.size()){
+            if(!finishedTask[msg->getTaskID()])
+            {
+                finishedTask[msg->getTaskID()]=true;
+                generatedTime[msg->getTaskID()] = simTime() - generatedTime[msg->getTaskID()];
+            }
+        }
 
         //send ACK
         CarCOAck* ack = new CarCOAck();
@@ -248,12 +266,12 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         //req->setConstraint(taskInfo[finishedTask.size()].first);    //[150, 230]ms
         //req->setRequiredCycle(taskInfo[finishedTask.size()].second);  //[0.6, 0.8]GHz
 
-        //req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
-        //req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
+        req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
+        req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
 
         //이동성 포함.
-        req->setConstraint(uniform(lowLatency, highLatency));
-        req->setRequiredCycle(uniform(lowCycle, highCycle));  //[4, 8]GHz
+        //req->setConstraint(uniform(lowLatency, highLatency));
+        //req->setRequiredCycle(uniform(lowCycle, highCycle));  //[4, 8]GHz
 
         req->setTaskCode(1);  //byte;
 
@@ -262,6 +280,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         req->setName("CarCOReq");
         //push Task
         finishedTask.push_back(false);
+        generatedTime.push_back(simTime());
 
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->setName("CarCOReq");
