@@ -21,7 +21,7 @@
 #include "veins/modules/application/traci/RSUCluster/SelfMessageType.h"
 
 //for file
-#include <fstream>
+//#include <fstream>
 
 //to manage connecting RSU
 #include <string>
@@ -45,16 +45,16 @@ using namespace omnetpp;
 namespace veins {
 
 constexpr double coverage = 500;
-constexpr double COTime = 0.15;
+//constexpr double COTime = 0.15;
 constexpr double COSize = 481;
 
 //mobility
 //Test begin
-//constexpr double COTime = 1.669;
-//constexpr double lowCycle = 6.7;
-//constexpr double highCycle = 7.3;
-//constexpr double lowLatency = 1.750;
-//constexpr double highLatency = 1.800;
+constexpr double COTime = 1.905;
+constexpr double lowCycle = 7.7;
+constexpr double highCycle = 8.3;
+constexpr double lowLatency = 2.000;
+constexpr double highLatency = 2.050;
 //Test end
 
 
@@ -71,6 +71,7 @@ class VEINS_API VehicleApp : public DemoBaseApplLayer {
 public:
 
     unsigned int  COMessages = 0;
+    unsigned int handoveredCO = 0;  //for counting handover
 
     inet::RSU_INFO curConnectingRSU;
     inet::RSU_INFO ConnectedRSU;
@@ -79,7 +80,8 @@ public:
 
     std::vector<std::pair<double, double>> taskInfo;    //constraint, required cycle    //data from file...
     std::vector<bool> finishedTask; //이름 isfinished_Task로 바꾸기
-    std::vector<simtime_t> generatedTime;
+    std::vector<simtime_t> generatedTime;   //for Response Time
+    std::vector<long> requestedRSU; //for check handover
 
     //연결 관련
     cMessage* self_ptr_Connect = nullptr;

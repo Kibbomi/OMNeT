@@ -160,6 +160,7 @@ void RSUClusterApp::onWSM(BaseFrame1609_4* frame)
         outPayload->setCarAddr(msg->getCarAddr());
         outPayload->setCarRad(msg->getRad());
         outPayload->setTimeLimit(constraintTime);
+        outPayload->setToSendRSU(inet::MacAddress::UNSPECIFIED_ADDRESS);
 
         //이동성 반영한 CO
         //오른쪽이면, rad = 0,

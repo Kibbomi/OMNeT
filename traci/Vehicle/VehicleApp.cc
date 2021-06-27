@@ -78,6 +78,7 @@ void VehicleApp::finish()
     recordScalar("Tasks", finishedTask.size());
     recordScalar("avgResponseTime", avgResponseTime);
     recordScalar("COMessages", COMessages);
+    recordScalar("Handovered CO", handoveredCO);
 
     EV<<this->getParentModule()->getFullName()<< "The number of finished task, all tasks " <<num<<"/ "<< finishedTask.size()<<'\n';
     return ;
@@ -201,6 +202,11 @@ void VehicleApp::onWSM(BaseFrame1609_4* wsm)
             {
                 finishedTask[msg->getTaskID()]=true;
                 generatedTime[msg->getTaskID()] = simTime() - generatedTime[msg->getTaskID()];
+
+                //handover occurred
+                if(requestedRSU[msg->getTaskID()] != curConnectingRSU.RSU_ID)
+                    ++handoveredCO;
+
             }
         }
 
@@ -263,15 +269,17 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //task information
         req->setTaskID(finishedTask.size());
+        //file..
         //req->setConstraint(taskInfo[finishedTask.size()].first);    //[150, 230]ms
         //req->setRequiredCycle(taskInfo[finishedTask.size()].second);  //[0.6, 0.8]GHz
 
-        req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
-        req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
+        //realtime
+        //req->setConstraint(uniform(0.15,0.23));    //[150, 230]ms
+        //req->setRequiredCycle(uniform(0.6,0.8));  //[0.6, 0.8]GHz
 
         //이동성 포함.
-        //req->setConstraint(uniform(lowLatency, highLatency));
-        //req->setRequiredCycle(uniform(lowCycle, highCycle));  //[4, 8]GHz
+        req->setConstraint(uniform(lowLatency, highLatency));
+        req->setRequiredCycle(uniform(lowCycle, highCycle));  //[4, 8]GHz
 
         req->setTaskCode(1);  //byte;
 
@@ -281,6 +289,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
         //push Task
         finishedTask.push_back(false);
         generatedTime.push_back(simTime());
+        requestedRSU.push_back(curConnectingRSU.RSU_ID);
 
         BaseFrame1609_4* wsm = new BaseFrame1609_4();
         wsm->setName("CarCOReq");
@@ -291,8 +300,7 @@ void VehicleApp::handleSelfMsg(cMessage* msg)
 
         //for next CO
         cMessage* selfMsg =new cMessage("",Self_COReq);
-        scheduleAt(simTime() + uniform(COTime, COTime + 0.01),selfMsg);    //CO 150ms마다 발생
-        //scheduleAt(simTime() + COTime, selfMsg);    //CO 150ms마다 발생
+        scheduleAt(simTime() + uniform(COTime, COTime + 0.01),selfMsg);    //CO 150ms마다 발생 0.01없으면 성능 확 떨어짐. collision
     }
     else if(msg->getKind() == Self_Connect)
     {
