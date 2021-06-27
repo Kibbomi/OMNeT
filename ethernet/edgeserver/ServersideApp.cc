@@ -260,8 +260,11 @@ void ServersideApp::socketDataArrived(Ieee8022LlcSocket*, Packet *msg)
         MacAddress srcAddr;
         if(req->getToSendRSU()== MacAddress::UNSPECIFIED_ADDRESS)
             srcAddr = msg->getTag<MacAddressInd>()->getSrcAddress();
-        else
+        else{
             srcAddr = req->getToSendRSU();
+            if(msg->getTag<MacAddressInd>()->getSrcAddress() != req->getToSendRSU())
+                ++handoverReq;
+        }
 
         EV<<"Expected RSU : "<<srcAddr.str()<<'\n';
 
@@ -375,6 +378,7 @@ void ServersideApp::registerDsap(int dsap)
 
 void ServersideApp::finish()
 {
+    recordScalar("HandoverReq", handoverReq);
 }
 
 } // namespace inet

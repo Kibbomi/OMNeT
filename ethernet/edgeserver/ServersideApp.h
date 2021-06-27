@@ -71,9 +71,11 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     // statistics
     long packetsSent = 0;
     long packetsReceived = 0;
+    unsigned int handoverReq = 0;   //for counting handovered CO (all)
 
     //test
-    bool Ondemand = true;
+    bool Ondemand = false;
+    unsigned int COthreshold = 9;  //->10
 
     //Availability,,, to send message to RSUs periodically
     std::map<std::string,Format_RSUCluster> RSUs;
@@ -82,7 +84,8 @@ class INET_API ServersideApp : public ApplicationBase, public Ieee8022LlcSocket:
     //This value can be changed by ini information, so that each server can have different value
     double f;
     unsigned int capacity;
-    unsigned int COthreshold = 4; //if 5 -> cothreshold = 4
+    //if 5 -> cothreshold = 4
+
     bool isAvailable;
 
   protected:
