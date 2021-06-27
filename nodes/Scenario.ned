@@ -39,28 +39,34 @@ network Scenario
         @display("bgb=$playgroundSizeX,$playgroundSizeY");
     submodules:
         obstacles: ObstacleControl {
-            @display("p=240,50");
+            //@display("p=240,50");
+            @display("p=2600,2050");
         }
         annotations: AnnotationManager {
-            @display("p=260,50");
+            //@display("p=260,50");
+            @display("p=2600,2100");
         }
         connectionManager: ConnectionManager {
             parameters:
-                @display("p=150,0;i=abstract/multicast");
+                //@display("p=150,0;i=abstract/multicast");
+                @display("p=2600,2150;i=abstract/multicast");
         }
         world: BaseWorldUtility {
             parameters:
                 playgroundSizeX = playgroundSizeX;
                 playgroundSizeY = playgroundSizeY;
                 playgroundSizeZ = playgroundSizeZ;
-                @display("p=30,0;i=misc/globe");
+                //@display("p=30,0;i=misc/globe");
+                @display("p=2600,2000;i=misc/globe");
         }
         manager: TraCIScenarioManagerLaunchd {
             parameters:
-                @display("p=512,128");
+                //@display("p=512,128");
+                @display("p=2600,2200");
         }
         roadsCanvasVisualizer: RoadsCanvasVisualizer {
-            @display("p=300,0");
+            //@display("p=300,0");
+            @display("p=2600,2250");
         }
         node[0]: Car {
         }

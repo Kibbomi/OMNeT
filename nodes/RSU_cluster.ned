@@ -40,7 +40,7 @@ module RSU_cluster
         eth.csmacdSupport = csmacdSupport;
         @networkNode();
         @labels(node,ethernet-node);
-        @display("i=device/pc2");
+        @display("i=device/antennatower");
 
     gates:
         //802.11p
