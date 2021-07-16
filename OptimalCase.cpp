@@ -33,7 +33,7 @@ constexpr double serverResource[SRVNum] = { 4.0, 5.0, 7.0, 5.0, 4.0, 7.0, 5.0, 4
 constexpr double computingResource[SRV] = { 4.0, 5.0, 7.0 };
 double taskCache[TaskNum][SRV];
 stack<double> stk[SRVNum];
-bool selected[TaskNum];	//Run ³»ºÎº¯¼ö·Î ¼±¾ğ.
+bool selected[TaskNum];	//Run ë‚´ë¶€ë³€ìˆ˜ë¡œ ì„ ì–¸.
 unsigned int ans;
 
 
@@ -107,7 +107,7 @@ void RunDFS(int carIdx )
 
 			selected[carIdx] = false;
 
-			//RunDFS(carIdx + 1); ÀÌ ¹æ¹ıÀº ´À¸².
+			//RunDFS(carIdx + 1); ì´ ë°©ë²•ì€ ëŠë¦¼.
 		}*/
 		selected[carIdx] = true;
 
