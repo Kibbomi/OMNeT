@@ -22,15 +22,15 @@ struct TASK {
 };
 vector<TASK> Tasks;
 
-constexpr unsigned int RSUNum = 5, SRVNum = 4, TaskNum = 70, Local = 0, lineNum = 3, carGenerateGap = 2;
+constexpr unsigned int RSUNum = 5, SRVNum = 9, TaskNum = 50, Local = 0, lineNum = 3, carGenerationGap = 2;
 constexpr double propagationDelay[RSUNum][SRVNum] = {
-	{0, 0.004, 0.009, 0.011},
-	{0, 0.005, 0.007, 0.009},
-	{0, 0.006, 0.006, 0.008},
-	{0, 0.009, 0.003, 0.005},
-	{0, 0.012, 0.006, 0.008}
+	{0, 0.004, 0.004, 0.006, 0.009, 0.010, 0.011, 0.012, 0.011},
+	{0, 0.005, 0.004, 0.004, 0.007, 0.008, 0.009, 0.010, 0.009},
+	{0, 0.006, 0.005, 0.003, 0.006, 0.007, 0.008, 0.009, 0.008},
+	{0, 0.009, 0.008, 0.006, 0.003, 0.004, 0.005, 0.006, 0.005},
+	{0, 0.012, 0.011, 0.009, 0.006, 0.007, 0.008, 0.003, 0.002}
 };
-constexpr double serverResource[SRVNum] = { 0, 4.0, 5.0, 7.0 };
+constexpr double serverResource[SRVNum] = { 0, 4.0, 5.0, 7.0, 5.0, 4.0, 7.0, 5.0, 4.0 };
 
 double taskCache[TaskNum][SRVNum];
 stack<double> stk[SRVNum];	//has 종료시간
@@ -43,7 +43,7 @@ long long int chk;
 chrono::system_clock::time_point start;
 //Testing
 
-void generateData()
+void GenerationData()
 {
 	Tasks.resize(TaskNum);
 
@@ -59,12 +59,12 @@ void generateData()
 
 		TASK task;
 
-		task.occurredTime = uniformOccurredTime(gen) + i/lineNum * carGenerateGap;
+		task.occurredTime = uniformOccurredTime(gen) + i/lineNum * carGenerationGap;
 		task.requiredCycle = uniformRequiredCycle(gen);
 		task.constraintTime = uniformConstraint(gen);
 
 		
-		double Car_x = 33.33 * (task.occurredTime - i / lineNum * carGenerateGap); //33.33m/s -> 120km/h
+		double Car_x = 33.33 * (task.occurredTime - i / lineNum * carGenerationGap); //33.33m/s -> 120km/h
 		
 		task.RSUseg = Car_x / 20;
 
@@ -144,7 +144,7 @@ int main()
 {
 	start = chrono::system_clock::now();
 
-	generateData();
+	GenerationData();
 	makeCache();
 	
 	fill(selected, selected + TaskNum, -1);
