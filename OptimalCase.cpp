@@ -21,23 +21,25 @@ struct TASK {
 	}
 };
 vector<TASK> Tasks;
-constexpr unsigned int RSUNum = 5, SRVNum = 8, TaskNum = 20, SRV = 3;
+constexpr unsigned int RSUNum = 5, SRVNum = 4, TaskNum = 30, Local = 0, lineNum = 3, carGenerateGap = 2;
 constexpr double propagationDelay[RSUNum][SRVNum] = {
-	{0.004, 0.004, 0.006, 0.009, 0.010, 0.011, 0.012, 0.011},
-	{0.005, 0.004, 0.004, 0.007, 0.008, 0.009, 0.010, 0.009},
-	{0.006, 0.005, 0.003, 0.006, 0.007, 0.008, 0.009, 0.008},
-	{0.009, 0.008, 0.006, 0.003, 0.004, 0.005, 0.006, 0.005},
-	{0.012, 0.011, 0.009, 0.006, 0.007, 0.008, 0.003, 0.002}
+	{0, 0.004, 0.009, 0.011},
+	{0, 0.005, 0.007, 0.009},
+	{0, 0.006, 0.006, 0.008},
+	{0, 0.009, 0.003, 0.005},
+	{0, 0.012, 0.006, 0.008}
 };
-constexpr double serverResource[SRVNum] = { 4.0, 5.0, 7.0, 5.0, 4.0, 7.0, 5.0, 4.0 };
-constexpr double computingResource[SRV] = { 4.0, 5.0, 7.0 };
-double taskCache[TaskNum][SRV];
-stack<double> stk[SRVNum];
-bool selected[TaskNum];	//Run 내부변수로 선언.
+constexpr double serverResource[SRVNum] = { 0, 4.0, 5.0, 7.0 };
+double taskCache[TaskNum][SRVNum];
+stack<double> stk[SRVNum];	//has 종료시간
+int selected[TaskNum];	//Run 내부변수로 선언.
 unsigned int ans;
 
 
+//Testing
 long long int chk;
+chrono::system_clock::time_point start;
+//Testing
 
 void generateData()
 {
@@ -47,20 +49,21 @@ void generateData()
 	mt19937 gen(rd());
 	uniform_real_distribution<double> uniformOccurredTime(0, 3);
 	uniform_real_distribution<double> uniformRequiredCycle(0.6, 0.8);
-	uniform_real_distribution<double> uniformConstraint(0.15, 0.23);
+	uniform_real_distribution<double> uniformConstraint(0.115, 0.16);
+	//uniform_real_distribution<double> uniformConstraint(0.130, 0.160);
+	//uniform_real_distribution<double> uniformConstraint(0.160, 0.230);
 
 	for (int i = 0; i < TaskNum; ++i) {
 
 		TASK task;
 
-		task.occurredTime = uniformOccurredTime(gen);
+		task.occurredTime = uniformOccurredTime(gen) + i/lineNum * carGenerateGap;
 		task.requiredCycle = uniformRequiredCycle(gen);
 		task.constraintTime = uniformConstraint(gen);
 
 		
-		double Car_x = 33.33 * task.occurredTime; //33.33m/s -> 120km/h
+		double Car_x = 33.33 * (task.occurredTime - i / lineNum * carGenerateGap); //33.33m/s -> 120km/h
 		
-		//RSU seg [0,20) : 0, [20,40): 1...
 		task.RSUseg = Car_x / 20;
 
 		Tasks[i] = task;
@@ -70,67 +73,82 @@ void generateData()
 	sort(Tasks.begin(), Tasks.end());
 	for (int i = 0; i < TaskNum; ++i)
 		Tasks[i].TaskID = i;
-	
 }
 
 void makeCache()
 {
 	for (int i = 0; i < TaskNum; ++i) 
-		for (int j = 0; j < 3; ++j) 
-			taskCache[i][j] = Tasks[i].requiredCycle / computingResource[j];
+		for (int j = 1; j < SRVNum; ++j)
+			taskCache[i][j] = Tasks[i].requiredCycle / serverResource[j];
 }
 
 void RunDFS(int carIdx )
 {
-	if (carIdx == 12)
+	if (carIdx == TaskNum)	//TaskNUM
 	{
 		int candidate = 0;
 
-		for (int i = 0; i < SRVNum; ++i)
-			if (selected[i])
-				candidate++;
+		for (int i = 0; i < TaskNum; ++i)
+			if (selected[i] != Local)
+				++candidate;
 
-		if (ans < candidate)
+		if (ans < candidate) {
 			ans = candidate;
+			for (int i = 0; i < TaskNum; ++i)
+				cout << selected[i] << " ";
+			cout << " value : " << candidate <<'\n';
+		}
 
 		++chk;
-		if (chk % 1000000000 == 0)
+		if (chk % 1000000000 == 0) {
 			cout << chk << '\n';
+			for (int i = 0; i < TaskNum; ++i)
+				cout << selected[i] << " ";
+			cout << " value : " << candidate << '\n';
+			chrono::duration<double> dur = std::chrono::system_clock::now() - start;
+			cout << dur.count() << "(s)" << '\n';
+		}
 		return;
 	}
 
+	//for (int srv = 0; srv < SRVNum + 1; ++srv) {
 	for (int srv = 0; srv < SRVNum; ++srv) {
-		/*if (taskCache[carIdx][srv] + propagationDelay[Tasks[carIdx].RSUseg][srv] <= Tasks[carIdx].constraintTime) {
-			selected[carIdx] = true;
-			
-			RunDFS(carIdx + 1);
 
-			selected[carIdx] = false;
+		if (srv != 0 && taskCache[carIdx][srv] + propagationDelay[Tasks[carIdx].RSUseg][srv] > Tasks[carIdx].constraintTime ) 
+			continue;
+		
+		if (srv != 0 && (!stk[srv].empty() && stk[srv].top() > Tasks[carIdx].occurredTime))
+			continue;
 
-			//RunDFS(carIdx + 1); 이 방법은 느림.
-		}*/
-		selected[carIdx] = true;
+		selected[carIdx] = srv;
+		if(srv != 0)
+			stk[srv].push(Tasks[carIdx].occurredTime + taskCache[carIdx][srv] + propagationDelay[Tasks[carIdx].RSUseg][srv]);
 
 		RunDFS(carIdx + 1);
 
-		selected[carIdx] = false;
+		selected[carIdx] = 0;
+		if(srv != 0)
+			stk[srv].pop();
 	}
 }
 
 int main()
 {
-	chrono::system_clock::time_point start = chrono::system_clock::now();
+	start = chrono::system_clock::now();
 
 	generateData();
 	makeCache();
-	//Run();
+	
+	fill(selected, selected + TaskNum, -1);
 	RunDFS(0);
 	
 	chrono::duration<double> dur = std::chrono::system_clock::now() - start;
 
-	cout << dur.count() << "(s)" << '\n';
+	cout <<"Finished time"<< dur.count() << "(s)" << '\n';
 	cout << ans << '\n';
 	cout << chk;
+	int a;
+	cin >> a;
 	return 0;
 }
 
