@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- generated on 07/17/21 18:31:29 by Eclipse SUMO netedit Version 1.8.0
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/netconvertConfiguration.xsd">
+
+    <input>
+        <sumo-net-file value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\Solution\OptimalNetwork.net.xml"/>
+    </input>
+
+    <output>
+        <output-file value="C:\Users\bum71\SIM\omnetpp-5.6.2\omnetpp-5.6.2\MyTest\Solution\OptimalNetwork.net.xml"/>
+    </output>
+
+    <processing>
+        <geometry.min-radius.fix.railways value="false"/>
+        <geometry.max-grade.fix value="false"/>
+        <offset.disable-normalization value="true"/>
+        <lefthand value="false"/>
+    </processing>
+
+    <junctions>
+        <no-internal-links value="true"/>
+        <no-turnarounds value="true"/>
+        <junctions.corner-detail value="5"/>
+        <junctions.limit-turn-speed value="5.5"/>
+        <rectangular-lane-cut value="false"/>
+    </junctions>
+
+    <pedestrian>
+        <walkingareas value="false"/>
+    </pedestrian>
+
+    <report>
+        <aggregate-warnings value="5"/>
+    </report>
+
+</configuration>
+-->
+
+<net version="1.6" junctionCornerDetail="5" limitTurnSpeed="5.50" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/net_file.xsd">
+
+    <location netOffset="0.00,0.00" convBoundary="0.00,-10.00,120.00,0.00" origBoundary="-10000000000.00,-10000000000.00,10000000000.00,10000000000.00" projParameter="!"/>
+
+    <edge id="gneE0" from="gneJ0" to="gneJ1" priority="-1">
+        <lane id="gneE0_0" index="0" speed="13.89" length="120.00" shape="0.00,-1.60 120.00,-1.60"/>
+    </edge>
+    <edge id="gneE1" from="gneJ2" to="gneJ3" priority="-1">
+        <lane id="gneE1_0" index="0" speed="13.89" length="120.00" shape="0.00,-6.60 120.00,-6.60"/>
+    </edge>
+    <edge id="gneE3" from="gneJ6" to="gneJ7" priority="-1">
+        <lane id="gneE3_0" index="0" speed="13.89" length="120.00" shape="0.00,-11.60 120.00,-11.60"/>
+    </edge>
+
+    <junction id="gneJ0" type="dead_end" x="0.00" y="0.00" incLanes="" intLanes="" shape="0.00,0.00 0.00,-3.20"/>
+    <junction id="gneJ1" type="dead_end" x="120.00" y="0.00" incLanes="gneE0_0" intLanes="" shape="120.00,-3.20 120.00,0.00"/>
+    <junction id="gneJ2" type="dead_end" x="0.00" y="-5.00" incLanes="" intLanes="" shape="0.00,-5.00 0.00,-8.20"/>
+    <junction id="gneJ3" type="dead_end" x="120.00" y="-5.00" incLanes="gneE1_0" intLanes="" shape="120.00,-8.20 120.00,-5.00"/>
+    <junction id="gneJ6" type="dead_end" x="0.00" y="-10.00" incLanes="" intLanes="" shape="0.00,-10.00 0.00,-13.20"/>
+    <junction id="gneJ7" type="dead_end" x="120.00" y="-10.00" incLanes="gneE3_0" intLanes="" shape="120.00,-13.20 120.00,-10.00"/>
+
+</net>
