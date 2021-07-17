@@ -21,7 +21,8 @@ struct TASK {
 	}
 };
 vector<TASK> Tasks;
-constexpr unsigned int RSUNum = 5, SRVNum = 4, TaskNum = 30, Local = 0, lineNum = 3, carGenerateGap = 2;
+
+constexpr unsigned int RSUNum = 5, SRVNum = 4, TaskNum = 70, Local = 0, lineNum = 3, carGenerateGap = 2;
 constexpr double propagationDelay[RSUNum][SRVNum] = {
 	{0, 0.004, 0.009, 0.011},
 	{0, 0.005, 0.007, 0.009},
@@ -30,10 +31,11 @@ constexpr double propagationDelay[RSUNum][SRVNum] = {
 	{0, 0.012, 0.006, 0.008}
 };
 constexpr double serverResource[SRVNum] = { 0, 4.0, 5.0, 7.0 };
+
 double taskCache[TaskNum][SRVNum];
 stack<double> stk[SRVNum];	//has 종료시간
 int selected[TaskNum];	//Run 내부변수로 선언.
-unsigned int ans;
+unsigned int globalOptimal , currentValue;
 
 
 //Testing
@@ -84,34 +86,33 @@ void makeCache()
 
 void RunDFS(int carIdx )
 {
+	++chk;
 	if (carIdx == TaskNum)	//TaskNUM
 	{
-		int candidate = 0;
+		int subOptimal = 0;
 
 		for (int i = 0; i < TaskNum; ++i)
 			if (selected[i] != Local)
-				++candidate;
+				++subOptimal;
 
-		if (ans < candidate) {
-			ans = candidate;
+		if (globalOptimal < subOptimal) {
+			globalOptimal = subOptimal;
 			for (int i = 0; i < TaskNum; ++i)
 				cout << selected[i] << " ";
-			cout << " value : " << candidate <<'\n';
+			cout << " value : " << subOptimal <<'\n';
 		}
 
-		++chk;
 		if (chk % 1000000000 == 0) {
 			cout << chk << '\n';
 			for (int i = 0; i < TaskNum; ++i)
 				cout << selected[i] << " ";
-			cout << " value : " << candidate << '\n';
+			cout << " value : " << subOptimal << '\n';
 			chrono::duration<double> dur = std::chrono::system_clock::now() - start;
 			cout << dur.count() << "(s)" << '\n';
 		}
 		return;
 	}
 
-	//for (int srv = 0; srv < SRVNum + 1; ++srv) {
 	for (int srv = 0; srv < SRVNum; ++srv) {
 
 		if (srv != 0 && taskCache[carIdx][srv] + propagationDelay[Tasks[carIdx].RSUseg][srv] > Tasks[carIdx].constraintTime ) 
@@ -120,15 +121,22 @@ void RunDFS(int carIdx )
 		if (srv != 0 && (!stk[srv].empty() && stk[srv].top() > Tasks[carIdx].occurredTime))
 			continue;
 
+		if (currentValue + (TaskNum - carIdx) <= globalOptimal)
+			continue;
+
 		selected[carIdx] = srv;
-		if(srv != 0)
+		if (srv != 0) {
 			stk[srv].push(Tasks[carIdx].occurredTime + taskCache[carIdx][srv] + propagationDelay[Tasks[carIdx].RSUseg][srv]);
+			++currentValue;
+		}
 
 		RunDFS(carIdx + 1);
 
 		selected[carIdx] = 0;
-		if(srv != 0)
+		if (srv != 0) {
 			stk[srv].pop();
+			--currentValue;
+		}
 	}
 }
 
@@ -145,7 +153,7 @@ int main()
 	chrono::duration<double> dur = std::chrono::system_clock::now() - start;
 
 	cout <<"Finished time"<< dur.count() << "(s)" << '\n';
-	cout << ans << '\n';
+	cout << globalOptimal << '\n';
 	cout << chk;
 	int a;
 	cin >> a;
