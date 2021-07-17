@@ -33,8 +33,8 @@ constexpr double propagationDelay[RSUNum][SRVNum] = {
 constexpr double serverResource[SRVNum] = { 0, 4.0, 5.0, 7.0, 5.0, 4.0, 7.0, 5.0, 4.0 };
 
 double taskCache[TaskNum][SRVNum];
-stack<double> stk[SRVNum];	//has Á¾·á½Ã°£
-int selected[TaskNum];	//Run ³»ºÎº¯¼ö·Î ¼±¾ð.
+stack<double> stk[SRVNum];	//has ì¢…ë£Œì‹œê°„
+int selected[TaskNum];	//Run ë‚´ë¶€ë³€ìˆ˜ë¡œ ì„ ì–¸.
 unsigned int globalOptimal , currentValue;
 
 
