@@ -22,7 +22,7 @@ struct TASK {
 };
 vector<TASK> Tasks;
 
-constexpr unsigned int RSUNum = 5, SRVNum = 4, TaskNum = 70, Local = 0, lineNum = 3, carGenerationGap = 2;
+constexpr unsigned int RSUNum = 5, SRVNum = 4, TaskNum = 40, Local = 0, lineNum = 3, carGenerationGap = 2;
 constexpr double propagationDelay[RSUNum][SRVNum] = {
 	{0, 0.004, 0.009, 0.011},
 	{0, 0.005, 0.007, 0.009},
@@ -52,8 +52,7 @@ void GenerationData()
 	uniform_real_distribution<double> uniformOccurredTime(0, 3);
 	uniform_real_distribution<double> uniformRequiredCycle(0.6, 0.8);
 	uniform_real_distribution<double> uniformConstraint(0.115, 0.16);
-	//uniform_real_distribution<double> uniformConstraint(0.130, 0.160);
-	//uniform_real_distribution<double> uniformConstraint(0.160, 0.230);
+	//uniform_real_distribution<double> uniformConstraint(0.13, 0.16);
 
 	for (int i = 0; i < TaskNum; ++i) {
 
